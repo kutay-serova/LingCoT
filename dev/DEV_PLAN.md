@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-02 · **Version:** v3.14.392
+**Updated:** 2026-09-02 · **Version:** v3.14.393
 
 | § | What is in it |
 |---|---|
@@ -189,6 +189,16 @@ legitimate location. The first two were `.gitignore` patterns that read as activ
 and were inert; the third was `hooks/pre-commit` disagreeing with `.gitignore`
 about which cleared data may ship, **and it surfaced by refusing the first commit
 outright.** None was found by reading. Any of the three would have been permanent.
+
+**`dev/archive/` — 280 MB, and now a disk question rather than a guard
+question.** `PIPELINE_AUDIT` 2.1 wanted it frozen the day git arrived, and
+UNIFIED ⑪ objected that freezing it kills `new_version.py`'s central purpose and
+`doc_integrity`'s strongest check. **v3.14.393 took neither horn**: the property
+those checks defended — *every file an entry says it touched actually changed in
+that version* — is now asserted against git, on any clone. The archive checks are
+kept until several versions carry their own commit, and then the 280 MB can be
+decided on its own merits. **Do not freeze it before then**, and do not delete it
+in the same version as anything else.
 
 **That the hook fired is the gate working, not the gate failing.** Two
 independent layers were built precisely because `.gitignore` is a default with

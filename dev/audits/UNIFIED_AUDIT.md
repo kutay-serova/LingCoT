@@ -1,5 +1,5 @@
 # UNIFIED AUDIT: the audit of record
-**Updated:** 2026-09-02 · **Version:** v3.14.392
+**Updated:** 2026-09-02 · **Version:** v3.14.393
 *LIVE. Started against v3.14.221 and bumped with every version since, because a
 stale audit of record is worse than none. Findings keep the build they were found
 against. `dev/audits/AUDIT_INDEX.md` indexes the frozen audits this replaced.*
@@ -25,10 +25,10 @@ its own line.
 | **[§8 Notes from the passes](#8-notes-kept-from-the-passes)** | what each wave examined · the journal session · the refuted guard proposal |
 | **[§9 How this audit has been wrong](#9-how-this-audit-has-been-wrong)** | its own corrections, kept because the pattern repeats |
 
-**42 findings — 35 closed, 0 half, 7 open. 18 conflicts — 13 settled, 5 live.**
+**42 findings — 35 closed, 0 half, 7 open. 18 conflicts — 15 settled, 3 live.**
 Every count is computed from the table that holds the rows and never carried
-forward: §1's board has the **12** rows still outstanding — 7 open findings and
-the 5 live conflicts — and §5's ledgers hold what is done. v3.14.314 changed two
+forward: §1's board has the **10** rows still outstanding — 7 open findings and
+the 3 live conflicts — and §5's ledgers hold what is done. v3.14.314 changed two
 states and miscounted the header by one in the same edit; **so did the line this
 replaces**, which said 32 closed / 2 half against a ledger holding 31 and 3, and
 "20 rows" against a board of 15. Recomputed from the tables at v3.14.387 —
@@ -58,9 +58,7 @@ the severity if it is also a bug.
 | **L-022** | documents | — | Disposition of the twelve superseded audits, mostly unapplied | — |
 | **⑥** | fill · timing | — | Two shipped word field orders, neither matching the observed one | — |
 | **⑦** | the view | — | The wanted mark reaches neither the word editor nor the morpheme rows — and a guard holds the gap open | — |
-| **⑪** | documents | — | Freezing the archive breaks the two mechanisms that substitute for git | — |
 | **⑫** | documents | — | The interchange decision was taken on a miscounted key | — |
-| **⑰** | references | — | The privacy constraint and the version-control plan carve out the same file — *mechanism decided, act pending* | — |
 
 **The guards-and-fixtures line is closed.** L-007, L-019, L-021 and L-042 were
 one question in four places — *is the fixture worth the guards that read it?* —
@@ -346,13 +344,16 @@ wherever the facts moved after an item was written — and **six of the eighteen
 were settled by D50 stage 4 completing at v3.14.249**, which is the case for
 doing format work as one migration.*
 
-**Re-checked v3.14.315, all five still live**, each against the code: ⑥
+**Re-checked v3.14.315, all five live then; ⑪ and ⑰ settled at v3.14.392–393
+(see their bodies).** Each against the code: ⑥
 `field_spec`'s word order and `renderWordEdit`'s DOM order still differ, and
 neither is L-013's observed one · ⑦ `wantedMark` has four sites and none is
-`renderWordEdit` or `morphEditRowsHtml` · ⑪ no `.git`, and `dev/archive/` is
-**224 MB** · ⑫ the miscount survives in `dev/design/file_layout_options.md:27-29`
-verbatim · ⑰ the carve-out is still a path exemption, and its resolution is now
-**decided rather than open** — v3.14.311's disclosure, run once before `git init`.
+`renderWordEdit` or `morphEditRowsHtml` · ⑫ the miscount survives in
+`dev/design/file_layout_options.md:27-29` verbatim. **⑪ and ⑰ were the two whose
+resolution depended on an act rather than an argument, and the act was `git
+init`:** ⑰ needed the disclosure run and signed, which happened at v3.14.392, and
+⑪ needed the archive's property to survive on a clone, which v3.14.393 did by
+replacing it rather than by freezing anything.
 
 ### ⑥ Two shipped word field orders, neither matching the observed one
 
@@ -421,6 +422,35 @@ false and the check prints `-- skipped`. **After `git init`, the project's
 strongest documentation guard is a silent no-op for every contributor but the
 author.** The transition must be in the same commit as the init, not after it.
 
+> **SETTLED v3.14.393 — right about the mechanism, wrong about one word.** The
+> transition was NOT in the same commit as the init: v3.14.392 shipped exactly
+> the state predicted here, and it was measured on a real clone the same hour —
+> **86 passed, 0 failed, 1 disabled**, with **Archives:** paths and pre-edit
+> copies both skipped.
+>
+> The word to correct is **silent**. `doc_integrity_test.js` exits 2 and
+> `run_all.sh` names the disabled guard on every run, so the property was
+> *unverified* for contributors and never quietly claimed. That distinction is
+> the difference between a gap and a lie, and this project's guards were already
+> built for it.
+>
+> **Resolved by replacing the property, not by freezing the archive.** *"A
+> pre-edit copy exists in a folder"* was always a proxy. The thing worth
+> asserting is **every file an entry says it touched actually changed in that
+> version** — and git answers that on any clone, from history, better than the
+> archive ever did. `doc_integrity_test.js` §8b does it: Touched ⊆ the commit's
+> diff, the root commit exempt **by name**, versions predating git counted rather
+> than ignored, and DISABLED rather than a pass while zero versions are
+> checkable — so it cannot report success before it is able to fail (PRACTICES
+> §7). Mutation-tested 2/2 in a scratch clone carrying a second commit.
+>
+> **The archive checks are KEPT, and this is the sequencing the conflict did not
+> consider.** They work for the author today; §8b needs history before it bites.
+> Deleting the working half on the day the replacement is born leaves a window
+> with neither. **Delete them once several versions carry their own commit** — at
+> which point PIPELINE 2.1's freeze, and the 280 MB, become a live question on
+> their own merits rather than as a guard's hostage.
+
 ### ⑫ The interchange decision was taken on a miscounted key
 
 > **Narrowed v3.14.310.** `DEV_PLAN.md` no longer carries the miscount; only
@@ -459,6 +489,28 @@ and `file_layout_options.md` §0 still carry the miscount.
 > records. The conflict is exactly as filed, and it is the one on this list that
 > ships something rather than merely leaving it undone.
 
+> **SETTLED v3.14.392 — by the act, which is all it was ever waiting for.** The
+> resolution was decided at v3.14.311: the carve-out is a **disclosure a person
+> signs**, not a rule the repository enforces on data it cannot read. That
+> disclosure ran twice before the first commit, printed both participants files
+> field by field — `name`, `affiliation`, `birth_decade`, `role`, and the source
+> records — and traced those two names to **58 occurrences across 20 files**.
+> That number is why an exclusion was never the answer: it would have covered one
+> file of twenty. Signed off 2026-09-02 on `Test Annotator #1` and `Google
+> Translate`, recorded on v3.14.391's `**Examined:**` line.
+>
+> **"No guard checks its contents" is still true, and is now the point rather
+> than the defect.** A guard that judged those contents would be a guard deciding
+> what a person may publish about themselves and their consultants. What the
+> tooling owes is that nobody publishes it *unknowingly* — which is what the
+> disclosure does.
+>
+> **Its own gap is now stated in its output (v3.14.393).** It greps text, so it
+> lists the files it could **not** read: a name in a screenshot is invisible to
+> it. Three ship — `docs/images/sentence-view.png` and the two Noto fonts — and
+> the screenshot was checked by eye before the first push. It shows `Deneme Metni
+> #1`, `Test Annotator #1`, `Test Source #1`; all synthetic.
+
 
 `.gitignore` blocks `*_participants.jsonl`, then `!samples/**` un-blocks it. The
 pre-commit hook refuses participants files, then allows `samples/*`.
@@ -492,7 +544,7 @@ open keep their reasoning, because that is the instruction for doing them.*
 | **10** | **D32 and D31 as one spec** | ◑ **and they were not specced together.** D32 ✅ v3.14.303 alone; D31 was reduced at v3.14.273 and its ▲▼ ordering control still does not exist (*0 references, v3.14.317*), waiting on I2 |
 | **11** | ✅ **one fixture pass — done v3.14.384** | and it closed four findings at once (L-007, L-019, L-021, L-042), which is what this row predicted a combined pass would do. `samples/` is the two live corpora, byte-identical; the two Korean guards were re-pointed at v3.14.385; D58 §§8–10 hold the account. **Two of its cheap additions were not made**: a non-empty lemma residue field and a `prov_history` longer than 5 still have no instance anywhere |
 | **12** | ◑ **one identity/read-view sweep** | **B-115 ✅ v3.14.309 — and closing it did not close I13**, which is the useful result. The shared piece is the sortable header *cell*; `viewHeader()` still has 19 call sites and *none in `participants.js`* (v3.14.317), and `.ann-view-topbar` / `.src-view-topbar` are still two rules. I12 is partly built, I14 untouched. The twins had less in common than the pairing implied |
-| **13** | **`git init` carrying the archive-freeze transition** | **open, and the cost grows**: `dev/archive/` is **280 MB** at v3.14.387, against 224 MB at v3.14.317 and 88 MB when this row was written. PIPELINE S1 **and** S6 **and** conflict ⑪, and it must be one commit or the suite breaks the day after |
+| **13** | ✅ **`git init` — done v3.14.391–392**, and the transition handled at v3.14.393 | **The prediction was half right, and the wrong half is the instructive one.** `git init` landed without the freeze, and the suite did NOT break the day after: `doc_integrity_test.js` already skipped the archive checks honestly on a clone, so what actually happened was 86/0/**1**, measured on a real clone the same hour. The freeze was never the only move — §8b keeps the *property* on any clone by asking git instead of the archive, so PIPELINE 2.1's freeze and the **280 MB** are now a question about disk rather than about a guard. **S1 closes; S6 does not** |
 
 ---
 
@@ -542,7 +594,7 @@ open keep their reasoning, because that is the instruction for doing them.*
 
 ### 5.2 Conflicts settled
 
-*The 13 settled. The five live ones are in §3 with the whole argument, because that argument is the instruction for resolving them.*
+*The 15 settled. The three live ones are in §3 with the whole argument, because that argument is the instruction for resolving them.*
 
 | # | conflict | state | what survives |
 |---|---|---|---|

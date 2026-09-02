@@ -168,6 +168,38 @@ def main():
                 print(f'            {c:5} × {n!r}')
         print(f'\n  {total} occurrence(s) in total.')
 
+    # ── 2b. what this tool CANNOT read, named so the gap is not silent ───────
+    # v3.14.393. Section 2 greps text. A screenshot of the application showing a
+    # real annotator's name, a real speaker's sentence or a filesystem path is
+    # invisible to it, and so is a name in font metadata. This was found the only
+    # way it could be: a person opened docs/images/sentence-view.png and looked
+    # at it, immediately before the first push. The tool cannot close this gap —
+    # it can refuse to let the gap go unmentioned, which is PRACTICES §5.
+    TEXTUAL = ('.md', '.js', '.py', '.pyw', '.json', '.jsonl', '.css', '.html',
+               '.txt', '.cff', '.toml', '.lock', '.sh', '.bat', '.command',
+               '.yml', '.yaml', '.gitignore', '.cursor')
+    # An EMPTY file carries nothing, so listing it is noise that trains the
+    # reader to skim the one list that must not be skimmed (logs/.gitkeep).
+    opaque = [p for p in ship
+              if not p.lower().endswith(TEXTUAL)
+              and os.path.basename(p) != 'pre-commit'
+              and os.path.getsize(os.path.join(ROOT, p)) > 0]
+    if opaque:
+        print()
+        print('-' * 72)
+        print('WHAT THIS TOOL COULD NOT READ')
+        print('-' * 72)
+        print()
+        print(f'  {len(opaque)} file(s) ship that section 2 did not search, because they')
+        print('  are not text. A name inside a SCREENSHOT is invisible to a grep:')
+        print()
+        for p in opaque:
+            print(f'    {p}')
+        print()
+        print('  Open each one and look at it before you push. A screenshot of the')
+        print('  app can carry an annotator name, a speaker\'s sentence, or a home')
+        print('  directory in a title bar, and none of those are searchable here.')
+
     # ── 3. the question, asked rather than answered ──────────────────────────
     print()
     print('=' * 72)
@@ -181,6 +213,9 @@ def main():
     print('  --examined line is what shows this was run. If no, change the DATA;')
     print('  do not add an exclusion, because the names above are in four files')
     print('  and an exclusion would only cover one of them.')
+    print()
+    print('  The names above are the ones that are SEARCHABLE. Anything under')
+    print('  "what this tool could not read" is yours to open and check by eye.')
     print('=' * 72)
     print()
     return 0

@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-02 · **Version:** v3.14.392
+**Updated:** 2026-09-02 · **Version:** v3.14.393
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,50 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## Conflict ⑪ — the archive check becomes a git check (2026-09-02)
+**Version:** v3.14.393 · **Type:** feature · **Archives:** `dev/archive/changes/c11_git_backed_touched_check/` (v3.14.392)
+**Touched:** dev/tests/doc_integrity_test.js · dev/tools/ship_disclosure.py · dev/audits/UNIFIED_AUDIT.md · dev/DEV_PLAN.md
+
+**What changed.** `doc_integrity_test.js` §8b asks GIT the question the archive
+checks asked the filesystem: **every file an entry says it touched actually
+changed in that version.** Touched ⊆ the commit's diff — never equality, because
+a version's commit also carries the header bumps `new_version.py` makes. The root
+commit is exempt **by name**, versions predating git are counted rather than
+ignored, and `RENAMES.md` resolves a path that moved.
+
+**Why.** UNIFIED conflict ⑪, which `git init` made live. `dev/archive/` is
+gitignored, so on every clone the two archive checks print `-- skipped` and the
+project's strongest documentation guard verifies nothing for anyone but the
+author. Measured on a real clone: **86 passed, 0 failed, 1 disabled.** ⑪ called
+it silent; it is not — the runner names it every run. The property was
+unverified, never quietly claimed.
+
+**The archive checks are kept.** They work for the author today and §8b needs
+history before it bites; deleting the working half the day the replacement is
+born leaves a window with neither. Delete them once several versions carry a
+commit — then PIPELINE 2.1's freeze and the 280 MB are a disk question rather
+than a guard's hostage.
+
+**⑰ settled too, by the act rather than by code**: the disclosure ran, printed
+both participants files field by field, and was signed. **PIPELINE S1 closes.**
+
+**`ship_disclosure.py` now names what it cannot read.** It greps text, so a name
+in a screenshot is invisible to it — found by opening
+`docs/images/sentence-view.png` before the first push. Three non-text files ship;
+empty files are excluded, because listing `logs/.gitkeep` trains the reader to
+skim the one list that must not be skimmed. PRACTICES §5.
+
+**Guard.** §8b guards itself: with zero checkable versions it reports DISABLED
+rather than passing, so it cannot claim success before it is able to fail
+(PRACTICES §7). It clears on the next commit, which gives it a parent to diff.
+
+**Verification.** `./dev/tests/run_all.sh` — 87 passed, 0 failed, 1 disabled
+(§8b, until this version is committed). Mutation-tested 2/2 in a scratch clone
+carrying a second commit: an entry claiming an untouched file, and one naming a
+path that had been renamed away. Both named the file and the commit.
 
 ---
 

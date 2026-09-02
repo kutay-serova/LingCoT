@@ -1,5 +1,5 @@
 # AUDIT INDEX: every audit and design document, what it is worth, and what in it is false
-**Updated:** 2026-09-02 · **Version:** v3.14.392
+**Updated:** 2026-09-02 · **Version:** v3.14.393
 
 This file is **live**. `new_version.py` stamps it and `doc_integrity_test.js`
 checks it, which is the whole reason it exists: the frozen documents it indexes
@@ -65,7 +65,7 @@ document unless the entry says otherwise.
 | `SEARCH_B_DESIGN.md` | v3.14.38 | **LIVE** | n-grams, stoplist, CSV export, pagination | no |
 | `ANNOTATION_FILL_AUDIT.md` | v3.14.109 | **SPENT**, prose wrong | **none.** `inferPos` deleted ✅ v3.14.302 · F2 ✅ v3.14.299 · F5 ✅ v3.14.300 · B-058 ✅ v3.14.267 · F3 ✅ v3.14.269 · F4's residue ✅ v3.14.266 | no — needs correction |
 | `DICT_SENSE_AUDIT.md` | v3.14.53 | thesis LIVE, evidence **WRONG** and now unmeasurable as written | D28, unscheduled. Re-measure on `chinese-test` — the live `turkish-test` has no dictionary (item 33) | no |
-| `PIPELINE_AUDIT.md` | v3.14.76 | **LIVE**, numbers wrong | S1 (git), S6 (release) | no — needs correction |
+| `PIPELINE_AUDIT.md` | v3.14.76 | **LIVE**, numbers wrong | ~~S1 (git)~~ **✅ v3.14.391–392** · S6 (release). Its 2.1 recommended freezing `dev/archive/` once git holds history; v3.14.393 took the other route — keep the *property*, ask git for it (conflict ⑪) — so the freeze is now a disk question, not a guard question | no — needs correction |
 | `DATA_MODEL_AUDIT.md` | v3.14.31 | **SPENT**, §1 wrong | F1/R28 dual representation | §1 only |
 | `SCRIPTS_AUDIT.md` | v3.14.149 | **SPENT** | S5 — **answered v3.14.313**: `corpus_optimize.py` still does what its *Usage* and *Output* say; its STRUCTURE map names three functions that do not exist (L-030) | title needs a strikethrough |
 | `DOCS_AUDIT.md` | v3.14.100 | **SPENT**, inventory wrong | none | inventory only |

@@ -80,6 +80,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const { DEV, ROOT, SRC, isGitignored, archiveAvailable } = require('./_source.js');
+let GIT_TOUCHED_RAN = false;
 const PLAN = path.join(DEV, 'DEV_PLAN.md');
 const BUGS = path.join(DEV, 'BUGS.md');
 const LOG  = path.join(DEV, 'edit_log.md');
@@ -451,6 +452,80 @@ console.log('\nedit_log integrity');
   else
     console.log('  --   pre-edit copies — skipped, dev/archive/ is not distributed');
 
+  /* ── 8b. The same property, asked of GIT — conflict ⑪, v3.14.393 ──────────
+     The two checks above read `dev/archive/`, which is gitignored, so on every
+     clone they print `-- skipped` and the strongest documentation guard in the
+     project verifies nothing for anyone but the author. That was UNIFIED_AUDIT
+     conflict ⑪, and `git init` at v3.14.391-392 is what made it live.
+
+     The property worth keeping is not "a copy exists in a folder" — it is
+     **every file an entry says it touched actually changed in that version**,
+     and git answers that for real, on any clone, from the history itself.
+
+     THREE THINGS THIS DELIBERATELY DOES NOT ASSERT.
+     · The reverse direction. A version's commit also carries the header bumps
+       `new_version.py` makes (DEV_PLAN, BUGS, PRACTICES, edit_log, RENAMES, the
+       two audits, source/version.py), and those are not on the Touched line. So
+       the assertion is Touched ⊆ diff, never equality.
+     · The root commit. Its diff is the whole tree by definition, so "did this
+       file change" has no meaning there. Exempted by name, not skipped silently.
+     · A version with no commit. History starts at v3.14.392; every earlier entry
+       predates git and is unverifiable here, which is a fact about the past
+       rather than a failure.
+
+     A rename moves a path, so an entry naming the old one would look unchanged.
+     `dev/RENAMES.md` is the ledger for that and is consulted the same way the
+     reference check above does it.
+
+     VACUITY. With one commit in the repository there is nothing this can check,
+     and a check that cannot fail is not a check (PRACTICES §7). So when zero
+     versions are verifiable it reports DISABLED rather than passing — and it
+     clears itself on the very next commit, because that commit gives it a
+     parent to diff against. */
+  const gitDir = fs.existsSync(path.join(ROOT, '.git'));
+  let gitCheckable = 0;
+  if (!gitDir) {
+    console.log('  --   **Touched:** against git — skipped, no .git (a tarball, not a clone)');
+  } else {
+    const g = (...a) => {
+      try { return require('child_process')
+        .execFileSync('git', ['-C', ROOT, ...a], { encoding: 'utf8', stdio: 'pipe' }); }
+      catch { return null; }
+    };
+    const renamed = new Map();
+    for (const m of fs.readFileSync(path.join(DEV, 'RENAMES.md'), 'utf8')
+                      .matchAll(/^\| `([^`]+)` \| `([^`]+)`/gm)) renamed.set(m[1], m[2]);
+
+    const log = g('log', '--format=%H%x1f%B%x1e') || '';
+    const commits = log.split('\x1e').map(r => r.replace(/^\n/, '')).filter(r => r.trim())
+      .map(r => { const i = r.indexOf('\x1f'); return { sha: r.slice(0, i).trim(), msg: r.slice(i + 1) }; });
+
+    const missing = [], rootExempt = [];
+    for (const e of entries) {
+      const c = commits.find(c => c.msg.includes(e.version));
+      if (!c) continue;
+      if (g('rev-parse', '--verify', '-q', c.sha + '^') === null) { rootExempt.push(e.version); continue; }
+      const changed = new Set((g('diff', '--name-only', c.sha + '^', c.sha) || '').split('\n').filter(Boolean));
+      const named = (e.touched && !/^—/.test(e.touched) && !/^documentation only/i.test(e.touched))
+        ? e.touched.split('·').map(x => x.trim().replace(/\s*\([^)]*\)\s*$/, '')).filter(Boolean) : [];
+      if (!named.length) continue;
+      gitCheckable++;
+      for (const f of named)
+        if (!changed.has(f) && !changed.has(renamed.get(f)))
+          missing.push(`         ${e.version} says it touched ${f}, and ${c.sha.slice(0, 8)} did not change it`);
+    }
+    if (gitCheckable) {
+      GIT_TOUCHED_RAN = true;
+      check(missing.length === 0,
+            `every **Touched:** file really changed, across ${gitCheckable} version(s) with a commit`,
+            missing.join('\n') + '\n         the entry and the history disagree about what the version did');
+    } else {
+      console.log(`  --   **Touched:** against git — 0 verifiable version(s)`
+        + `${rootExempt.length ? `; ${rootExempt.join(', ')} is the root commit, whose diff is the whole tree` : ''}`);
+      console.log('       history begins at the first commit; this clears itself on the next one');
+    }
+  }
+
   /* 9. Entry types, and the fields each one implies. */
   const TYPES = ['fix', 'feature', 'finding', 'decision', 'chore'];
   const badType = [], badShape = [];
@@ -762,9 +837,16 @@ console.log(`\n${pass} passed, ${fail} failed\n`);
    snapshots and is not distributed. They were SKIPPED above on a clone, so this
    run verified less than a full one and must not report a plain pass. Exit 2:
    run_all.sh tallies DISABLED separately and names it on every run. */
-if (!archiveAvailable() && !fail) {
-  console.log('  DISABLED: 2 archive check(s) were skipped — dev/archive/ is not distributed.');
-  console.log('            Everything above did run. Archive integrity is unverified here.\n');
-  process.exit(2);
+{
+  const why = [];
+  if (!archiveAvailable())
+    why.push('2 archive check(s) — dev/archive/ is not distributed');
+  if (!GIT_TOUCHED_RAN)
+    why.push('the **Touched:**-against-git check — no version yet has a commit with a parent');
+  if (why.length && !fail) {
+    console.log(`  DISABLED: ${why.join('; ')}.`);
+    console.log('            Everything above did run. Those properties are unverified here.\n');
+    process.exit(2);
+  }
 }
 process.exit(fail ? 1 : 0);
