@@ -25,9 +25,9 @@
 #   main(), argparse entry point (--translate, --serve, etc.)
 #
 # USAGE
-#   python scripts/corpus_annotate.py corpora/my_corpus/corpus.jsonl --translate \
+#   python source/scripts/corpus_annotate.py corpora/my_corpus/corpus.jsonl --translate \
 #       --translator nllb --source-lang kor
-#   python scripts/corpus_annotate.py --serve --port 5001
+#   python source/scripts/corpus_annotate.py --serve --port 5001
 #
 # THIRD-PARTY TOOLS
 #   NLLB-200  https://github.com/facebookresearch/fairseq/tree/nllb
@@ -97,22 +97,22 @@ Designed for rate-limited APIs:
 Typical workflow
 ----------------
   # Step 1, ingest without translation (fast, no API needed)
-  python corpus_ingest.py book.epub -o corpus.jsonl
+  python source/scripts/corpus_ingest.py book.epub -o corpus.jsonl
 
   # Step 1b, run the optimizer once to find the fastest settings for this machine
-  python corpus_optimize.py                  # writes annotator_config.json
+  python source/scripts/corpus_optimize.py                  # writes annotator_config.json
 
   # Step 2, annotate in safe chunks (run this repeatedly until done)
   # annotator_config.json is loaded automatically; CLI flags override it
-  python corpus_annotate.py corpus.jsonl --translate \\
+  python source/scripts/corpus_annotate.py corpus.jsonl --translate \\
       --translator google --target-lang en --max-sentences 100
 
   # Step 3, after API cooldown, run again; cursor auto-resumes
-  python corpus_annotate.py corpus.jsonl --translate \\
+  python source/scripts/corpus_annotate.py corpus.jsonl --translate \\
       --translator google --target-lang en --max-sentences 100
 
   # Alternative: offline NLLB-200 run (200-language model, no cooldown)
-  python corpus_annotate.py corpus.jsonl --translate \\
+  python source/scripts/corpus_annotate.py corpus.jsonl --translate \\
       --translator nllb --source-lang tur --target-lang en
 
 Cursor file

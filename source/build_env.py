@@ -44,13 +44,13 @@
 #                            --tier, --check, --recreate, --show, --dev
 #
 # USAGE
-#   python3 build_env.py                    # create/update .venv/ (minimal tier)
-#   python3 build_env.py --tier nllb        # install with NLLB extras
-#   python3 build_env.py --tier pdf         # install with PDF export extras
-#   python3 build_env.py --check            # verify environment health
-#   python3 build_env.py --check --tier nllb  # also verify NLLB extras
-#   python3 build_env.py --recreate         # wipe and rebuild from scratch
-#   python3 build_env.py --show             # list installed package versions
+#   python3 source/build_env.py                    # create/update .venv/ (minimal tier)
+#   python3 source/build_env.py --tier nllb        # install with NLLB extras
+#   python3 source/build_env.py --tier pdf         # install with PDF export extras
+#   python3 source/build_env.py --check            # verify environment health
+#   python3 source/build_env.py --check --tier nllb  # also verify NLLB extras
+#   python3 source/build_env.py --recreate         # wipe and rebuild from scratch
+#   python3 source/build_env.py --show             # list installed package versions
 # =============================================================================
 """
 build_env.py  –  LingCoT Python environment builder
@@ -73,14 +73,14 @@ uv/pip will add the new packages without rebuilding from scratch.
 
 Usage
 -----
-  python3 build_env.py                    # minimal tier (default)
-  python3 build_env.py --tier nllb        # install NLLB extras as well
-  python3 build_env.py --tier pdf         # install PDF export extras
-  python3 build_env.py --check            # verify the venv is healthy
-  python3 build_env.py --check --tier nllb  # also verify NLLB extras are installed
-  python3 build_env.py --check --tier pdf   # also verify PDF extras are installed
-  python3 build_env.py --recreate         # delete .venv and rebuild from scratch
-  python3 build_env.py --show             # print venv path + package versions
+  python3 source/build_env.py                    # minimal tier (default)
+  python3 source/build_env.py --tier nllb        # install NLLB extras as well
+  python3 source/build_env.py --tier pdf         # install PDF export extras
+  python3 source/build_env.py --check            # verify the venv is healthy
+  python3 source/build_env.py --check --tier nllb  # also verify NLLB extras are installed
+  python3 source/build_env.py --check --tier pdf   # also verify PDF extras are installed
+  python3 source/build_env.py --recreate         # delete .venv and rebuild from scratch
+  python3 source/build_env.py --show             # print venv path + package versions
 
 After the first run, scripts self-activate the venv automatically, no need
 to run  source .venv/bin/activate  or prefix commands with .venv/bin/python.
@@ -581,7 +581,7 @@ def check_venv(tier: str = TIER_MINIMAL) -> bool:
 
     if not VENV_PYTHON.exists():
         fail(f".venv/ not found at  {VENV_DIR}")
-        info("Run  python3 build_env.py  to create it.")
+        info("Run  python3 source/build_env.py  to create it.")
         return False
     ok(f"Venv python:  {VENV_PYTHON}")
 
@@ -662,14 +662,14 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python3 build_env.py                      # minimal tier (default)\n"
-            "  python3 build_env.py --tier nllb          # install NLLB extras too\n"
-            "  python3 build_env.py --tier pdf           # install PDF export extras\n"
-            "  python3 build_env.py --check              # verify existing venv\n"
-            "  python3 build_env.py --check --tier nllb  # also verify NLLB extras\n"
-            "  python3 build_env.py --check --tier pdf   # also verify PDF extras\n"
-            "  python3 build_env.py --recreate           # wipe and rebuild from scratch\n"
-            "  python3 build_env.py --show               # print installed package versions\n"
+            "  python3 source/build_env.py                      # minimal tier (default)\n"
+            "  python3 source/build_env.py --tier nllb          # install NLLB extras too\n"
+            "  python3 source/build_env.py --tier pdf           # install PDF export extras\n"
+            "  python3 source/build_env.py --check              # verify existing venv\n"
+            "  python3 source/build_env.py --check --tier nllb  # also verify NLLB extras\n"
+            "  python3 source/build_env.py --check --tier pdf   # also verify PDF extras\n"
+            "  python3 source/build_env.py --recreate           # wipe and rebuild from scratch\n"
+            "  python3 source/build_env.py --show               # print installed package versions\n"
             "\n"
             "Tiers:\n"
             "  minimal  Ingestion + Google Translate only (~30 MB)\n"
@@ -769,7 +769,7 @@ def main() -> int:
             print(_c(GREEN, "  Environment is on tier: " + args.tier))
             if args.tier == TIER_NLLB:
                 print()
-                print("  Next step:  .venv/bin/python3 setup.py --nllb")
+                print("  Next step:  .venv/bin/python3 source/setup.py --nllb")
                 print("              (downloads + converts the NLLB-200 model)")
         return 0
 
@@ -811,14 +811,14 @@ def main() -> int:
         print()
         if args.tier == TIER_MINIMAL:
             print("  Next step:  use Google Translate backend out of the box:")
-            print("    .venv/bin/python3 scripts/corpus_annotate.py <corpus> --translate --translator google")
+            print("    .venv/bin/python3 source/scripts/corpus_annotate.py <corpus> --translate --translator google")
             print()
             print("  To add offline NLLB later, run:")
-            print("    python3 build_env.py --tier nllb")
-            print("    .venv/bin/python3 setup.py --nllb")
+            print("    python3 source/build_env.py --tier nllb")
+            print("    .venv/bin/python3 source/setup.py --nllb")
         else:
             print("  Next step:  download the NLLB-200 model")
-            print("    .venv/bin/python3 setup.py --nllb   # ~1.2 GB transient → ~600 MB on disk")
+            print("    .venv/bin/python3 source/setup.py --nllb   # ~1.2 GB transient → ~600 MB on disk")
     else:
         fail("Some packages failed to install.  Check the errors above.")
         _log.error(f"Some packages failed to install for tier: {args.tier}")

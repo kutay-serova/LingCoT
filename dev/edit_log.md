@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-02 · **Version:** v3.14.393
+**Updated:** 2026-09-02 · **Version:** v3.14.395
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,93 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## QUICKSTART.md — the way in, for someone who is not a developer (2026-09-02)
+**Version:** v3.14.395 · **Type:** feature · **Archives:** `dev/archive/changes/quickstart_for_testers/` (v3.14.394)
+**Touched:** QUICKSTART.md (new) · README.md · dev/tests/quickstart_labels_test.js · dev/PRACTICES.md · dev/DEV_PLAN.md
+
+**What changed.** A guided first session, linked from README Contents. Gate 2's
+third item, and the second of its three now done.
+
+**Two decisions the user made, both correcting a first draft.**
+**No terminal commands at all** — the audience is documentary linguists, and a
+draft that opened with `mkdir -p` and `cp -R` was written for the wrong person.
+**And it teaches the features rather than only the first five minutes**: a tester
+who never reaches search cannot report on search.
+
+Both were possible because of something the draft did not know: the Add Section
+form has a **Section text** box that takes a raw paste and auto-parses it into
+paragraphs, sentences and words. So the whole path is clickable, and the tester
+uses *their own text* — which is a better test than any fixture.
+
+**What writing it found.** Three names `README.md` uses do not exist in the app:
+the button is **LaTeX**, not `TeX`; **Potential Matches** was retired by D42 and
+suggestions are one offer strip marked `take:`; the control reads **Add
+selection**, not "Selection relations". The quickstart uses the real labels. The
+README is not corrected here — that is its own version.
+
+**Also measured, and not used:** `samples/turkish-test` has 90 content words of
+which **7** are fully annotated, and its section 3 is empty (`DATA_INTEGRITY`
+§3d).
+
+**Guard.** `quickstart_labels_test.js` parses the bold spans out of the
+quickstart itself — not a curated list beside it, which would be a second writer
+(PRACTICES §4) — and checks each against `en.json`. **Guard count 90 → 91.**
+
+**What it cannot do, recorded rather than implied.** It proves a label exists in
+the app's vocabulary, not that it sits on the named control: `Progress` is the
+value of two keys, so renaming the button alone still passes. Mutation-tested
+3/3 by intent — renaming a label with a UNIQUE value fails, and the two
+collision cases are documented in the guard's own header. The failure worth
+catching is a label leaving the app entirely, and that is caught.
+
+**Verification.** `./dev/tests/run_all.sh` — 89 passed, 0 failed, 0 disabled.
+
+---
+
+## B-207 — every command setup printed failed (2026-09-02)
+**Version:** v3.14.394 · **Type:** fix · **Archives:** `dev/archive/changes/b207_printed_commands_dont_resolve/` (v3.14.393)
+**Touched:** source/build_env.py · source/setup.py · source/scripts/corpus_annotate.py · source/scripts/corpus_ingest.py · source/scripts/corpus_optimize.py · source/scripts/dict_export.py · dev/tests/printed_commands_test.js · dev/PRACTICES.md · dev/BUGS.md · dev/DEV_PLAN.md
+
+**What changed.** 67 printed command paths across six files, made
+root-relative — `scripts/corpus_annotate.py` → `source/scripts/…`, `setup.py` →
+`source/setup.py`, `build_env.py` → `source/build_env.py`.
+
+**Why.** `build_env.py` and `setup.py` live in `source/`, so their usage lines
+were written relative to themselves. `setup.command` does `cd "$(dirname "$0")"`
+— the project ROOT — and runs `python3 source/build_env.py`. **The user is always
+one directory above the script that is talking to them.** So the last thing a
+successful install printed was a command that fails with *No such file or
+directory*, and so did all six examples in `setup.py --help`.
+
+**How it was found, which is the part worth keeping.** By doing gate 2's
+fresh-machine item literally: clone the PUBLISHED repository onto a clean
+machine, run setup, then run what setup tells you to run. Setup itself worked
+perfectly. Everything it said afterwards was wrong. **No amount of reading those
+files finds this** — each line is correct relative to the file it sits in, and
+the `.command`/`.bat` launchers had the right paths all along, which is exactly
+what hid the disagreement: two writers, and the correct one was not the one
+talking to the user at the end of setup.
+
+**Guard.** `printed_commands_test.js` — every interpreter-plus-path in a
+user-facing file must resolve from the root. **Guard count 89 → 90**
+(PRACTICES §6).
+
+**Two escapes of my own, both recorded because they are the guard's own
+lesson.** Its first version gated on `print|echo` appearing on the same line and
+so skipped every argparse `epilog` — the exact 27 sites the bug was filed for —
+and passed. Its first vacuity floor was `FILES.length >= 10`, which let
+`setup.py` (21 of the 67) be dropped from the sweep with 13 files still scanned.
+A count answers *did we scan enough things*; the question is *did we scan THE
+things*, so the required files are named. A bare `\.py` also matched the first
+three characters of `LingCoT.pyw` and reported a real file missing.
+
+**Verification.** `./dev/tests/run_all.sh` — 88 passed, 0 failed, 0 disabled.
+Mutation-tested 2/2 after the tightening. Then re-verified where it matters: on
+the clean machine, `corpus_annotate.py --help`, `build_env.py --check` and
+`setup.py --check` all run.
 
 ---
 

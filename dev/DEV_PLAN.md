@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-02 · **Version:** v3.14.393
+**Updated:** 2026-09-02 · **Version:** v3.14.395
 
 | § | What is in it |
 |---|---|
@@ -367,9 +367,9 @@ or hitting a wall?
 | Sev | Item | Why here |
 |---|---|---|
 | — | ~~**B-093** morpheme `transliterations` settable nowhere~~ | ✅ both halves: type v3.14.193, transliteration v3.14.303 with **D32** |
-| — | **D46** the pipeline audit | belongs *inside* this gate: the order the work takes is only observable while someone is doing it |
-| — | a fresh-machine install | `setup.py` has never been run by anyone but its author |
-| — | an annotator quickstart | the README documents the developer path; a tester needs half a page — open, annotate a word, save |
+| — | **D46** the pipeline audit | belongs *inside* this gate: the order the work takes is only observable while someone is doing it. **Now gated only on the macOS install half** — the quickstart shipped at v3.14.395 and asks its readers the D46 question directly (*what order did you want to fill things in?*), so a tester's answer arrives with their other feedback rather than needing a separate sitting |
+| ◑ | a fresh-machine install | `setup.py` has never been run by anyone but its author. **Half taken v3.14.394**: the published repo was cloned onto a clean Linux machine and `build_env.py` run for real. It **succeeded** — venv built, all packages resolved, `~/LingCoT-Data/` created — and then every command it printed afterwards failed (**B-207**, 67 of them). What is still owed is the half this cannot reach: **macOS, by double-click, on a machine with no developer tooling.** `setup.command` opens a browser when python3 is absent, and the Gatekeeper refusal path in `setup.md` has never been walked by a stranger |
+| ✅ | an annotator quickstart | **`QUICKSTART.md`, v3.14.395**, linked from README Contents. Grew past "half a page" on purpose: it is a guided tour of every major feature in the order a first session meets them — corpus, ingest, gloss, dictionary and the offer strip, translation, dependency parse, search, Progress, export — because a tester who never reaches search cannot report on it. GUI only, **no terminal commands**: the audience is linguists, not developers, and the Section text box makes the whole path clickable. Guarded by `quickstart_labels_test.js` |
 
 #### Gate 3 — before the first stable version
 

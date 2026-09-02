@@ -66,6 +66,10 @@ setup installs everything else for you.
 
 ## Contents
 
+**New here?** [QUICKSTART.md](QUICKSTART.md) is a guided first session — build a
+corpus from your own text and try each major feature in order. Half an hour. This
+README is the reference you come back to; the quickstart is the way in.
+
 **Part I — Essentials**
 
 | | |

@@ -28,13 +28,13 @@
 #
 # USAGE
 #   # Auto-named output (~/LingCoT-Data/corpora/my_novel/my_novel_corpus.jsonl):
-#   python scripts/corpus_ingest.py input.txt --title "My Novel" --language kor
+#   python source/scripts/corpus_ingest.py input.txt --title "My Novel" --language kor
 #
 #   # Multiple files into one corpus:
-#   python scripts/corpus_ingest.py ch1.epub ch2.epub --title "Novel" --language zho
+#   python source/scripts/corpus_ingest.py ch1.epub ch2.epub --title "Novel" --language zho
 #
 #   # Explicit output path:
-#   python scripts/corpus_ingest.py input.txt -o /path/to/corpus.jsonl
+#   python source/scripts/corpus_ingest.py input.txt -o /path/to/corpus.jsonl
 #
 # NOTE
 #   Translation is intentionally not handled here.  Use corpus_annotate.py
@@ -100,14 +100,14 @@ resume/cursor support and rate-limit protection.
 Usage
 -----
   # Basic ingestion, auto-detects next doc number from the output file
-  python corpus_ingest.py input.txt -o corpus.jsonl
+  python source/scripts/corpus_ingest.py input.txt -o corpus.jsonl
 
   # With metadata overrides
-  python corpus_ingest.py input.epub -o corpus.jsonl \\
+  python source/scripts/corpus_ingest.py input.epub -o corpus.jsonl \\
       --author "J. Doe" --language kor
 
   # Multiple files in one run (each becomes its own document)
-  python corpus_ingest.py ch1.txt ch2.txt -o corpus.jsonl
+  python source/scripts/corpus_ingest.py ch1.txt ch2.txt -o corpus.jsonl
 
 Reserved for future implementation (flags accepted but not yet active)
 -------------------

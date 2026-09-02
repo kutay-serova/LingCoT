@@ -26,9 +26,9 @@
 # entries pointed at nothing. The same defect was in the other two scripts.
 #
 # USAGE
-#   python scripts/corpus_optimize.py
-#   python scripts/corpus_optimize.py --sample-size 20 --quiet
-#   python scripts/corpus_optimize.py --sample-file my_text.txt --test-google
+#   python source/scripts/corpus_optimize.py
+#   python source/scripts/corpus_optimize.py --sample-size 20 --quiet
+#   python source/scripts/corpus_optimize.py --sample-file my_text.txt --test-google
 #
 # THIRD-PARTY TOOLS
 #   NLLB-200  https://github.com/facebookresearch/fairseq/tree/nllb
@@ -96,16 +96,16 @@ Usage
 -----
   # Quick auto-benchmark (uses built-in Chinese sentences, good proxy for any
   # language since NLLB handles all scripts through the same model)
-  python corpus_optimize.py
+  python source/scripts/corpus_optimize.py
 
   # Use sentences from a real corpus file for a more representative result
-  python corpus_optimize.py --sample-file my_corpus.jsonl --sample-lang tur
+  python source/scripts/corpus_optimize.py --sample-file my_corpus.jsonl --sample-lang tur
 
   # Also benchmark Google Translate (needs internet, consumes API quota)
-  python corpus_optimize.py --test-google --google-source-lang zho
+  python source/scripts/corpus_optimize.py --test-google --google-source-lang zho
 
   # Save config to a custom path
-  python corpus_optimize.py --output my_config.json
+  python source/scripts/corpus_optimize.py --output my_config.json
 
 Output
 ------

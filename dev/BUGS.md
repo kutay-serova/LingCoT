@@ -1,12 +1,12 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-02 · **Version:** v3.14.393
+**Updated:** 2026-09-02 · **Version:** v3.14.395
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **199 fixed**
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **200 fixed**
 
 | Sev | Count | What it means | Open |
 |---|---|---|---|
@@ -243,6 +243,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-207** | S2 | v3.14.394 | **Every command setup printed failed.** `build_env.py` and `setup.py` live in `source/`, so their usage lines named paths relative to themselves — but `setup.command` leaves the user at the PROJECT ROOT, where `scripts/corpus_annotate.py` and `setup.py` do not exist. **67 occurrences across six files**, including the literal next step after a successful install. The `.command`/`.bat` launchers had it right, which is what hid it. Found by doing gate 2's fresh-machine install for real: clone the published repo, run setup, then run what it tells you |
 | **B-206** | S1 | v3.14.392 | **The hook refused the first commit.** `hooks/pre-commit` exempted `samples/` alone, so the CLI specimen admitted to `.gitignore` at B-205 was tracked by git and refused by the hook. Two writers of one rule — *which cleared data may ship* — disagreeing by one directory (PRACTICES §4), and the third instance of the shape after B-156 and B-205. `gitignore_test.js` §B now EXECUTES the hook against every path `.gitignore` admits, so they cannot drift again |
 | **B-205** | S2 | v3.14.389 | **The CLI specimen would not have been committed.** `dev/tests/fixtures/cli_ingested/cli-ingested_corpus.jsonl` carries the name `corpus_ingest.py` writes and the loader resolves, so `*_corpus.jsonl` caught it — and the first commit would have shipped a guard that fails on a fresh clone, `prov_intern_test` asserting a file the repository does not contain. The same shape as B-156 one directory over, found the same way: by asking git rather than reading `.gitignore` |
 | **B-204** | S1 | v3.14.388 | **Opening the concordance and then saving wrote the search substrate into the corpus.** `sentTokens` and `paraTokens` park caches on the annotator's own records, and the serializer stringifies whatever a record enumerates — `_srchTokens` holds one entry per word, each a REFERENCE to the word object, so every word was written again inside its own sentence. `turkish-test`: 85,964 characters clean, **230,125 after one KWIC**. A search alone never showed it; only the concordance touches the substrate. Non-enumerable now |

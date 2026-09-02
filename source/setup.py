@@ -32,10 +32,10 @@
 #                               --check, --all, --nllb, --require-nllb
 #
 # USAGE
-#   .venv/bin/python3 setup.py              # interactive check-and-fix
-#   .venv/bin/python3 setup.py --check      # exit 1 only if minimal tier broken
-#   .venv/bin/python3 setup.py --check --require-nllb  # also require NLLB ready
-#   .venv/bin/python3 setup.py --nllb       # upgrade to nllb tier + download
+#   .venv/bin/python3 source/setup.py              # interactive check-and-fix
+#   .venv/bin/python3 source/setup.py --check      # exit 1 only if minimal tier broken
+#   .venv/bin/python3 source/setup.py --check --require-nllb  # also require NLLB ready
+#   .venv/bin/python3 source/setup.py --nllb       # upgrade to nllb tier + download
 #
 # THIRD-PARTY TOOLS
 #   NLLB-200  https://github.com/facebookresearch/fairseq/tree/nllb
@@ -93,11 +93,11 @@ Checks that all required models, data files, and configuration are present
 and offers to download or generate anything that is missing.
 
 Usage:
-  .venv/bin/python3 setup.py               # interactive: check everything, prompt to fix
-  .venv/bin/python3 setup.py --check       # check minimal tier; exit 1 only if broken
-  .venv/bin/python3 setup.py --check --require-nllb   # also require NLLB packages + model
-  .venv/bin/python3 setup.py --all         # download/generate everything missing automatically
-  .venv/bin/python3 setup.py --nllb        # upgrade venv to nllb tier + download model
+  .venv/bin/python3 source/setup.py               # interactive: check everything, prompt to fix
+  .venv/bin/python3 source/setup.py --check       # check minimal tier; exit 1 only if broken
+  .venv/bin/python3 source/setup.py --check --require-nllb   # also require NLLB packages + model
+  .venv/bin/python3 source/setup.py --all         # download/generate everything missing automatically
+  .venv/bin/python3 source/setup.py --nllb        # upgrade venv to nllb tier + download model
 
 What this script sets up
 ------------------------
@@ -124,7 +124,7 @@ NLLB upgrade path
 If the user created the venv with `build_env.py` at the minimal tier and later
 decides they want offline translation, running
 
-    .venv/bin/python3 setup.py --nllb
+    .venv/bin/python3 source/setup.py --nllb
 
 is sufficient: this script will invoke `build_env.py --tier nllb` to add the
 missing packages, then proceed to download + convert the model.  No manual
@@ -335,7 +335,7 @@ def check_pdf_packages(verbose: bool = True) -> bool:
     """
     Check that the venv has the Python packages required for dictionary PDF export.
     Returns True if all packages are present.
-    Install with:  python3 build_env.py --tier pdf
+    Install with:  python3 source/build_env.py --tier pdf
     """
     if verbose:
         header("PDF export packages")
@@ -347,7 +347,7 @@ def check_pdf_packages(verbose: bool = True) -> bool:
         for pkg in _PDF_PACKAGES:
             (ok if _check_import(pkg) else missing)(f"{pkg}  ({pkg_labels.get(pkg, pkg)})")
         if not all_ok:
-            info("Install with:  python3 build_env.py --tier pdf")
+            info("Install with:  python3 source/build_env.py --tier pdf")
 
     return all_ok
 
@@ -429,7 +429,7 @@ def check_config() -> bool:
     header("Annotator config")
     if not CONFIG_FILE.exists():
         warn("annotator_config.json not found — scripts will use built-in defaults.")
-        info("Run  .venv/bin/python3 scripts/corpus_optimize.py  to generate an optimised config.")
+        info("Run  .venv/bin/python3 source/scripts/corpus_optimize.py  to generate an optimised config.")
         info("Or run this script with --all to write a default config now.")
         return False
     try:
@@ -502,7 +502,7 @@ def ensure_nllb_packages() -> bool:
     if not post["all"]:
         warn("Some NLLB packages are still not importable after upgrade.")
         info("Try running this command again in a new terminal:")
-        info("  .venv/bin/python3 setup.py --nllb")
+        info("  .venv/bin/python3 source/setup.py --nllb")
         return False
 
     ok("NLLB tier is ready.")
@@ -637,7 +637,7 @@ def _print_nllb_manual_instructions() -> None:
     print()
     print("  ── Manual NLLB setup ─────────────────────────────────────────────")
     print("  1. Make sure the venv is on the nllb tier:")
-    print("       python3 build_env.py --tier nllb")
+    print("       python3 source/build_env.py --tier nllb")
     print()
     print("  2. Convert the HF model to CTranslate2 int8:")
     print(f"       .venv/bin/python3 -m ctranslate2.converters.transformers \\")
@@ -671,7 +671,7 @@ def write_default_config() -> bool:
         CONFIG_FILE.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n",
                                encoding="utf-8")
         ok(f"Wrote default config  →  {CONFIG_FILE.name}")
-        info("Run  .venv/bin/python3 scripts/corpus_optimize.py  to tune settings for this machine.")
+        info("Run  .venv/bin/python3 source/scripts/corpus_optimize.py  to tune settings for this machine.")
         return True
     except Exception as exc:
         warn(f"Could not write config: {exc}")
@@ -713,12 +713,12 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  .venv/bin/python3 setup.py                        # interactive check\n"
-            "  .venv/bin/python3 setup.py --check                # exit 1 if minimal tier broken\n"
-            "  .venv/bin/python3 setup.py --check --require-nllb # also require NLLB ready\n"
-            "  .venv/bin/python3 setup.py --all                  # fill in everything missing\n"
-            "  .venv/bin/python3 setup.py --nllb                 # upgrade to nllb tier + download model\n"
-            "  .venv/bin/python3 setup.py --pdf                  # install PDF export packages\n"
+            "  .venv/bin/python3 source/setup.py                        # interactive check\n"
+            "  .venv/bin/python3 source/setup.py --check                # exit 1 if minimal tier broken\n"
+            "  .venv/bin/python3 source/setup.py --check --require-nllb # also require NLLB ready\n"
+            "  .venv/bin/python3 source/setup.py --all                  # fill in everything missing\n"
+            "  .venv/bin/python3 source/setup.py --nllb                 # upgrade to nllb tier + download model\n"
+            "  .venv/bin/python3 source/setup.py --pdf                  # install PDF export packages\n"
         ),
     )
     p.add_argument("--check",        action="store_true",
@@ -770,9 +770,9 @@ def main() -> int:
     venv_present = (PROJECT_ROOT / ".venv" / "bin" / "python").exists()
     if not venv_present:
         warn("Virtual environment (.venv/) not found.")
-        info("Run  python3 build_env.py  first.")
+        info("Run  python3 source/build_env.py  first.")
         print()
-        errors.append(".venv/ missing — run  python3 build_env.py")
+        errors.append(".venv/ missing — run  python3 source/build_env.py")
 
     # ── Python version ─────────────────────────────────────────────────────────
     if not check_python():
@@ -788,7 +788,7 @@ def main() -> int:
     nllb_pkgs_complete = nllb_pkg_status["all"]
     if not nllb_pkgs_complete:
         nllb_issues.append(
-            "NLLB Python packages missing (install with: python3 build_env.py --tier nllb)"
+            "NLLB Python packages missing (install with: python3 source/build_env.py --tier nllb)"
         )
 
     # ── NLLB model files on disk ───────────────────────────────────────────────
@@ -796,14 +796,14 @@ def main() -> int:
     nllb_model_complete = nllb_model_status["tokenizer"] and nllb_model_status["model"]
     if not nllb_model_complete:
         nllb_issues.append(
-            "NLLB model/tokenizer missing (install with: .venv/bin/python3 setup.py --nllb)"
+            "NLLB model/tokenizer missing (install with: .venv/bin/python3 source/setup.py --nllb)"
         )
 
     # ── PDF export packages (optional, app works without them) ──────────────
     pdf_pkgs_ok = check_pdf_packages()
     if not pdf_pkgs_ok:
         pdf_issues.append(
-            "PDF export packages missing (install with: python3 build_env.py --tier pdf)"
+            "PDF export packages missing (install with: python3 source/build_env.py --tier pdf)"
         )
 
     # ── Annotator config (optional, scripts have built-in defaults) ──────────
@@ -856,7 +856,7 @@ def main() -> int:
             if ask("Install PDF export packages now?"):
                 ensure_pdf_packages()
             else:
-                info("Skipped.  Run  .venv/bin/python3 setup.py --pdf  at any time.")
+                info("Skipped.  Run  .venv/bin/python3 source/setup.py --pdf  at any time.")
 
     # NLLB model, download_nllb() also handles the package tier upgrade.
     if not (nllb_pkgs_complete and nllb_model_complete):

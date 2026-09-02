@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-09-02 · **Version:** v3.14.393
+**Updated:** 2026-09-02 · **Version:** v3.14.395
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its
@@ -77,9 +77,15 @@ table that did not before.
 
 ## 6. Guards
 
-**89 in `dev/tests/`. `run_all.sh` runs 87 by default — 87 pass, 0 disabled;
-`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 89.** Run `--slow`
+**91 in `dev/tests/`. `run_all.sh` runs 89 by default — 89 pass, 0 disabled;
+`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 91.** Run `--slow`
 before a release.
+
+**Two guards came out of gate 2 rather than out of the code.**
+`printed_commands_test.js` (v3.14.394) exists because a *fresh-machine install*
+was actually performed; `quickstart_labels_test.js` (v3.14.395) because writing
+documentation for a stranger is its own kind of execution — it found three names
+`README.md` still uses that the app does not have.
 
 **Nothing has been dark since v3.14.385**, when the two search guards were
 re-pointed from the Korean fixture retired at v3.14.120 at last. The count held

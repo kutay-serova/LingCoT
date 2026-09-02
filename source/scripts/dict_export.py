@@ -6,7 +6,7 @@
 # Renders the LingCoT dictionary (or a filtered subset) to a PDF file using
 # fpdf2.  Called from LingCoT.pyw via the export_dict_pdf() API method.
 #
-# DEPENDENCIES (install with: python3 build_env.py --tier pdf)
+# DEPENDENCIES (install with: python3 source/build_env.py --tier pdf)
 #   fpdf2>=2.7        PDF generation (pure Python, supports TTF Unicode fonts)
 #   python-bidi>=0.6  Unicode bidi algorithm, reorders RTL text (Arabic,
 #                     Hebrew, etc.) to visual order before fpdf2 renders it.
@@ -67,7 +67,7 @@ def _check_deps() -> str | None:
         pkgs = " ".join(missing)
         return (
             f"PDF export requires: {pkgs}\n"
-            "Install with:  python3 build_env.py --tier pdf\n"
+            "Install with:  python3 source/build_env.py --tier pdf\n"
             "or:            .venv/bin/pip install fpdf2 python-bidi"
         )
     return None
