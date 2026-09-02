@@ -1,0 +1,2 @@
+{"record_type":"annotator","id":"ann_001","name":"Test Annotator #1","researcher":false,"affiliation":"Placeholder affiliation","role":"Glosser","birth_decade":"Placeholder Date","contact_info":null,"other":null}
+{"record_type":"source","id":"src_001","name":"Google Translate","type":"text","publication_restrictions":"no_restriction","other_information":"Machine translation of purpose-written English source text, fetched from translate.google.com on 2026-08-31.","birth_decade":null,"gender":null,"language_background":null,"researcher":null,"citation_information":null}

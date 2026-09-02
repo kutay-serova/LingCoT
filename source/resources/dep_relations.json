@@ -1,0 +1,47 @@
+[
+  { "tag": "root",       "name": "root",                      "description": "The head of the whole sentence. Exactly one token per sentence; its head is left empty (shown as 0)." },
+
+  { "tag": "nsubj",      "name": "nominal subject",           "description": "A nominal that is the syntactic subject of a clause. 'The DOG barked.'" },
+  { "tag": "obj",        "name": "object",                    "description": "The direct object — the second core argument of a transitive verb. 'She read the BOOK.'" },
+  { "tag": "iobj",       "name": "indirect object",           "description": "A core argument other than subject or direct object, typically a recipient. 'She gave ME the book.'" },
+  { "tag": "csubj",      "name": "clausal subject",           "description": "A clause functioning as the subject. 'WHAT SHE SAID matters.'" },
+  { "tag": "ccomp",      "name": "clausal complement",        "description": "A clausal object with its own subject. 'He says THAT YOU LIKE IT.'" },
+  { "tag": "xcomp",      "name": "open clausal complement",   "description": "A predicative complement whose subject is supplied from outside. 'She tried TO LEAVE.'" },
+
+  { "tag": "obl",        "name": "oblique nominal",           "description": "A non-core nominal, usually adverbial — place, time, manner. 'He slept IN THE GARDEN.'" },
+  { "tag": "vocative",   "name": "vocative",                  "description": "A nominal used to address someone. 'MARY, come here.'" },
+  { "tag": "expl",       "name": "expletive",                 "description": "A semantically empty placeholder in subject position. 'THERE is a problem.'" },
+  { "tag": "dislocated", "name": "dislocated element",        "description": "A fronted or trailing element outside the normal argument structure. 'The book, I READ IT yesterday.'" },
+  { "tag": "advcl",      "name": "adverbial clause modifier", "description": "A clause modifying a predicate — time, condition, purpose, cause. 'IF IT RAINS, we stay.'" },
+  { "tag": "advmod",     "name": "adverbial modifier",        "description": "An adverb or adverbial phrase modifying a predicate or modifier. 'She sang QUIETLY.'" },
+  { "tag": "discourse",  "name": "discourse element",         "description": "Interjections, fillers, and discourse particles. 'WELL, I think so.'" },
+  { "tag": "aux",        "name": "auxiliary",                 "description": "A function word marking tense, aspect, mood, voice or polarity. 'She HAS left.'" },
+  { "tag": "cop",        "name": "copula",                    "description": "A linking verb joining a subject to a non-verbal predicate. 'She IS a teacher.'" },
+  { "tag": "mark",       "name": "marker",                    "description": "A word introducing a subordinate clause. 'I know THAT he left.'" },
+
+  { "tag": "nmod",       "name": "nominal modifier",          "description": "A nominal modifying another nominal, often possessive or prepositional. 'the roof OF THE HOUSE'" },
+  { "tag": "appos",      "name": "appositional modifier",     "description": "A nominal that renames or elaborates another nominal. 'Sam, MY BROTHER, called.'" },
+  { "tag": "nummod",     "name": "numeric modifier",          "description": "A numeral modifying a nominal. 'THREE books'" },
+  { "tag": "acl",        "name": "clausal modifier of noun",  "description": "A clause modifying a nominal, including relative clauses. 'the man WHO LEFT'" },
+  { "tag": "amod",       "name": "adjectival modifier",       "description": "An adjective modifying a nominal. 'the OLD dog'" },
+  { "tag": "det",        "name": "determiner",                "description": "An article, demonstrative or quantifier specifying a nominal. 'THE dog'" },
+  { "tag": "clf",        "name": "classifier",                "description": "A numeral classifier accompanying a counted nominal. Common in East and Southeast Asian languages." },
+  { "tag": "case",       "name": "case marking",              "description": "An adposition or case affix attaching to a nominal. 'in THE garden' — 'in' attaches to 'garden'." },
+
+  { "tag": "conj",       "name": "conjunct",                  "description": "A non-first element of a coordination, attached to the first conjunct. 'tea and COFFEE'" },
+  { "tag": "cc",         "name": "coordinating conjunction",  "description": "The coordinator itself, attached to the following conjunct. 'tea AND coffee'" },
+
+  { "tag": "fixed",      "name": "fixed multiword",           "description": "A grammaticalised fixed expression treated as one unit. 'as WELL as'" },
+  { "tag": "flat",       "name": "flat multiword",            "description": "A headless multiword unit such as a personal name or date. 'Anna KARENINA'" },
+  { "tag": "compound",   "name": "compound",                  "description": "A noun or verb compound. 'PHONE book'" },
+
+  { "tag": "list",       "name": "list",                      "description": "Comparable items in a list, such as contact details in a signature block." },
+  { "tag": "parataxis",  "name": "parataxis",                 "description": "Clauses joined without a coordinator or subordinator. 'He said it — I HEARD him.'" },
+
+  { "tag": "orphan",     "name": "orphan",                    "description": "Links surviving dependents when their head has been elided in gapping." },
+  { "tag": "goeswith",   "name": "goes with",                 "description": "Joins parts of a word wrongly split in the original text." },
+  { "tag": "reparandum", "name": "reparandum",                "description": "A disfluency that the speaker repairs. 'Go to the righ— TO THE LEFT.'" },
+
+  { "tag": "punct",      "name": "punctuation",               "description": "A punctuation mark, attached to the head of the phrase it delimits." },
+  { "tag": "dep",        "name": "unspecified dependency",    "description": "Fallback when the relation cannot be determined or no other label fits." }
+]

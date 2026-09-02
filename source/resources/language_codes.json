@@ -1,0 +1,724 @@
+{
+  "_schema": "1.0",
+  "_description": "Language code lookup table. Key = canonical Stanza language code. Each entry lists all accepted aliases (ISO 639-1/2/3, BCP-47, full English and native names) so any reasonable user input resolves to the same canonical code. google_bcp47 and nllb_code are used by the translation backends. wiktionary_sections lists Wiktionary page-section names tried in order when fetching a gloss. Set to null where the backend does not support the language.",
+  "languages": {
+    "af": {
+      "english_name": "Afrikaans",
+      "native_name": "Afrikaans",
+      "iso639_1": "af",
+      "iso639_3": "afr",
+      "google_bcp47": "af",
+      "nllb_code": "afr_Latn",
+      "wiktionary_sections": ["Afrikaans"],
+      "aliases": ["afr", "Afrikaans"]
+    },
+    "ar": {
+      "english_name": "Arabic",
+      "native_name": "العربية",
+      "iso639_1": "ar",
+      "iso639_3": "ara",
+      "google_bcp47": "ar",
+      "nllb_code": "arb_Arab",
+      "wiktionary_sections": ["Arabic"],
+      "aliases": ["ara", "arb", "Arabic", "العربية", "iw-arabic"]
+    },
+    "be": {
+      "english_name": "Belarusian",
+      "native_name": "беларуская",
+      "iso639_1": "be",
+      "iso639_3": "bel",
+      "google_bcp47": "be",
+      "nllb_code": "bel_Cyrl",
+      "wiktionary_sections": ["Belarusian"],
+      "aliases": ["bel", "Belarusian", "беларуская"]
+    },
+    "bg": {
+      "english_name": "Bulgarian",
+      "native_name": "Български",
+      "iso639_1": "bg",
+      "iso639_3": "bul",
+      "google_bcp47": "bg",
+      "nllb_code": "bul_Cyrl",
+      "wiktionary_sections": ["Bulgarian"],
+      "aliases": ["bul", "Bulgarian", "Български"]
+    },
+    "bxr": {
+      "english_name": "Buryat",
+      "native_name": "Буряад",
+      "iso639_1": null,
+      "iso639_3": "bxr",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Buryat"],
+      "aliases": ["Russia Buriat", "Buryat", "Буряад"]
+    },
+    "ca": {
+      "english_name": "Catalan",
+      "native_name": "Català",
+      "iso639_1": "ca",
+      "iso639_3": "cat",
+      "google_bcp47": "ca",
+      "nllb_code": "cat_Latn",
+      "wiktionary_sections": ["Catalan"],
+      "aliases": ["cat", "Catalan", "Català", "Valencian"]
+    },
+    "cop": {
+      "english_name": "Coptic",
+      "native_name": "ⲙⲉⲧⲣⲉⲙⲛⲕⲏⲙⲉ",
+      "iso639_1": null,
+      "iso639_3": "cop",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Coptic"],
+      "aliases": ["Coptic", "ⲙⲉⲧⲣⲉⲙⲛⲕⲏⲙⲉ"]
+    },
+    "cs": {
+      "english_name": "Czech",
+      "native_name": "Čeština",
+      "iso639_1": "cs",
+      "iso639_3": "ces",
+      "google_bcp47": "cs",
+      "nllb_code": "ces_Latn",
+      "wiktionary_sections": ["Czech"],
+      "aliases": ["ces", "cze", "Czech", "Čeština"]
+    },
+    "cu": {
+      "english_name": "Old Church Slavonic",
+      "native_name": "словѣньскъ",
+      "iso639_1": "cu",
+      "iso639_3": "chu",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Old Church Slavonic"],
+      "aliases": ["chu", "Old Church Slavonic", "Church Slavic", "OCS", "словѣньскъ"]
+    },
+    "cy": {
+      "english_name": "Welsh",
+      "native_name": "Cymraeg",
+      "iso639_1": "cy",
+      "iso639_3": "cym",
+      "google_bcp47": "cy",
+      "nllb_code": "cym_Latn",
+      "wiktionary_sections": ["Welsh"],
+      "aliases": ["cym", "wel", "Welsh", "Cymraeg"]
+    },
+    "da": {
+      "english_name": "Danish",
+      "native_name": "Dansk",
+      "iso639_1": "da",
+      "iso639_3": "dan",
+      "google_bcp47": "da",
+      "nllb_code": "dan_Latn",
+      "wiktionary_sections": ["Danish"],
+      "aliases": ["dan", "Danish", "Dansk"]
+    },
+    "de": {
+      "english_name": "German",
+      "native_name": "Deutsch",
+      "iso639_1": "de",
+      "iso639_3": "deu",
+      "google_bcp47": "de",
+      "nllb_code": "deu_Latn",
+      "wiktionary_sections": ["German"],
+      "aliases": ["deu", "ger", "German", "Deutsch"]
+    },
+    "el": {
+      "english_name": "Greek",
+      "native_name": "Ελληνικά",
+      "iso639_1": "el",
+      "iso639_3": "ell",
+      "google_bcp47": "el",
+      "nllb_code": "ell_Grek",
+      "wiktionary_sections": ["Greek"],
+      "aliases": ["ell", "gre", "Greek", "Modern Greek", "Ελληνικά"]
+    },
+    "en": {
+      "english_name": "English",
+      "native_name": "English",
+      "iso639_1": "en",
+      "iso639_3": "eng",
+      "google_bcp47": "en",
+      "nllb_code": "eng_Latn",
+      "wiktionary_sections": ["English"],
+      "aliases": ["eng", "eng_Latn", "en-US", "en-GB", "en-AU", "English"]
+    },
+    "es": {
+      "english_name": "Spanish",
+      "native_name": "Español",
+      "iso639_1": "es",
+      "iso639_3": "spa",
+      "google_bcp47": "es",
+      "nllb_code": "spa_Latn",
+      "wiktionary_sections": ["Spanish"],
+      "aliases": ["spa", "Spanish", "Español", "Castellano", "es-ES", "es-MX", "es-419"]
+    },
+    "et": {
+      "english_name": "Estonian",
+      "native_name": "Eesti",
+      "iso639_1": "et",
+      "iso639_3": "est",
+      "google_bcp47": "et",
+      "nllb_code": "est_Latn",
+      "wiktionary_sections": ["Estonian"],
+      "aliases": ["est", "Estonian", "Eesti"]
+    },
+    "eu": {
+      "english_name": "Basque",
+      "native_name": "Euskara",
+      "iso639_1": "eu",
+      "iso639_3": "eus",
+      "google_bcp47": "eu",
+      "nllb_code": "eus_Latn",
+      "wiktionary_sections": ["Basque"],
+      "aliases": ["eus", "baq", "Basque", "Euskara", "Euskera"]
+    },
+    "fa": {
+      "english_name": "Persian",
+      "native_name": "فارسی",
+      "iso639_1": "fa",
+      "iso639_3": "fas",
+      "google_bcp47": "fa",
+      "nllb_code": "pes_Arab",
+      "wiktionary_sections": ["Persian", "Farsi"],
+      "aliases": ["fas", "per", "pes", "Persian", "Farsi", "Iranian", "فارسی"]
+    },
+    "fi": {
+      "english_name": "Finnish",
+      "native_name": "Suomi",
+      "iso639_1": "fi",
+      "iso639_3": "fin",
+      "google_bcp47": "fi",
+      "nllb_code": "fin_Latn",
+      "wiktionary_sections": ["Finnish"],
+      "aliases": ["fin", "Finnish", "Suomi"]
+    },
+    "fr": {
+      "english_name": "French",
+      "native_name": "Français",
+      "iso639_1": "fr",
+      "iso639_3": "fra",
+      "google_bcp47": "fr",
+      "nllb_code": "fra_Latn",
+      "wiktionary_sections": ["French"],
+      "aliases": ["fra", "fre", "French", "Français", "fr-FR", "fr-CA", "fr-BE"]
+    },
+    "fro": {
+      "english_name": "Old French",
+      "native_name": "François",
+      "iso639_1": null,
+      "iso639_3": "fro",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Old French"],
+      "aliases": ["Old French", "François", "Anglo-Norman"]
+    },
+    "ga": {
+      "english_name": "Irish",
+      "native_name": "Gaeilge",
+      "iso639_1": "ga",
+      "iso639_3": "gle",
+      "google_bcp47": "ga",
+      "nllb_code": "gle_Latn",
+      "wiktionary_sections": ["Irish"],
+      "aliases": ["gle", "Irish", "Irish Gaelic", "Gaeilge"]
+    },
+    "gl": {
+      "english_name": "Galician",
+      "native_name": "Galego",
+      "iso639_1": "gl",
+      "iso639_3": "glg",
+      "google_bcp47": "gl",
+      "nllb_code": "glg_Latn",
+      "wiktionary_sections": ["Galician"],
+      "aliases": ["glg", "Galician", "Galego"]
+    },
+    "got": {
+      "english_name": "Gothic",
+      "native_name": "𐌲𐌿𐍄𐌹𐍃𐌺",
+      "iso639_1": null,
+      "iso639_3": "got",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Gothic"],
+      "aliases": ["Gothic", "𐌲𐌿𐍄𐌹𐍃𐌺"]
+    },
+    "grc": {
+      "english_name": "Ancient Greek",
+      "native_name": "Ἀρχαία ἑλληνική",
+      "iso639_1": null,
+      "iso639_3": "grc",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Ancient Greek"],
+      "aliases": ["Ancient Greek", "Classical Greek", "Ἀρχαία ἑλληνική", "Attic Greek"]
+    },
+    "he": {
+      "english_name": "Hebrew",
+      "native_name": "עברית",
+      "iso639_1": "he",
+      "iso639_3": "heb",
+      "google_bcp47": "he",
+      "nllb_code": "heb_Hebr",
+      "wiktionary_sections": ["Hebrew"],
+      "aliases": ["heb", "Hebrew", "Modern Hebrew", "עברית", "iw"]
+    },
+    "hi": {
+      "english_name": "Hindi",
+      "native_name": "हिन्दी",
+      "iso639_1": "hi",
+      "iso639_3": "hin",
+      "google_bcp47": "hi",
+      "nllb_code": "hin_Deva",
+      "wiktionary_sections": ["Hindi"],
+      "aliases": ["hin", "Hindi", "हिन्दी", "हिंदी"]
+    },
+    "hr": {
+      "english_name": "Croatian",
+      "native_name": "Hrvatski",
+      "iso639_1": "hr",
+      "iso639_3": "hrv",
+      "google_bcp47": "hr",
+      "nllb_code": "hrv_Latn",
+      "wiktionary_sections": ["Croatian"],
+      "aliases": ["hrv", "Croatian", "Hrvatski"]
+    },
+    "hsb": {
+      "english_name": "Upper Sorbian",
+      "native_name": "Hornjoserbsce",
+      "iso639_1": null,
+      "iso639_3": "hsb",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Upper Sorbian"],
+      "aliases": ["Upper Sorbian", "Hornjoserbsce"]
+    },
+    "hu": {
+      "english_name": "Hungarian",
+      "native_name": "Magyar",
+      "iso639_1": "hu",
+      "iso639_3": "hun",
+      "google_bcp47": "hu",
+      "nllb_code": "hun_Latn",
+      "wiktionary_sections": ["Hungarian"],
+      "aliases": ["hun", "Hungarian", "Magyar"]
+    },
+    "hy": {
+      "english_name": "Armenian",
+      "native_name": "Հայերեն",
+      "iso639_1": "hy",
+      "iso639_3": "hye",
+      "google_bcp47": "hy",
+      "nllb_code": "hye_Armn",
+      "wiktionary_sections": ["Armenian"],
+      "aliases": ["hye", "arm", "Armenian", "Հայերեն"]
+    },
+    "id": {
+      "english_name": "Indonesian",
+      "native_name": "Bahasa Indonesia",
+      "iso639_1": "id",
+      "iso639_3": "ind",
+      "google_bcp47": "id",
+      "nllb_code": "ind_Latn",
+      "wiktionary_sections": ["Indonesian"],
+      "aliases": ["ind", "Indonesian", "Bahasa Indonesia"]
+    },
+    "it": {
+      "english_name": "Italian",
+      "native_name": "Italiano",
+      "iso639_1": "it",
+      "iso639_3": "ita",
+      "google_bcp47": "it",
+      "nllb_code": "ita_Latn",
+      "wiktionary_sections": ["Italian"],
+      "aliases": ["ita", "Italian", "Italiano", "it-IT", "it-CH"]
+    },
+    "ja": {
+      "english_name": "Japanese",
+      "native_name": "日本語",
+      "iso639_1": "ja",
+      "iso639_3": "jpn",
+      "google_bcp47": "ja",
+      "nllb_code": "jpn_Jpan",
+      "wiktionary_sections": ["Japanese"],
+      "aliases": ["jpn", "Japanese", "日本語", "ja-JP"]
+    },
+    "ko": {
+      "english_name": "Korean",
+      "native_name": "한국어",
+      "iso639_1": "ko",
+      "iso639_3": "kor",
+      "google_bcp47": "ko",
+      "nllb_code": "kor_Hang",
+      "wiktionary_sections": ["Korean"],
+      "aliases": ["kor", "kor_Hang", "Korean", "한국어", "조선말", "ko-KR"]
+    },
+    "la": {
+      "english_name": "Latin",
+      "native_name": "Latina",
+      "iso639_1": "la",
+      "iso639_3": "lat",
+      "google_bcp47": "la",
+      "nllb_code": "lat_Latn",
+      "wiktionary_sections": ["Latin"],
+      "aliases": ["lat", "Latin", "Latina", "Classical Latin"]
+    },
+    "lij": {
+      "english_name": "Ligurian",
+      "native_name": "Ligure",
+      "iso639_1": null,
+      "iso639_3": "lij",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Ligurian"],
+      "aliases": ["Ligurian", "Ligure"]
+    },
+    "lt": {
+      "english_name": "Lithuanian",
+      "native_name": "Lietuvių",
+      "iso639_1": "lt",
+      "iso639_3": "lit",
+      "google_bcp47": "lt",
+      "nllb_code": "lit_Latn",
+      "wiktionary_sections": ["Lithuanian"],
+      "aliases": ["lit", "Lithuanian", "Lietuvių"]
+    },
+    "lv": {
+      "english_name": "Latvian",
+      "native_name": "Latviešu",
+      "iso639_1": "lv",
+      "iso639_3": "lav",
+      "google_bcp47": "lv",
+      "nllb_code": "lvs_Latn",
+      "wiktionary_sections": ["Latvian"],
+      "aliases": ["lav", "lvs", "Latvian", "Lettish", "Latviešu"]
+    },
+    "mdf": {
+      "english_name": "Moksha",
+      "native_name": "Мокшень",
+      "iso639_1": null,
+      "iso639_3": "mdf",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Moksha"],
+      "aliases": ["Moksha", "Мокшень"]
+    },
+    "mr": {
+      "english_name": "Marathi",
+      "native_name": "मराठी",
+      "iso639_1": "mr",
+      "iso639_3": "mar",
+      "google_bcp47": "mr",
+      "nllb_code": "mar_Deva",
+      "wiktionary_sections": ["Marathi"],
+      "aliases": ["mar", "Marathi", "मराठी"]
+    },
+    "mt": {
+      "english_name": "Maltese",
+      "native_name": "Malti",
+      "iso639_1": "mt",
+      "iso639_3": "mlt",
+      "google_bcp47": "mt",
+      "nllb_code": "mlt_Latn",
+      "wiktionary_sections": ["Maltese"],
+      "aliases": ["mlt", "Maltese", "Malti"]
+    },
+    "myv": {
+      "english_name": "Erzya",
+      "native_name": "Эрзянь",
+      "iso639_1": null,
+      "iso639_3": "myv",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Erzya"],
+      "aliases": ["Erzya", "Эрзянь"]
+    },
+    "nl": {
+      "english_name": "Dutch",
+      "native_name": "Nederlands",
+      "iso639_1": "nl",
+      "iso639_3": "nld",
+      "google_bcp47": "nl",
+      "nllb_code": "nld_Latn",
+      "wiktionary_sections": ["Dutch"],
+      "aliases": ["nld", "dut", "Dutch", "Flemish", "Nederlands", "nl-NL", "nl-BE"]
+    },
+    "nn": {
+      "english_name": "Norwegian Nynorsk",
+      "native_name": "Nynorsk",
+      "iso639_1": "nn",
+      "iso639_3": "nno",
+      "google_bcp47": "no",
+      "nllb_code": "nno_Latn",
+      "wiktionary_sections": ["Norwegian Nynorsk", "Norwegian"],
+      "aliases": ["nno", "Norwegian Nynorsk", "Nynorsk"]
+    },
+    "no": {
+      "english_name": "Norwegian Bokmål",
+      "native_name": "Bokmål",
+      "iso639_1": "no",
+      "iso639_3": "nob",
+      "google_bcp47": "no",
+      "nllb_code": "nob_Latn",
+      "wiktionary_sections": ["Norwegian Bokmål", "Norwegian"],
+      "aliases": ["nob", "nor", "Norwegian", "Norwegian Bokmål", "Bokmål", "no-NO"]
+    },
+    "olo": {
+      "english_name": "Livvi-Karelian",
+      "native_name": "Livvin karjala",
+      "iso639_1": null,
+      "iso639_3": "olo",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Livvi-Karelian"],
+      "aliases": ["Livvi-Karelian", "Livvi", "Olonets Karelian", "Livvin karjala"]
+    },
+    "orv": {
+      "english_name": "Old Russian",
+      "native_name": "Словѣньскъ",
+      "iso639_1": null,
+      "iso639_3": "orv",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Old Russian"],
+      "aliases": ["Old Russian", "Medieval Russian", "Словѣньскъ"]
+    },
+    "pl": {
+      "english_name": "Polish",
+      "native_name": "Polski",
+      "iso639_1": "pl",
+      "iso639_3": "pol",
+      "google_bcp47": "pl",
+      "nllb_code": "pol_Latn",
+      "wiktionary_sections": ["Polish"],
+      "aliases": ["pol", "Polish", "Polski"]
+    },
+    "pt": {
+      "english_name": "Portuguese",
+      "native_name": "Português",
+      "iso639_1": "pt",
+      "iso639_3": "por",
+      "google_bcp47": "pt",
+      "nllb_code": "por_Latn",
+      "wiktionary_sections": ["Portuguese"],
+      "aliases": ["por", "Portuguese", "Português", "pt-PT", "pt-BR", "pt-AO"]
+    },
+    "ro": {
+      "english_name": "Romanian",
+      "native_name": "Română",
+      "iso639_1": "ro",
+      "iso639_3": "ron",
+      "google_bcp47": "ro",
+      "nllb_code": "ron_Latn",
+      "wiktionary_sections": ["Romanian"],
+      "aliases": ["ron", "rum", "Romanian", "Moldavian", "Română"]
+    },
+    "ru": {
+      "english_name": "Russian",
+      "native_name": "Русский",
+      "iso639_1": "ru",
+      "iso639_3": "rus",
+      "google_bcp47": "ru",
+      "nllb_code": "rus_Cyrl",
+      "wiktionary_sections": ["Russian"],
+      "aliases": ["rus", "Russian", "Русский", "ru-RU"]
+    },
+    "sk": {
+      "english_name": "Slovak",
+      "native_name": "Slovenčina",
+      "iso639_1": "sk",
+      "iso639_3": "slk",
+      "google_bcp47": "sk",
+      "nllb_code": "slk_Latn",
+      "wiktionary_sections": ["Slovak"],
+      "aliases": ["slk", "slo", "Slovak", "Slovenčina"]
+    },
+    "sl": {
+      "english_name": "Slovenian",
+      "native_name": "Slovenščina",
+      "iso639_1": "sl",
+      "iso639_3": "slv",
+      "google_bcp47": "sl",
+      "nllb_code": "slv_Latn",
+      "wiktionary_sections": ["Slovene"],
+      "aliases": ["slv", "Slovenian", "Slovene", "Slovenščina"]
+    },
+    "sme": {
+      "english_name": "Northern Sami",
+      "native_name": "Davvisámegiella",
+      "iso639_1": null,
+      "iso639_3": "sme",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": ["Northern Sami"],
+      "aliases": ["Northern Sami", "North Sami", "Davvisámegiella"]
+    },
+    "sq": {
+      "english_name": "Albanian",
+      "native_name": "Shqip",
+      "iso639_1": "sq",
+      "iso639_3": "sqi",
+      "google_bcp47": "sq",
+      "nllb_code": "als_Latn",
+      "wiktionary_sections": ["Albanian"],
+      "aliases": ["sqi", "alb", "als", "Albanian", "Shqip"]
+    },
+    "sr": {
+      "english_name": "Serbian",
+      "native_name": "Српски",
+      "iso639_1": "sr",
+      "iso639_3": "srp",
+      "google_bcp47": "sr",
+      "nllb_code": "srp_Cyrl",
+      "wiktionary_sections": ["Serbian"],
+      "aliases": ["srp", "Serbian", "Српски", "sr-Cyrl", "sr-Latn"]
+    },
+    "su": {
+      "english_name": "Sundanese",
+      "native_name": "Basa Sunda",
+      "iso639_1": "su",
+      "iso639_3": "sun",
+      "google_bcp47": "su",
+      "nllb_code": "sun_Latn",
+      "wiktionary_sections": ["Sundanese"],
+      "aliases": ["sun", "Sundanese", "Basa Sunda"]
+    },
+    "sv": {
+      "english_name": "Swedish",
+      "native_name": "Svenska",
+      "iso639_1": "sv",
+      "iso639_3": "swe",
+      "google_bcp47": "sv",
+      "nllb_code": "swe_Latn",
+      "wiktionary_sections": ["Swedish"],
+      "aliases": ["swe", "Swedish", "Svenska", "sv-SE"]
+    },
+    "swl": {
+      "english_name": "Swedish Sign Language",
+      "native_name": "Svenskt teckenspråk",
+      "iso639_1": null,
+      "iso639_3": "swl",
+      "google_bcp47": null,
+      "nllb_code": null,
+      "wiktionary_sections": [],
+      "aliases": ["Swedish Sign Language", "Svenskt teckenspråk"]
+    },
+    "ta": {
+      "english_name": "Tamil",
+      "native_name": "தமிழ்",
+      "iso639_1": "ta",
+      "iso639_3": "tam",
+      "google_bcp47": "ta",
+      "nllb_code": "tam_Taml",
+      "wiktionary_sections": ["Tamil"],
+      "aliases": ["tam", "Tamil", "தமிழ்"]
+    },
+    "te": {
+      "english_name": "Telugu",
+      "native_name": "తెలుగు",
+      "iso639_1": "te",
+      "iso639_3": "tel",
+      "google_bcp47": "te",
+      "nllb_code": "tel_Telu",
+      "wiktionary_sections": ["Telugu"],
+      "aliases": ["tel", "Telugu", "తెలుగు"]
+    },
+    "th": {
+      "english_name": "Thai",
+      "native_name": "ภาษาไทย",
+      "iso639_1": "th",
+      "iso639_3": "tha",
+      "google_bcp47": "th",
+      "nllb_code": "tha_Thai",
+      "wiktionary_sections": ["Thai"],
+      "aliases": ["tha", "Thai", "ภาษาไทย", "th-TH"]
+    },
+    "tr": {
+      "english_name": "Turkish",
+      "native_name": "Türkçe",
+      "iso639_1": "tr",
+      "iso639_3": "tur",
+      "google_bcp47": "tr",
+      "nllb_code": "tur_Latn",
+      "wiktionary_sections": ["Turkish"],
+      "aliases": ["tur", "tur_Latn", "Turkish", "Türkçe", "tr-TR"]
+    },
+    "ug": {
+      "english_name": "Uyghur",
+      "native_name": "ئۇيغۇرچە",
+      "iso639_1": "ug",
+      "iso639_3": "uig",
+      "google_bcp47": "ug",
+      "nllb_code": "uig_Arab",
+      "wiktionary_sections": ["Uyghur"],
+      "aliases": ["uig", "Uyghur", "Uighur", "ئۇيغۇرچە"]
+    },
+    "uk": {
+      "english_name": "Ukrainian",
+      "native_name": "Українська",
+      "iso639_1": "uk",
+      "iso639_3": "ukr",
+      "google_bcp47": "uk",
+      "nllb_code": "ukr_Cyrl",
+      "wiktionary_sections": ["Ukrainian"],
+      "aliases": ["ukr", "Ukrainian", "Українська"]
+    },
+    "ur": {
+      "english_name": "Urdu",
+      "native_name": "اردو",
+      "iso639_1": "ur",
+      "iso639_3": "urd",
+      "google_bcp47": "ur",
+      "nllb_code": "urd_Arab",
+      "wiktionary_sections": ["Urdu"],
+      "aliases": ["urd", "Urdu", "اردو"]
+    },
+    "vi": {
+      "english_name": "Vietnamese",
+      "native_name": "Tiếng Việt",
+      "iso639_1": "vi",
+      "iso639_3": "vie",
+      "google_bcp47": "vi",
+      "nllb_code": "vie_Latn",
+      "wiktionary_sections": ["Vietnamese"],
+      "aliases": ["vie", "Vietnamese", "Tiếng Việt", "vi-VN"]
+    },
+    "wo": {
+      "english_name": "Wolof",
+      "native_name": "Wolof",
+      "iso639_1": "wo",
+      "iso639_3": "wol",
+      "google_bcp47": null,
+      "nllb_code": "wol_Latn",
+      "wiktionary_sections": ["Wolof"],
+      "aliases": ["wol", "Wolof"]
+    },
+    "zh-hans": {
+      "english_name": "Simplified Chinese",
+      "native_name": "简体中文",
+      "iso639_1": "zh",
+      "iso639_3": "zho",
+      "google_bcp47": "zh-CN",
+      "nllb_code": "zho_Hans",
+      "wiktionary_sections": ["Chinese", "Mandarin"],
+      "aliases": [
+        "zh-CN", "zh-cn", "zh-Hans", "zho_Hans", "zho-Hans",
+        "cmn_Hans", "chi_Hans",
+        "Simplified Chinese", "简体中文", "普通话"
+      ]
+    },
+    "zh-hant": {
+      "english_name": "Traditional Chinese",
+      "native_name": "繁體中文",
+      "iso639_1": null,
+      "iso639_3": null,
+      "google_bcp47": "zh-TW",
+      "nllb_code": "zho_Hant",
+      "wiktionary_sections": ["Chinese", "Mandarin"],
+      "aliases": [
+        "zh-TW", "zh-tw", "zh-Hant", "zh-HK", "zh-MO",
+        "zho_Hant", "zho-Hant", "chi", "cmn_Hant",
+        "Traditional Chinese", "繁體中文", "國語", "廣東話"
+      ]
+    }
+  }
+}

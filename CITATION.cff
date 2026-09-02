@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: "LingCoT: Linguistic Corpus Toolkit"
+message: "If LingCoT contributes to published work, please cite it."
+type: software
+authors:
+  - family-names: Serova
+    given-names: Kutay
+repository-code: "https://github.com/kutay-serova/LingCoT"
+abstract: >-
+  A desktop tool for annotating linguistic corpora: interlinear glossing from
+  document down to morpheme following the Leipzig Glossing Rules, a dictionary
+  that grows with the corpus, manual dependency parsing in a CoNLL-U-compatible
+  schema, concordance search, and per-field annotator provenance. Built for
+  language documentation. Runs offline, stores corpora as plain-text JSONL, and
+  keeps fieldwork data outside the application folder.
+keywords:
+  - linguistics
+  - language documentation
+  - interlinear glossing
+  - corpus annotation
+  - Leipzig Glossing Rules
+  - lexicography
+  - fieldwork
+license: MIT

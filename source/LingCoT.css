@@ -1,0 +1,3211 @@
+/*
+  =============================================================================
+  Linguistic Corpus Toolkit (LingCoT) — LingCoT.css
+  Copyright (c) 2026 Kutay Serova  |  SPDX-License-Identifier: MIT
+  See LICENSE in the project root for the full license text.
+  =============================================================================
+
+  All styles for the LingCoT single-page application.
+  Loaded by LingCoT.html via: <link rel="stylesheet" href="LingCoT.css">
+  =============================================================================
+*/
+:root {
+  --bg:            #f5f4f0;
+  --surface:       #ffffff;
+  --surface-dim:   #f0ede8;
+  --border:        #e0ddd6;
+  --border-strong: #c8c4bc;
+  --text:          #1c1c1c;
+  --text-dim:      #6a6660;
+  --text-muted:    #aaa49c;
+  --accent:        #3a5f8a;
+  --accent-dim:    #d0dff0;
+  --accent-hover:  #2e4e7a;
+  --hi-bg:         #fff8c0;
+  --hi-ring:       #f5d800;
+  --dict-accent:   #6b4e9e;
+  --dict-dim:      #ede8f8;
+  --trans-color:   #7a6030;
+  --edit-accent:   #8a5a00;
+  --edit-bg:       #fff8e0;
+  --edit-border:   #f0d000;
+  --on-accent:     #ffffff;   /* text/icon colour on a filled --accent surface */
+  --warn-text:     #b45309;   /* amber warning text (search help) */
+  --success:       #3a7d44;   /* status text: succeeded (dark-mode pair below) */
+  --danger:        #b34040;   /* status text: failed  (dark-mode pair below) */
+  --warn-bg:       #fdf3e0;   /* amber notice fill   (pairs with --warn-text) */
+  --warn-border:   #e8c88a;
+  --r-lg:          10px;      /* larger radius for modals; --r is the default 6px */
+  --content-max:   900px;     /* GUI-S1: unified content column width (all views) */
+  --font:  'Noto Sans', 'Segoe UI', system-ui, -apple-system, 'Arial Unicode MS', sans-serif;
+  --mono:  'SF Mono', 'Menlo', 'Consolas', 'Courier New', monospace;
+  --r:     6px;
+}
+
+/* ── B1: Dark mode (Warm ink) ─────────────────────────────────────────────────
+   Inverts the warm "paper" light theme: warm brown-gray surfaces + warm off-white
+   text, accent hues brightened to read on dark. Only the colour tokens change;
+   font/radius live in :root. Toggled via <html data-theme="dark"> (see toggleTheme).
+   Hardcoded component colours (red/green/blue status, prov badges, IGT tiers) get
+   matching dark overrides lower down — search "[data-theme=\"dark\"]". */
+:root[data-theme="dark"] {
+  --bg:            #1a1714;
+  --surface:       #241f19;
+  --surface-dim:   #2b2620;
+  --border:        #3a352e;
+  --border-strong: #4d4840;
+  --text:          #ece7dd;
+  --text-dim:      #a8a298;
+  --text-muted:    #7d766b;
+  --accent:        #7aa6d6;
+  --accent-dim:    #26344a;
+  --accent-hover:  #8fb6e0;
+  --hi-bg:         #4d4520;
+  --hi-ring:       #d8bd49;
+  --dict-accent:   #b89ae4;
+  --dict-dim:      #322a46;
+  --trans-color:   #c2a878;
+  --edit-accent:   #e2ad42;
+  --edit-bg:       #3c3318;
+  --edit-border:   #8c7522;
+  --on-accent:     #1a1714;
+  --warn-text:     #e0a94a;
+  --success:       #7fc98d;   /* lightened so it reads on the dark surface */
+  --danger:        #e08a8a;
+  --warn-bg:       #3a2f16;
+  --warn-border:   #7d6828;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.75; min-height: 100vh; display: flex; flex-direction: column;
+  /* Allow text to be selected/copied in pywebview (WKWebView disables selection
+     for non-editable content by default). Buttons and chips that already carry
+     user-select:none will continue to suppress selection correctly. */
+  -webkit-user-select: text; user-select: text; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+#header {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 18px; height: 48px;
+}
+#app-name {
+  display: flex; flex-direction: column; align-items: flex-start;
+  line-height: 1; gap: 2px; margin-right: 6px; flex-shrink: 0;
+}
+#app-title {
+  font-size: 1.05rem; font-weight: 800; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--accent); white-space: nowrap;
+}
+#app-subtitle {
+  font-size: 0.52rem; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted); white-space: nowrap;
+}
+/* Breadcrumb fills all available space between the app name and buttons,
+   pushing buttons flush to the right edge automatically. */
+#breadcrumb {
+  display: flex; align-items: center; gap: 5px; flex: 1;
+  font-size: 0.82rem; color: var(--text-dim); min-width: 0; overflow: hidden;
+}
+.bc-link {
+  color: var(--accent); cursor: pointer; white-space: nowrap;
+  border-bottom: 1px solid transparent; transition: border-color .15s;
+}
+.bc-link:hover { border-color: var(--accent); }
+.bc-sep { color: var(--text-muted); }
+.bc-cur { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-dict { color: var(--dict-accent) !important; }
+.bc-link.bc-dict:hover { border-color: var(--dict-accent); }
+
+/* Dict status pill sits between the breadcrumb and the action buttons.
+   When the breadcrumb is short it lands close to the last breadcrumb item;
+   when the breadcrumb is long the flex layout absorbs the extra space. */
+#dict-status {
+  font-size: 0.7rem; font-family: var(--mono); color: var(--dict-accent);
+  background: var(--dict-dim); padding: 2px 8px; border-radius: 10px;
+  display: none; flex-shrink: 0; white-space: nowrap;
+}
+#dict-status.loaded { display: inline; }
+
+#header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+/* @rule .hdr-btn, THE look of a header button — all of it, in one place.
+
+   B-188, v3.14.359. The border, the surface and the hover used to be written
+   once PER BUTTON — `#searchtn`, `#project-btn` and `#file-btn` each carried
+   the same four declarations — and `.hdr-btn` carried only the metrics. So the
+   fourth button, `#gaps-btn` (Progress), inherited no appearance at all and
+   rendered as a bare UA button beside three that did not. Nothing was broken;
+   the look was simply never written a fourth time, which is PRACTICES §4 in the
+   stylesheet: three writers of one thing, and the next one forgets.
+
+   What stays per id below is VISIBILITY, which genuinely differs per button. */
+.hdr-btn {
+  padding: 4px 11px; border-radius: var(--r);
+  font-size: 0.79rem; font-family: var(--font);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);   /* B-001: buttons don't inherit colour — see .sent-card */
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+  /* Standard icon+text gap: 7px on small buttons (B7, 2026-06-10) */
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.hdr-btn:hover { background: var(--surface-dim); }
+
+/* Corpus actions: hidden until a corpus is loaded.
+   B-188's other half. `#gaps-btn` had no rule of any kind, so the
+   `classList.add('visible')` beside Search's — two call sites, one line apart —
+   did nothing, and Progress sat in the header from launch offering a panel about
+   a corpus that was not open. A class nobody styles is PRACTICES §7 one floor
+   down: a control that cannot fail to appear is not hidden. */
+#searchtn, #gaps-btn          { display: none; }
+#searchtn.visible,
+#gaps-btn.visible               { display: inline-flex; }
+
+/* ── Companion dictionary banner ─────────────────────────────────────────── */
+/* Non-blocking bar at the bottom of the screen, shown when a corpus is loaded
+   but no dictionary is present.  Dismisses on load or skip. */
+
+/* ── D60/L-035: the dictionary's offer ──────────────────────────────────────
+   The banner borrows the companion banner's shape deliberately: both say the
+   same kind of thing — something about this project is available and you may
+   want it — and a second visual language for that would be noise. */
+#offer-banner {
+  position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 2); box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+  font-size: 0.82rem; white-space: nowrap; z-index: 90;
+  animation: banner-in .2s ease;
+}
+#offer-banner[hidden] { display: none; }
+#offer-btns { display: flex; gap: 8px; }
+#offer-panel-box { width: 460px; max-height: 82vh; display: flex; flex-direction: column; }
+#offer-panel-box .sp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.offer-intro { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+.offer-row { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; }
+.offer-head { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
+.offer-form { font-weight: 600; }
+.offer-bits { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.offer-bit { font-size: 12px; background: var(--surface-dim); border-radius: 4px; padding: 2px 6px; }
+.offer-bit-link { background: var(--accent-dim); color: var(--accent); }
+.offer-where { font-size: 12px; color: var(--text-muted); padding: 4px 0; word-break: break-word; }
+.offer-acts { display: flex; gap: 6px; margin-top: 6px; }
+.offer-foot { display: flex; gap: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+#companion-banner {
+  position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 2); box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+  font-size: 0.82rem; white-space: nowrap; z-index: 90;
+  animation: banner-in .2s ease;
+}
+#companion-banner[hidden] { display: none; }
+@keyframes banner-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+#companion-msg { color: var(--text-dim); }
+#companion-msg strong { color: var(--text); font-weight: 600; }
+#companion-btns { display: flex; gap: 6px; }
+
+/* ── Autosave status flash ───────────────────────────────────────────────── */
+#save-status-flash {
+  font-size: 0.72rem; color: var(--text-muted); opacity: 0;
+  transition: opacity .3s ease; pointer-events: none; white-space: nowrap;
+  align-self: center;
+}
+#save-status-flash.visible { opacity: 1; }
+/* L-038: a failure is not muted, does not expire, and can be clicked away. The
+   pointer events come back only for a warning — an ordinary outcome dismisses
+   itself and must not invite a click that does nothing. */
+#save-status-flash.flash-warn {
+  color: var(--danger, #c0392b); font-weight: 600;
+  pointer-events: auto; cursor: pointer;
+}
+/* L-038's history: collapsed, and small enough that the queue keeps the panel. */
+.oc-fold { margin-top: 8px; }
+.oc-list { max-height: 168px; overflow-y: auto; padding-top: 4px; }
+.oc-row { display: flex; gap: 8px; align-items: baseline; font-size: 0.72rem;
+          padding: 2px 0; color: var(--text-muted); }
+.oc-row .oc-t { flex: 0 0 auto; opacity: .7; font-variant-numeric: tabular-nums; }
+.oc-row .oc-m { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+.oc-row.oc-warn .oc-m { color: var(--danger, #c0392b); }
+
+/* ── B-182: `hidden` beats every author rule ─────────────────────────────────
+   An author `display:` on an element ALWAYS beats the UA stylesheet's
+   `[hidden] { display: none }`, so `el.hidden = true` stops working the moment
+   anyone gives that element a display of its own. It is silent both ways: the
+   property is set correctly, `el.hidden` reads back `true`, and every guard that
+   asks the DOM agrees the panel is closed while the annotator is looking at it.
+
+   B-162 (v3.14.332) gave `#gap-panel-box` `display: flex` to fix its scrolling.
+   From that version the Progress panel could not be closed and — because
+   `renderGapPanel()` only runs when it is OPENED — sat on screen empty, for 17
+   versions, until a screenshot showed it. `#offer-panel-box` inherited the same
+   shape at v3.14.348 and made the dictionary offer look as though Accept had
+   done nothing: the last group's accept calls `closeOfferPanel()`, which wrote
+   `hidden = true` and changed nothing on screen.
+
+   One rule, `!important`, so it cannot be lost again to a later `display:` — and
+   `hidden_attr_test.js` derives the elements this covers from the JS that
+   toggles them rather than from a list. */
+[hidden] { display: none !important; }
+
+/* ── Save panel (centered modal) ─────────────────────────────────────────── */
+#save-panel-backdrop, #ncs-backdrop, #mf-backdrop, #gap-panel-backdrop,
+#offer-panel-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 200;
+}
+#save-panel-backdrop.open, #ncs-backdrop.open, #mf-backdrop.open,
+#gap-panel-backdrop.open, #offer-panel-backdrop.open { display: block; }
+
+/* B-182: `#offer-panel-box` was left out of this list at v3.14.348 and had no
+   position, no background and no z-index — it rendered in normal flow at the
+   foot of the document, which is what the annotator's screenshot showed. */
+#save-panel-box, #ncs-box, #mf-box, #gap-panel-box, #offer-panel-box {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 2); box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  width: 380px; max-width: 94vw; z-index: 201; overflow: hidden;
+}
+.sp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  font-weight: 700; font-size: 0.9rem;
+}
+.sp-close {
+  background: none; border: none; cursor: pointer; padding: 2px 7px;
+  border-radius: var(--r); color: var(--text-muted); font-size: 1.1rem; line-height: 1;
+}
+.sp-close:hover { background: var(--surface-dim); color: var(--text); }
+.sp-body { padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+.sp-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.sp-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); min-width: 72px; }
+.sp-path {
+  font-size: 0.8rem; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 4px 9px; flex: 1; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; font-family: monospace;
+}
+.sp-path.empty { color: var(--text-muted); font-family: inherit; font-style: italic; }
+.sp-change { font-size: 0.75rem; padding: 4px 10px; }
+
+/* iOS-style toggle switch */
+.sp-toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.sp-toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+.sp-toggle input { opacity: 0; width: 0; height: 0; }
+.sp-toggle-track {
+  position: absolute; inset: 0; border-radius: 11px;
+  background: var(--border-strong); cursor: pointer; transition: background .2s;
+}
+.sp-toggle input:checked + .sp-toggle-track { background: var(--accent); }
+.sp-toggle-track::before {
+  content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; top: 3px; left: 3px; transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.sp-toggle input:checked + .sp-toggle-track::before { transform: translateX(16px); }
+.sp-hint { font-size: 0.78rem; color: var(--text-muted); }
+
+.sp-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+.sp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Disabled dict row — shown when no dictionary is loaded */
+.sp-row-disabled { opacity: 0.4; pointer-events: none; }
+
+/* Autosave prompt modal — slimmer variant of the save panel */
+#ncs-box { width: 360px; }
+.ncs-body { padding: 18px 16px; font-size: 0.85rem; line-height: 1.55; color: var(--text-dim); }
+.ncs-body p { margin: 0 0 12px; white-space: pre-line; }
+/* Secondary hint line — slightly dimmer than the main message */
+.ncs-body .ncs-hint { font-size: 0.78rem; color: var(--text-muted, var(--text-dim)); opacity: 0.75; margin-bottom: 14px; }
+
+/* ── Entry Sheet overlay ──────────────────────────────────────────────────── */
+/* Full-screen modal for creating word + morpheme + lemma dict entries in one pass */
+
+/* The add-to-dictionary surface — same chrome as the entry sheet.
+   B-085 gave the picker the completion modal's shell because they were "the
+   same object at two moments of the same flow". D51 stage 4 agreed with that
+   sentence and drew the conclusion it was avoiding: one object, one moment. The
+   completion modal is gone and `#cd-overlay` with it. */
+#pk-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 300;
+  overflow-y: auto; padding: 1.5rem 1rem;
+}
+#pk-overlay.open { display: block; }
+#pk-box {
+  max-width: 460px; margin: 0 auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: calc(var(--r) * 2); box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+.cd-sub {
+  padding: 11px 18px 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;
+}
+.cd-body { padding: 8px 18px 4px; }
+
+/* One row per form the push could create. The gloss sits beside the form
+   because "which of these is a lexeme" is not answerable from the form alone. */
+.pk-row {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 9px 0; border-top: 1px solid var(--border); cursor: pointer;
+}
+.pk-row:first-child { border-top: none; }
+.pk-form  { font-weight: 600; }
+.pk-gloss { color: var(--text-muted); font-size: 0.86rem; }
+
+/* ── D51 stage 4: one surface, so a row can be opened ──────────────────────
+   The row asks WHICH; opening it shows WHAT. Two modals in sequence, neither
+   showing the whole thing being made, is what B-112 objects to. */
+/* B-183, v3.14.352: the tick is a SIBLING of the row's `<details>`, not a child
+   of its `<summary>`. Opening a details is the summary's activation behaviour —
+   the click's default action — so a tick inside it shared one default with the
+   disclosure and no handler could separate them. The row divider moves out here
+   with it, so the two halves still read as one row. */
+.pk-row { display: flex; align-items: flex-start; gap: 10px; border-top: 1px solid var(--border); }
+.pk-row:first-child { border-top: none; }
+.pk-row > input[type="checkbox"] { margin-top: 14px; flex: 0 0 auto; }
+.pk-cand { flex: 1 1 auto; min-width: 0; }
+.pk-cand > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: baseline; gap: 10px; padding: 9px 0;
+}
+.pk-cand > summary::-webkit-details-marker { display: none; }
+/* The disclosure arrow, drawn rather than borrowed, so it turns with the state
+   and sits on the baseline of the form beside it. */
+.pk-cand > summary::after {
+  content: '▸'; margin-left: auto; color: var(--text-muted);
+  font-size: 0.8rem; transition: transform .12s ease;
+}
+.pk-cand[open] > summary::after { transform: rotate(90deg); }
+.pk-cand > summary:hover { color: var(--accent); }
+
+/* What the push will do to a form that is already an entry. The push has always
+   been fill-only; this is the first surface that says so. */
+.pk-state { font-size: 0.72rem; letter-spacing: .01em; }
+.pk-state.is-new    { color: var(--dict-accent); }
+.pk-state.is-exists { color: var(--text-muted); }
+/* B-196: the form is in the dictionary and the entry there is not this lexeme.
+   Coloured like a warning because it is one: the push would fold two words into
+   one and link the token to the wrong entry. */
+.pk-state.is-clash  { color: var(--warn-text); font-weight: 600; }
+.pk-fills.pk-clash  { color: var(--warn-text); }
+.pk-fills.pk-clash em { color: inherit; font-weight: 600; }
+.pk-door {
+  margin-left: 6px; padding: 1px 7px; font: inherit; font-size: 0.72rem;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  background: var(--surface); color: var(--accent); cursor: pointer;
+}
+.pk-door:hover { background: var(--accent-dim); border-color: var(--accent); }
+/* B-196, the other half of the report: a field the push will not overwrite was
+   drawn exactly like one it would. It focuses, it selects, its text can be
+   dragged — everything says "type here" except the effect. */
+.pk-fields input[readonly], .pk-fields textarea[readonly] {
+  background: var(--surface-dim); color: var(--text-muted);
+  border-style: dashed; cursor: default;
+}
+.pk-fields input[readonly]:focus, .pk-fields textarea[readonly]:focus {
+  outline: none; box-shadow: none; border-color: var(--border);
+}
+.pk-fills { color: var(--text-muted); font-size: 0.72rem; }
+.pk-fills em { font-style: normal; color: var(--accent); }
+
+/* B-140's row types its own form; every other route names one that is already
+   in the corpus. Sized to sit in the summary line rather than dominate it. */
+.pk-form-input { flex: 1 1 auto; min-width: 0; max-width: 15rem; font-weight: 600; }
+
+.pk-fields {
+  display: grid; grid-template-columns: 74px 1fr;
+  gap: 6px 10px; align-items: start; padding: 2px 0 12px 26px;
+}
+.pk-fields .edit-textarea { min-height: 42px; }
+/* A row nobody ticked is still readable, just plainly not in play. */
+.pk-cand:not(.pk-on) > summary .pk-form { opacity: .55; font-weight: 500; }
+/* `.cd-card`, `.cd-card-hdr`, `.cd-form`, `.cd-type` and `.cd-fields` went with
+   the completion modal at v3.14.269 (D51 stage 4). One surface asks which forms
+   AND what they say, before anything is written, so there is no second panel to
+   style. `.cd-sub` and `.cd-body` survive because the shell does. */
+.pk-form-tag {
+  font-size: 0.7rem; color: var(--text-muted);
+  background: var(--surface-dim); border-radius: 5px; padding: 2px 7px;
+}
+/* Header */
+.es-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; border-bottom: 1px solid var(--border);
+  font-weight: 700; font-size: 0.95rem;
+}
+/* Section containers */
+
+/* Two-column label / field grid used inside each section */
+
+.es-lbl { font-size: 0.78rem; color: var(--text-muted); padding-top: 7px; }
+/* Morpheme rows inside the morpheme section */
+
+/* "…" expand button inside truncated chip rows */
+/* D45: the … expander is gone; the tag drawer replaced it. */
+/* Footer */
+.es-footer {
+  padding: 12px 18px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+
+/* ── Content ─────────────────────────────────────────────────────────────── */
+/* flex: 1 makes #content expand to fill all remaining space, pushing the footer
+   to the bottom of the viewport even when page content is short. */
+/* GUI-S1: single source of truth for the content column width — every view
+   (Corpus, Search) renders inside #content, so this governs them all. */
+#content { max-width: var(--content-max); width: 100%; margin: 0 auto; padding: 36px 24px 80px; flex: 1; }
+
+/* ── Shared components ────────────────────────────────────────────────────── */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--accent); font-size: 0.84rem; cursor: pointer;
+  margin-bottom: 22px; border-bottom: 1px solid transparent; transition: border-color .15s;
+}
+.back-btn:hover { border-color: var(--accent); }
+.back-btn.dict-back { color: var(--dict-accent); }
+.back-btn.dict-back:hover { border-color: var(--dict-accent); }
+
+.section-label {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 16px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 100px 20px; color: var(--text-dim); }
+.empty-state h2 { font-size: 1.4rem; margin-bottom: 10px; color: var(--text); }
+.empty-state p  { margin-bottom: 24px; }
+
+/* ── Edit button ──────────────────────────────────────────────────────────── */
+.edit-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.75rem; font-family: var(--font); cursor: pointer;
+  padding: 3px 10px; border-radius: var(--r);
+  border: 1px solid var(--edit-border); background: var(--edit-bg); color: var(--edit-accent);
+  transition: background .15s; white-space: nowrap;
+}
+.edit-btn:hover { background: #fef0b0; }
+
+/* ── LaTeX export button ──────────────────────────────────────────────────── */
+/* ── Dictionary: constituent-form badges (word entry → morpheme links) ───── */
+.dict-constituent-row {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.dict-constituent-label {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted); white-space: nowrap;
+}
+/* Each badge is a morpheme form. Clickable ones have a dict entry. */
+.dict-morph-badge {
+  display: inline-block; font-size: 0.9rem; padding: 2px 10px;
+  border-radius: 14px; border: 1px solid var(--dict-accent);
+  color: var(--dict-accent); background: var(--dict-dim);
+  line-height: 1.6;
+}
+.dict-morph-badge.linked {
+  cursor: pointer; transition: background .12s;
+}
+.dict-morph-badge.linked:hover { background: #d8ccf0; }
+.dict-morph-badge.unlinked {
+  border-style: dashed; color: var(--text-muted);
+  border-color: var(--border-strong); background: transparent;
+}
+
+/* ── Dictionary: morpheme word-context example rows ─────────────────────── */
+/* Reuses .dict-example; the target word inside is wrapped in <strong>. */
+.dict-example strong { color: var(--text); }
+.dict-example .ctx-ellipsis { color: var(--text-muted); font-style: italic; }
+
+/* ── Delete button (dictionary entries) ──────────────────────────────────── */
+
+/* ── LaTeX export button ──────────────────────────────────────────────────── */
+.latex-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.73rem; font-family: var(--mono); cursor: pointer;
+  padding: 3px 10px; border-radius: var(--r);
+  border: 1px solid #9abf88; background: #f2f9ed; color: #3a6a28;
+  transition: background .15s; white-space: nowrap; letter-spacing: 0.01em;
+}
+.latex-btn:hover  { background: #e0f0d8; }
+.latex-btn.active { background: #e0f0d8; border-color: #6a9e58; }
+
+/* ── Translate button ─────────────────────────────────────────────────────── */
+.translate-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.75rem; font-family: var(--font); cursor: pointer;
+  padding: 3px 10px; border-radius: var(--r);
+  border: 1px solid #88b0d8; background: #eef5fc; color: #1a5a8a;
+  transition: background .15s; white-space: nowrap;
+}
+.translate-btn:hover   { background: #d8ecf8; }
+.translate-btn.loading { opacity: .65; cursor: default; pointer-events: none; }
+
+/* ── Translation settings gear button ──────────────────────────────────────── */
+.xlate-settings-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; cursor: pointer;
+  padding: 3px 7px; border-radius: var(--r);
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-dim); transition: background .15s, color .15s;
+  white-space: nowrap; font-family: var(--font);
+}
+.xlate-settings-btn:hover { background: var(--surface-dim); color: var(--text); }
+
+/* ── Shared modal styles (translation setup / settings / failure) ────────────
+   All translation modals share these base classes.                            */
+.nllb-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9000;
+}
+.nllb-modal {
+  background: var(--surface); border-radius: 10px;
+  padding: 28px 32px; max-width: 500px; width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+}
+.nllb-modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+.nllb-modal-body  {
+  font-size: 0.88rem; line-height: 1.6;
+  color: var(--text-dim); margin-bottom: 18px;
+}
+.nllb-modal-body p { margin: 0 0 8px; }
+.nllb-modal-code {
+  font-family: var(--mono); font-size: 0.82rem;
+  background: var(--surface-dim); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 14px; margin: 4px 0 10px;
+  white-space: pre; user-select: all;
+}
+.nllb-modal-btns  { display: flex; gap: 10px; justify-content: flex-end; }
+.nllb-modal-close {
+  padding: 6px 18px; border-radius: var(--r); cursor: pointer;
+  font-size: 0.83rem; font-family: var(--font);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  transition: background .12s;
+}
+.nllb-modal-close:hover { background: var(--surface-dim); }
+
+/* ── Translation settings modal specifics ───────────────────────────────────── */
+.xlate-settings-modal { max-width: 460px; }
+.xlate-radio-group { display: flex; flex-direction: column; gap: 6px; }
+.xlate-radio-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px; border-radius: var(--r);
+  border: 1px solid var(--border); cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.xlate-radio-row:hover    { background: var(--surface-dim); }
+.xlate-radio-row.selected { border-color: #4a88be; background: #eef5fc; }
+.xlate-radio-row.xlate-recommended { border-color: var(--accent); }
+.xlate-radio-row input[type="radio"] {
+  margin-top: 3px; flex-shrink: 0; accent-color: #4a88be;
+}
+/* B2/R6: comparison-card option body — head (label + sub + badge), desc, chips */
+.xlate-radio-body { display: flex; flex-direction: column; gap: 5px; line-height: 1.4; }
+.xlate-radio-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.xlate-radio-head strong { font-size: 0.92rem; font-weight: 600; }
+.xlate-radio-sub  { font-size: 0.76rem; color: var(--text-muted); font-weight: 400; }
+.xlate-radio-desc { font-size: 0.82rem; color: var(--text-dim); }
+.xlate-rec-badge {
+  font-size: 0.66rem; font-weight: 600; letter-spacing: .03em;
+  background: var(--accent-dim); color: var(--accent);
+  padding: 1px 8px; border-radius: 10px;
+}
+
+/* ── LaTeX export panel ───────────────────────────────────────────────────── */
+.latex-panel {
+  display: none;
+  margin-top: 14px;
+  border: 1px solid #9abf88;
+  border-radius: var(--r);
+  background: #f8fcf5;
+  overflow: hidden;
+}
+.latex-panel.open { display: block; }
+.latex-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px;
+  background: #eaf5e2;
+  border-bottom: 1px solid #9abf88;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #3a6a28;
+}
+.latex-copy-btn {
+  font-size: 0.72rem; font-family: var(--font); cursor: pointer;
+  padding: 2px 10px; border-radius: 4px;
+  border: 1px solid #9abf88; background: var(--surface); color: #3a6a28;
+  transition: background .15s, color .15s;
+}
+.latex-copy-btn:hover  { background: #e0f0d8; }
+.latex-copy-btn.copied { color: #1a6a1a; border-color: #1a6a1a; }
+/* Thin rule between the linguex and gb4e sections inside the panel */
+.latex-panel-divider {
+  height: 1px; background: #9abf88; margin: 0;
+}
+/* Monospace pre block for copy-pastable LaTeX output */
+.latex-pre {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  padding: 14px 16px;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+  background: transparent;
+}
+
+/* ── Edit forms ───────────────────────────────────────────────────────────── */
+.edit-page-title {
+  font-size: 1.1rem; font-weight: 700; margin-bottom: 20px;
+  padding-bottom: 14px; border-bottom: 2px solid var(--edit-border);
+  display: flex; align-items: center; gap: 10px;
+}
+.edit-badge {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; background: var(--edit-bg); color: var(--edit-accent);
+  padding: 2px 8px; border-radius: 10px; border: 1px solid var(--edit-border);
+}
+/* I11: the badge has three variants and had one class. "Editing" used the class;
+   "adding" overrode it with the same three declarations written inline at five
+   sites, four alike and one for the dictionary, and the ＋ was on three of the
+   five. The mark lives here now, so it cannot go missing on the next one. */
+.edit-badge-add  { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+.edit-badge-add::before { content: '＋ '; }
+
+.edit-annotator-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 16px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.edit-annotator-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); white-space: nowrap;
+}
+.edit-annotator-input {
+  flex: 1; min-width: 160px; max-width: 260px;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  padding: 5px 10px; font-size: 0.9rem; font-family: var(--font);
+  background: var(--surface); color: var(--text);
+  transition: border-color .15s;
+}
+.edit-annotator-input:focus { outline: none; border-color: var(--accent); }
+.edit-date-note {
+  font-size: 0.78rem; font-family: var(--mono); color: var(--text-muted);
+}
+
+.edit-group { margin-bottom: 22px; }
+.edit-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 6px; display: block;
+}
+.edit-input, .edit-textarea {
+  width: 100%; border: 1px solid var(--border-strong); border-radius: var(--r);
+  padding: 8px 12px; font-size: 0.95rem; font-family: var(--font); line-height: 1.65;
+  background: var(--surface); color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.edit-input:focus, .edit-textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(58,95,138,.12);
+}
+.edit-textarea { min-height: 80px; resize: vertical; }
+
+.edit-hint {
+  font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;
+  font-style: italic;
+}
+/* Inline quick-lemma creation panel (appears below Lemma field in dict edit/add views) */
+.ql-panel {
+  display: none; margin-top: 8px; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface-dim);
+}
+.ql-panel.ql-open { display: block; }
+.ql-panel-title { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+.ql-grid { display: grid; grid-template-columns: 56px 1fr; gap: 6px 8px; align-items: start; margin-bottom: 10px; }
+.ql-lbl { font-size: 0.78rem; color: var(--text-muted); padding-top: 7px; }
+.ql-actions { display: flex; gap: 6px; }
+
+/* Morpheme edit table */
+.morph-edit-section {
+  background: var(--surface-dim); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px;
+}
+.morph-edit-row {
+  /* Stacked: a Form header, then a 74px-label / field grid (Gloss, PoS).
+     Mirrors the Entry Sheet so columns align across rows and PoS chips have room. */
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 0; border-top: 1px solid var(--border);
+}
+.morph-edit-row:first-child { border-top: none; padding-top: 2px; }
+.morph-edit-row:last-child { margin-bottom: 0; }
+.morph-edit-row-hdr { display: flex; align-items: center; gap: 10px; }
+.morph-row-prov { font-size: 0.7rem; color: var(--text-muted); }
+.morph-edit-fields {
+  display: grid; grid-template-columns: 74px 1fr;
+  gap: 6px 10px; align-items: start;
+}
+.morph-edit-form-label {
+  font-size: 1.05rem; font-weight: 600; min-width: 50px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 4px 10px;
+}
+.morph-col-label {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); margin-bottom: 3px;
+}
+
+.edit-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 32px;
+  padding-top: 20px; border-top: 1px solid var(--border);
+}
+/* S1: "also save to dictionary" toggle on the word-edit view */
+.ew-pushdict-group { margin-bottom: 0; }
+.ew-pushdict-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+}
+.ew-pushdict-label input { cursor: pointer; }
+/* I1: the one required-field marker. Was two different inline-styled asterisks
+   on four of the eight required fields; the other four said nothing. */
+.required { color: var(--accent); font-weight: 700; cursor: help; }
+/* B-099 · D48 stage C: the other mark. `.required` says the save will refuse;
+   this says the field is part of the work and is not filled in yet. Deliberately
+   quiet — muted, not accent — because it appears on several fields at once on a
+   fresh object, and a screen of accent-coloured marks reads as a screen of
+   errors. It disappears when the field is filled. */
+.wanted { color: var(--text-muted); font-weight: 700; cursor: help; }
+/* I1: the host for an identity field's live verdict. Empty until the annotator
+   empties the field, and an empty host must occupy nothing, or every form grows
+   a gap under its first label. The margin belongs to .offer-strip inside it. */
+.req-strip:empty { display: none; }
+/* I7: the empty state offers Open and New side by side. */
+.empty-state-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.ew-pushdict-hint {
+  margin-top: 5px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;
+}
+/* Add-new action buttons inside views */
+.add-row {
+  margin-top: 24px; padding-top: 18px;
+  border-top: 1px dashed var(--border);
+  display: flex; justify-content: flex-end;
+}
+
+/* View title rows (with edit button) */
+.view-title-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+/* ── Document view ────────────────────────────────────────────────────────── */
+.doc-meta { padding-bottom: 22px; margin-bottom: 32px; border-bottom: 2px solid var(--border); }
+
+.doc-title   { font-size: 1.75rem; font-weight: 700; line-height: 1.3; }
+.doc-sub     { font-size: 0.78rem; color: var(--text-muted); margin-top: 5px; }
+
+/* ── Render-failure panel (B-008) ───────
+   Shown when a view's renderer throws. Previously such a failure left the old
+   content on screen with an updated breadcrumb, which read as "navigation is
+   broken" rather than "this view crashed". */
+.render-error {
+  border: 1px solid var(--danger); border-radius: var(--r);
+  background: var(--surface); padding: 16px 18px; margin: 12px 0;
+}
+.render-error-title {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 700; color: var(--danger); margin-bottom: 10px;
+}
+.render-error-detail {
+  font-family: var(--mono); font-size: 0.74rem;
+  color: var(--text-muted); white-space: pre-wrap; word-break: break-word;
+  max-height: 260px; overflow: auto; margin: 0;
+}
+
+/* ── D30: annotation traversal controls ─────────────
+   A prev/next pair in the word and sentence render views. Sits under the
+   back-link so the eye finds it in the same place in both views. */
+.nav-row {
+  display: flex; gap: 8px; align-items: center;
+  margin: 2px 0 12px;
+}
+.nav-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.8rem; font-family: inherit; color: var(--accent);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 4px 11px; cursor: pointer;
+  transition: border-color .13s, background .13s;
+}
+.nav-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+.nav-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Document edge: disabled rather than wrapping. Kept visible so the pair does
+   not jump around as you reach the ends. */
+.nav-btn-end, .nav-btn[disabled] {
+  color: var(--text-muted); cursor: default; opacity: .55;
+}
+.nav-btn-end:hover, .nav-btn[disabled]:hover {
+  border-color: var(--border); background: var(--surface);
+}
+.nav-btn .ph-icon { width: 13px; height: 13px; }
+
+/* Crossing cue: the breadcrumb crumb that changed flashes once. Deliberately
+   brief and colour-only — a boundary crossing should be noticed, not obeyed. */
+@keyframes bc-crossed-flash {
+  0%   { background: var(--accent); color: var(--surface); }
+  100% { background: transparent; }
+}
+.bc-crossed {
+  animation: bc-crossed-flash .85s ease-out;
+  border-radius: 3px; padding: 0 3px; margin: 0 -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc-crossed { animation: none; outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+/* ── Section blocks in document view ─── */
+.sec-block {
+  margin-bottom: 36px; padding-bottom: 28px;
+  border-bottom: 2px solid var(--border);
+}
+.sec-block:last-of-type { border-bottom: none; }
+.sec-block-header {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 14px;
+}
+/* GUI-1c: the section title is the ONLY way into the section view from the
+   document, so it has to look like a way in.
+   It used to be bold, accent-coloured, and underlined only on hover — which
+   reads as a heading that happens to change on mouseover, and a heading is not
+   something people click. The underline is now permanent (that is the static
+   signal), a caret states the direction, and both strengthen on hover.
+
+   `.sec-go-btn` used to sit here: an explicit "open section" button, deleted
+   from the markup at some point while its CSS stayed behind. Removed rather
+   than restored — one affordance per action, and the title is the better one
+   because it is what people aim at. */
+.sec-block-title {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  cursor: pointer;
+  border-bottom: 1px solid var(--accent-dim);
+  transition: border-color .13s, gap .13s;
+}
+.sec-block-title:hover { border-bottom-color: var(--accent); gap: 9px; }
+/* Keyboard users get the same affordance: the title carries tabindex so it can
+   be reached and Enter-activated, which a click-only <div> never allowed. */
+.sec-block-title:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+}
+.sec-block-title .ph-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: .75; }
+.sec-block-title:hover .ph-icon { opacity: 1; }
+/* The header row keeps the title from stretching: the underline should be as
+   wide as the words, not as wide as the column. */
+.sec-block-header > .sec-block-title { flex: 0 1 auto; margin-right: auto; }
+
+/* Section partition editor rows */
+.sec-edit-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.sec-edit-arrows { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.sec-arr-btn {
+  padding: 1px 5px; font-size: 0.65rem; cursor: pointer; border-radius: 3px;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text-dim); line-height: 1.4; transition: background .12s;
+}
+.sec-arr-btn:hover { background: var(--surface-dim); color: var(--text); }
+.sec-merge-btn {
+  padding: 2px 7px; font-size: 0.72rem; cursor: pointer; border-radius: 3px; flex-shrink: 0;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text-dim); line-height: 1.4; transition: background .12s;
+  white-space: nowrap;
+}
+.sec-merge-btn:hover { background: var(--accent-dim); color: var(--accent); }
+
+/* Hoverable paragraph spans within document view */
+.p-span {
+  display: block; cursor: pointer;
+  border-radius: 4px; padding: 6px 8px; margin: 0 -8px 2px;
+  transition: background .12s, box-shadow .12s;
+  line-height: 1.85; font-size: 1.0rem;
+}
+.p-span:hover, .p-span.hi {
+  background: var(--hi-bg); box-shadow: 0 0 0 2px var(--hi-bg);
+  outline: 1px solid var(--hi-ring);
+}
+
+/* Translation preview below each section */
+.sec-preview {
+  margin-top: 12px; padding: 8px 14px;
+  border-left: 3px solid var(--border);
+  font-size: 0.88rem; color: var(--text-dim); font-style: italic;
+  line-height: 1.6;
+}
+.sec-preview-empty { color: var(--text-muted); }
+
+.para-pair {
+  margin-bottom: 0;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+.para-pair:last-child { border-bottom: none; }
+.para-pair .para-body-trans { margin-top: 8px; padding-left: 14px; border-left: 3px solid var(--border); }
+
+.para-header {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--accent); cursor: pointer; padding: 2px 7px; border-radius: 4px;
+  margin-bottom: 5px; transition: background .15s;
+}
+.para-header:hover { background: var(--accent-dim); }
+.para-header .chevron { font-size: 0.6rem; }
+.para-body       { font-size: 1.0rem; line-height: 1.85; color: var(--text); }
+.para-body-trans { font-size: 0.93rem; line-height: 1.85; color: var(--text-dim); font-style: italic; }
+.s-span {
+  cursor: pointer; border-radius: 3px; padding: 1px 2px; margin: 0 -2px;
+  transition: background .12s, box-shadow .12s;
+}
+.s-span:hover, .s-span.hi {
+  background: var(--hi-bg); box-shadow: 0 0 0 3px var(--hi-bg); outline: 1px solid var(--hi-ring);
+}
+.s-span.no-data  { color: var(--text-muted); }
+.s-span.derived  { color: var(--text-dim); font-style: italic; }
+
+/* ── Paragraph view ───────────────────────────────────────────────────────── */
+.para-view-title { font-size: 1.25rem; font-weight: 700; }
+.sent-card {
+  display: block; width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+  text-align: left; transition: border-color .15s, box-shadow .15s; font-family: var(--font);
+  /* B-001: <button> does NOT inherit colour — the UA sheet forces `buttontext`
+     (black).  Without this, .sent-card .src (which declares no colour of its own)
+     renders black on the dark surface.  .trl looked fine only because it sets
+     var(--text-dim) explicitly.  Any button-based control needs this. */
+  color: var(--text);
+}
+.sent-card:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(58,95,138,.12); }
+.sent-card .src { font-size: 0.99rem; margin-bottom: 4px; }
+.sent-card .trl          { font-size: 0.88rem; color: var(--text-dim); font-style: italic; }
+.sent-card .trl.empty    { color: var(--text-muted); }
+/* L-037, v3.14.338: this rule was defined and never set — the class had nothing
+   emitting it. Setting it revealed the rule was also wrong: `.trl` is ALREADY
+   dim and italic, and `.trl.empty` is `--text-muted`, so "derived" as written
+   was indistinguishable from "no translation at all". Dimming means ABSENT on
+   this card.
+
+   So it takes D43's mark instead, which is the app's existing vocabulary for
+   exactly this — `[data-prov-derived] > .edit-label::after { content: '·auto' }`
+   — a mark rather than a shade, because who and when are in the tooltip and the
+   permanent part only has to say "not a person". */
+.sent-card .trl.derived::after {
+  content: '·auto'; margin-left: 6px; font-size: 0.9em; letter-spacing: 0;
+  color: var(--text-muted); font-style: normal;
+}
+
+/* ── Sentence / IGT view ──────────────────────────────────────────────────── */
+.sent-view-title { font-size: 1.1rem; font-weight: 700; }
+.sent-src-text {
+  font-size: 1.05rem; line-height: 1.7; padding: 10px 14px;
+  background: var(--surface-dim); border-radius: var(--r);
+  margin-bottom: 18px; border: 1px solid var(--border);
+}
+/* IGT 4-layer wrapping display */
+.igt-section { margin-bottom: 24px; }
+.igt-section-label {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 14px;
+}
+.igt-legend {
+  display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px;
+  padding: 6px 10px; background: var(--surface-dim);
+  border-radius: var(--r); border: 1px solid var(--border); width: fit-content;
+}
+.igt-legend-row { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
+.igt-legend-swatch { width: 28px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.legend-form  { background: var(--border-strong); }
+.legend-parse { background: var(--text-muted); }
+.legend-gloss { background: var(--accent); }
+.legend-mgloss { background: var(--text-muted); }
+.igt-legend-label { color: var(--text-dim); }
+
+.igt-wrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 22px; }
+.igt-word {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  cursor: pointer; border-radius: 4px; padding: 4px 5px; margin: -4px -5px;
+  transition: background .12s;
+}
+.igt-word:hover { background: var(--hi-bg); }
+/* B-151: dimmed, but still a link. It keeps the pointer and the hover, because
+   the IGT view is the only way to reach a punctuation token's head/dep_rel
+   outside the sentence editor; the dimming says "traversal will not stop here",
+   not "there is nothing here". */
+.igt-word.punct { opacity: 0.45; }
+
+/* D52: "Merge into…" on a dictionary entry that has a same-form sibling. Sized
+   and coloured as a secondary control — it sits between Edit and Delete, and it
+   is neither the usual thing to do nor the dangerous one. */
+.dict-merge-into {
+  font: inherit; font-size: 0.85rem; padding: 4px 8px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-dim);
+  max-width: 15rem;
+}
+.dict-merge-into:hover { color: var(--text); border-color: var(--border-strong); }
+
+/* D52 stage D: the dangling-lemma repair strip, above the dictionary table.
+   Drawn only when there is something to repair, so it is allowed to be loud. */
+.dict-repair {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 10px 12px; margin-bottom: 10px; border-radius: var(--r);
+  border: 1px solid var(--border-strong); background: var(--surface-dim);
+}
+.dict-repair-msg { color: var(--text-dim); font-size: 0.9rem; }
+
+/* D53 stage E: the parse, segment by segment, with what the lexicon offers under
+   each. Colour carries the state so the gaps are findable without reading —
+   which is the whole point, since the gaps are the work. */
+.parse-guide {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px 4px;
+  margin-top: 6px; padding: 6px 8px; border-radius: var(--r);
+  background: var(--surface-dim); border: 1px solid var(--border);
+}
+.pg-seg { display: flex; flex-direction: column; align-items: center; padding: 1px 5px; border-radius: 4px; }
+.pg-form  { font-size: 0.95rem; }
+.pg-gloss { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
+.pg-sep   { color: var(--text-muted); align-self: center; padding-bottom: 12px; }
+.pg-unique    .pg-gloss { color: var(--accent); }
+.pg-ambiguous .pg-gloss { color: var(--danger); }
+.pg-none      { opacity: 0.75; }
+.pg-none      .pg-gloss { font-style: italic; }
+.pg-fill { margin-left: auto; align-self: center; }
+.igt-word.punct:hover { opacity: 0.75; }
+
+.igt-t-form  { font-size: 1rem; font-weight: 500; white-space: nowrap; padding-bottom: 3px; border-bottom: 2px solid var(--border-strong); }
+
+.igt-t-parse { font-size: 0.78rem; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; padding-top: 1px; }
+.igt-t-gloss { font-size: 0.8rem;  font-family: var(--mono); color: var(--accent); font-weight: 500; white-space: nowrap; }
+/* L-040: the morpheme join, drawn only where it disagrees with the word gloss
+   above it. Muted and a size down, because it is the second statement — the
+   word gloss is the primary one and must not have to compete with it. */
+.igt-t-mgloss { font-size: 0.74rem; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; }
+.legend-translit { background: #7ab8a0; }
+.igt-t-translit { font-size: 0.82rem; font-family: var(--mono); color: #4a9e7f; white-space: nowrap; padding-top: 1px; }
+.igt-t-translit.derived { opacity: 0.6; font-style: italic; }
+
+/* ── Word view ────────────────────────────────────────────────────────────── */
+.word-view-header { margin-bottom: 28px; }
+/* Inline lexicon summary card shown in Word View when a dict entry exists */
+.lex-card { margin-top: 24px; border: 1px solid var(--dict-accent); border-radius: calc(var(--r) * 2); background: var(--dict-dim); overflow: hidden; }
+.lex-card-hdr { display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid var(--dict-accent); }
+.lex-card-title { font-size: 0.7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--dict-accent); }
+.lex-card-edit { font-size: 0.78rem; color: var(--dict-accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.lex-card-body { padding: 10px 14px; display: grid; grid-template-columns: 68px 1fr; gap: 5px 10px; align-items: baseline; font-size: 0.82rem; }
+.lex-card-lbl { color: var(--text-muted); }
+.lex-card-val { color: var(--text); font-family: var(--mono); word-break: break-word; }
+.lex-card-more { font-size: 0.75rem; color: var(--dict-accent); padding: 5px 14px; border-top: 1px solid var(--dict-accent); }
+.word-view-context {
+  font-size: 0.85rem; color: var(--text-dim); font-style: italic;
+  margin-bottom: 14px; line-height: 1.5;
+}
+.word-view-context .hw { font-style: normal; font-weight: 600; color: var(--text); background: var(--hi-bg); padding: 0 2px; border-radius: 2px; }
+.word-view-form  { font-size: 1.8rem; font-weight: 700; line-height: 1.2; margin-bottom: 4px; }
+.word-view-parse { font-size: 0.9rem; font-family: var(--mono); color: var(--text-muted); }
+.word-view-gloss { font-size: 0.9rem; font-family: var(--mono); color: var(--accent); font-weight: 500; margin-top: 2px; }
+/* S3: subtle one-line hint clarifying Annotate vs + Lexicon */
+.word-action-hint { font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+
+/* Morpheme IGT in word view */
+.morph-igt-wrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0; }
+.morph-col {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 10px; border-radius: var(--r); gap: 3px;
+  transition: background .12s, box-shadow .12s;
+}
+.morph-col.clickable { cursor: pointer; }
+.morph-col.clickable:hover {
+  background: var(--dict-dim); box-shadow: 0 0 0 1px var(--dict-accent);
+}
+.morph-hyphen {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding-top: 14px; color: var(--text-muted); font-size: 0.9rem; font-weight: 300;
+  align-self: flex-start;
+}
+.morph-col-form  { font-size: 1.1rem; font-weight: 500; }
+.morph-col-gloss { font-size: 0.78rem; font-family: var(--mono); color: var(--accent); font-weight: 500; }
+.morph-col-link  {
+  font-size: 0.65rem; font-family: var(--mono); color: var(--dict-accent);
+  margin-top: 2px; letter-spacing: 0.02em;
+}
+.morph-col.clickable .morph-col-form { text-decoration: underline; text-decoration-color: var(--dict-accent); text-underline-offset: 3px; }
+
+/* ── Dictionary view ──────────────────────────────────────────────────────── */
+.dict-no-entry {
+  padding: 32px 20px; text-align: center; color: var(--text-dim);
+  background: var(--surface); border-radius: var(--r); border: 1px dashed var(--border);
+}
+/* B-140: the empty dictionary is where an annotator reaches for "new entry"
+   first, and it was the one branch of the browse view that returned early. */
+.dict-no-entry-actions { margin-top: 14px; }
+/* The sentence-card result tab reuses the .srch-card styling the result cards
+   have always used — one prefix since v3.14.388, when `sb-` joined it. */
+.srch-sentcards { margin-top: 6px; }
+.dict-entry { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 24px; margin-bottom: 16px; }
+/* G32: the entry a token is linked to, when reached via "Edit entry" */
+.dict-entry-focused { border-color: var(--dict-accent); box-shadow: 0 0 0 1px var(--dict-accent); }
+.dict-entry-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+/* D48 stage B: the `extra` tier, folded. Extra means never prompted, not never
+   shown — B-094's bibliographic fields were stored and displayed nowhere. */
+.edit-extra { margin-bottom: 16px; border-top: 1px solid var(--border); padding-top: 10px; }
+.edit-extra > summary { cursor: pointer; list-style: revert; user-select: none; }
+.edit-extra > summary:hover { color: var(--text); }
+.edit-extra[open] > summary { margin-bottom: 12px; }
+
+.dict-form  { font-size: 2rem; font-weight: 700; line-height: 1.2; }
+/* D35 A1: the homograph number. Muted and small, it identifies the entry
+   without competing with the form it is attached to. */
+.dict-homograph { font-size: 0.55em; font-weight: 600; color: var(--text-muted); padding-left: 1px; }
+.dict-pos   {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  background: var(--dict-dim); color: var(--dict-accent); padding: 2px 8px; border-radius: 10px;
+}
+.dict-type-badge {
+  font-size: 0.7rem; color: var(--text-muted); font-family: var(--mono);
+  border: 1px solid var(--border); padding: 1px 7px; border-radius: 10px;
+}
+.dict-translit { font-size: 0.9rem; font-family: var(--mono); color: var(--text-muted); margin-bottom: 10px; }
+.dict-gloss    { font-size: 1.05rem; font-style: italic; color: var(--text-dim); margin-bottom: 10px; }
+.dict-meaning  { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px; font-size: 0.9rem; line-height: 1.65; color: var(--text); margin-top: 4px; margin-bottom: 10px; }
+
+.dict-examples-label {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.dict-examples-label::after { content:''; flex:1; height:1px; background: var(--border); }
+.dict-example {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-radius: var(--r); border: 1px solid var(--border);
+  margin-bottom: 6px; transition: border-color .15s, background .12s;
+}
+.dict-example:hover { border-color: var(--dict-accent); background: var(--dict-dim); }
+.dict-example-text { font-size: 0.9rem; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dict-example-arr  { color: var(--dict-accent); font-size: 0.8rem; flex-shrink: 0; }
+.dict-sep { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+/* ── Dictionary browse table ── */
+.dict-browse-toolbar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.dict-browse-search {
+  flex: 1; min-width: 160px; padding: 6px 10px;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text);
+}
+.dict-browse-search:focus { outline: none; border-color: var(--dict-accent); box-shadow: 0 0 0 2px var(--dict-dim); }
+/* B-109: the filter is a chip row over the whole of TYPE_CHOICES now, on its own
+   line below the toolbar, so the drawer has the width the inventory needs. */
+.dict-type-filter { margin-bottom: 12px; }
+.dict-type-filter .chip-row { margin-top: 0; align-items: center; }
+.dict-browse-count { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; margin-left: auto; }
+/* Export PDF button sits at the far right of the toolbar, visually distinct from chips. */
+.dict-export-btn { margin-left: 4px; white-space: nowrap; }
+
+/* ── Dict PDF export modal ── */
+.dict-export-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;
+}
+.dict-export-modal {
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg); box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  width: min(480px, 94vw); max-height: 85vh; display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.dict-export-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 12px; border-bottom: 1px solid var(--border);
+}
+.dict-export-title { font-weight: 700; font-size: 0.95rem; }
+.modal-close-btn {
+  background: none; border: none; cursor: pointer; color: var(--text-muted);
+  padding: 2px 4px; border-radius: var(--r); display: flex; align-items: center;
+}
+.modal-close-btn:hover { color: var(--text); background: var(--surface-dim); }
+.dict-export-body { padding: 14px 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.dex-row { display: flex; align-items: center; gap: 8px; }
+.dex-label { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; min-width: 72px; }
+.dex-select {
+  flex: 1; padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: var(--r);
+  font: inherit; font-size: 0.85rem; background: var(--surface); color: var(--text);
+}
+.dex-section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+/* B-084: the type filter is a checkbox list now, laid out like the field list
+   directly below it, because they are the same kind of question. */
+.dex-types {
+  display: flex; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 10px;
+}
+.dex-type-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; cursor: pointer;
+}
+.dex-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; }
+.dex-field-row {
+  display: flex; align-items: center; gap: 6px; font-size: 0.83rem;
+  cursor: pointer; user-select: none;
+}
+.dex-field-row input[type="checkbox"] { accent-color: var(--dict-accent); cursor: pointer; }
+.dict-export-footer {
+  padding: 12px 18px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+}
+.dex-status { flex: 1; font-size: 0.82rem; }
+/* B-001 follow-up: --success / --danger were never defined anywhere, so these
+   silently fell through to their light-mode fallbacks in both themes — dark
+   green / dark red on the dark modal surface.  The tokens are now real (see
+   :root and the dark block), and the fallbacks are kept as belt-and-braces. */
+.dex-success { color: var(--success, #3a7d44); display: flex; align-items: center; gap: 4px; }
+.dex-error   { color: var(--danger,  #b34040); }
+.dex-install-hint {
+  font-family: var(--mono); font-size: 0.75rem; background: var(--surface-dim);
+  border: 1px solid var(--border); border-radius: var(--r); padding: 6px 8px;
+  margin-top: 4px; white-space: pre-wrap; word-break: break-all;
+}
+
+.dict-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.dict-table th {
+  text-align: left; padding: 7px 10px; border-bottom: 2px solid var(--border-strong);
+  color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; user-select: none;
+  transition: color .12s;
+}
+.dict-table th:hover { color: var(--dict-accent); }
+.dict-table th.dbs-active { color: var(--dict-accent); }
+.sort-arrow { margin-left: 3px; font-size: 0.65rem; opacity: 0.8; }
+.dict-table td {
+  padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; max-width: 240px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dict-table tr.dict-row:hover td { background: var(--dict-dim); cursor: pointer; }
+.dt-form    { font-size: 0.9rem; font-weight: 600; }
+.dt-translit { font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); }
+.dt-pos     { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; color: var(--dict-accent); }
+.dt-gloss   { font-style: italic; color: var(--text-dim); }
+/* Truncated meaning preview — fixed max-width so long definitions don't blow out the layout. */
+.dt-meaning { font-size: 0.82rem; color: var(--text-dim); max-width: 18rem;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dt-type    { font-size: 0.7rem; color: var(--text-muted); font-family: var(--mono); }
+/* Domain column — small badge-style text; only visible when _dictShowDomain is on. */
+.dt-domain  { font-size: 0.72rem; color: var(--dict-accent); font-style: italic; white-space: nowrap; }
+
+#dict-status.loaded { cursor: pointer; }
+#dict-status.loaded:hover { opacity: 0.75; }
+
+/* Provenance badge */
+.prov { display: inline-block; font-size: 0.6rem; padding: 1px 5px; border-radius: 3px; font-family: var(--mono); vertical-align: middle; margin-left: 6px; }
+.prov-claude  { background: #dceefb; color: #2460a0; }
+.prov-human   { background: #d8f5e3; color: #1a6640; }
+.prov-unknown { background: #ece9e3; color: #7a7268; }
+
+/* ── Field-level provenance tooltip (read views) ─────────────────────────── */
+/* Applied as data-prov-tip="annotator · date" on individual rendered fields.
+   Uses ::after for the bubble; the element needs position:relative (set below).
+   Not used inside the IGT scroll container — those use the native title attr. */
+[data-prov-tip] { position: relative; }
+/* D43: the half of provenance that is NOT detail. A value the app derived should
+   not read like one a person typed — B-061 was that mistake twice — so it keeps a
+   permanent mark while who and when move into the tooltip. Same dim-and-italic
+   treatment as .s-span.derived and .igt-t-translit.derived, on the value inside
+   the field rather than on a line beneath it. */
+[data-prov-derived] .edit-input,
+[data-prov-derived] .edit-textarea { color: var(--text-dim); font-style: italic; }
+[data-prov-derived] > .edit-label::after {
+  content: '·auto'; margin-left: 6px; font-size: 0.9em; letter-spacing: 0;
+  color: var(--text-muted); text-transform: none; font-weight: 400;
+}
+[data-prov-tip]::after {
+  content: attr(data-prov-tip);
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 0;
+  background: #2a2825;
+  color: #e8e4dc;
+  font-size: 0.63rem;
+  font-family: var(--mono);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+  z-index: 400;
+}
+[data-prov-tip]:hover::after { opacity: 1; }
+
+/* D43: three presentations retired here — the per-field hint line, the
+   interlinear provenance tier, and the line in the expanded morpheme column.
+   All three spent permanent space on who and when; the tooltip above carries it
+   on hover instead, and a derived value keeps its own mark.
+   (Their class names are described rather than written: the guard for this
+   change greps the stylesheet for them.) */
+
+/* ── Unicode / bidirectional text support ─────────────────────────────────── */
+/*
+   unicode-bidi: plaintext  — each block independently determines direction
+   from the first strong directional character (like dir="auto").
+   Applied to all text-display and text-input elements so RTL scripts
+   (Arabic, Hebrew, Persian, Urdu…) as well as CJK and other non-Latin
+   scripts render correctly without manual direction hints.
+*/
+.para-body, .para-body-trans,
+.sent-src-text,
+.igt-t-form, .igt-t-parse, .igt-t-translit, .igt-t-gloss, .igt-t-mgloss,
+.word-view-form, .word-view-parse, .word-view-context,
+.morph-col-form, .morph-col-gloss,
+.dict-form, .dict-translit, .dict-gloss, .dict-meaning,
+.sent-card .src, .sent-card .trl,
+.dict-example-text,
+.edit-input, .edit-textarea,
+.edit-annotator-input,
+.morph-edit-form-label {
+  unicode-bidi: plaintext;
+}
+/* Inputs additionally get dir="auto" via HTML attribute (set in render functions) */
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* POS chip styles → .chip.chip-choice (S2, renamed by D44) */
+
+/* ── Leipzig Glosses button ──────────────────────────────────────────────── */
+.leipzig-btn {
+  padding: 3px 6px; font-size: 0.82rem; line-height: 1;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  background: var(--surface-dim); color: var(--text-dim);
+  cursor: pointer; white-space: nowrap; user-select: none;
+  transition: background .12s, color .12s, border-color .12s;
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+}
+/* Phosphor icon helper — scales with font-size, aligns optically with text */
+.ph-icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; fill: currentColor; flex-shrink: 0; }
+/* SVG icon inside the Leipzig button (Phosphor, fill-based) */
+.leipzig-btn svg { width: 14px; height: 14px; display: block; }
+.leipzig-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.leipzig-btn.lp-open { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+/* ── Leipzig Glosses floating panel ──────────────────────────────────────── */
+#lp-panel {
+  position: fixed; z-index: 9500;
+  width: 340px; max-height: 420px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity .12s, transform .12s;
+}
+#lp-panel.lp-visible {
+  opacity: 1; pointer-events: auto; transform: translateY(0);
+}
+#lp-panel-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#lp-filter {
+  flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.83rem;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface-dim); color: var(--text);
+  font-family: var(--font);
+}
+#lp-filter:focus { outline: none; border-color: var(--accent); }
+#lp-close-btn {
+  padding: 2px 7px; font-size: 0.85rem; font-weight: 700;
+  border: none; background: none; color: var(--text-dim); cursor: pointer; border-radius: var(--r);
+}
+#lp-close-btn:hover { background: var(--surface-dim); color: var(--text); }
+/* Dynamic hint shown after first chip click ("PST — past tense · click again to insert").
+   Hidden by default; revealed by _updateLpHint() when _lpHighlighted is set. */
+#lp-hint {
+  display: none; padding: 5px 10px; font-size: 0.78rem; line-height: 1.4;
+  background: var(--accent-dim); color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+#lp-chips {
+  padding: 8px 10px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px;
+  align-content: flex-start;
+}
+.chip-meaning { font-size: 0.72rem; font-family: var(--font); font-weight: 400; opacity: .75; }
+
+/* ── Annotator panel (mirrors LP panel structure) ────────────────────────── */
+#ann-panel {
+  position: fixed; z-index: 9500;
+  width: 300px; max-height: 380px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateY(-4px);
+  transition: opacity .12s, transform .12s;
+}
+#ann-panel.ann-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#ann-panel-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#ann-filter {
+  flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.83rem;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface-dim); color: var(--text); font-family: var(--font);
+}
+#ann-filter:focus { outline: none; border-color: var(--accent); }
+/* Footer "add" button — same dashed-pill style as #src-pick-add-new */
+#ann-add-btn { margin: 6px 8px 8px; font-size: 0.82rem; padding: 4px 10px; cursor: pointer;
+               border: 1px dashed var(--border); border-radius: 6px; background: none;
+               color: var(--text-muted); text-align: left; width: calc(100% - 16px); }
+#ann-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+#ann-close-btn {
+  padding: 2px 7px; font-size: 0.85rem; font-weight: 700;
+  border: none; background: none; color: var(--text-dim); cursor: pointer; border-radius: var(--r);
+}
+#ann-close-btn:hover { background: var(--surface-dim); color: var(--text); }
+#ann-chips {
+  padding: 8px 10px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px;
+  align-content: flex-start;
+}
+
+/* ── Annotator input row (name input + Annotators button) ────────────────── */
+.ann-input-wrap { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.ann-panel-btn {
+  padding: 5px 11px; font-size: 0.82rem; white-space: nowrap;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  background: var(--surface); color: var(--text); cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s; flex-shrink: 0;
+}
+.ann-panel-btn:hover, .ann-panel-btn.ann-open {
+  background: var(--accent-dim); color: var(--accent); border-color: var(--accent);
+}
+/* Read-only annotator display inside the annotator bar */
+.edit-annotator-input[readonly] {
+  background: var(--surface-dim); color: var(--text); cursor: default;
+  border-color: var(--border);
+}
+.edit-annotator-input[readonly]:focus { outline: none; box-shadow: none; }
+/* × clear button — shown only when an annotator is selected */
+.ann-clear-btn {
+  padding: 3px 7px; font-size: 0.9rem; line-height: 1;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: none; color: var(--text-muted); cursor: pointer; flex-shrink: 0;
+}
+.ann-clear-btn:hover { background: var(--surface-dim); color: var(--text); }
+
+/* ── Add / Edit annotator modal ──────────────────────────────────────────── */
+/* Shared modal backdrop + box rules — used by both Annotator and Source modals */
+#ann-modal-backdrop,
+#src-modal-backdrop {
+  position: fixed; inset: 0; z-index: 9800;
+  background: rgba(0,0,0,.35); display: none;
+}
+#ann-modal-backdrop.ann-modal-open,
+#src-modal-backdrop.ann-modal-open { display: block; }
+#ann-modal-box,
+#src-modal-box {
+  position: fixed; z-index: 9900; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 460px; max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 80px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r); box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  display: none;
+}
+#ann-modal-backdrop.ann-modal-open ~ #ann-modal-box,
+#src-modal-backdrop.ann-modal-open ~ #src-modal-box { display: block; }
+.ann-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ann-modal-title { font-weight: 700; font-size: 1rem; }
+.ann-modal-close {
+  padding: 2px 8px; font-size: 0.9rem; font-weight: 700;
+  border: none; background: none; color: var(--text-dim); cursor: pointer; border-radius: var(--r);
+}
+.ann-modal-close:hover { background: var(--surface-dim); color: var(--text); }
+.ann-modal-body { padding: 18px; }
+.ann-modal-field { margin-bottom: 14px; }
+.ann-modal-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 5px; display: block;
+}
+.ann-modal-input {
+  width: 100%; border: 1px solid var(--border-strong); border-radius: var(--r);
+  padding: 7px 11px; font-size: 0.9rem; font-family: var(--font);
+  background: var(--surface); color: var(--text); box-sizing: border-box;
+}
+.ann-modal-input:focus { outline: none; border-color: var(--accent); }
+.ann-modal-row { display: flex; align-items: center; gap: 10px; }
+.ann-modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+/* ── Prov history — inline section (hr + details/summary) ────────────────── */
+.prov-hr {
+  border: none; border-top: 1px solid var(--border); margin: 28px 0 0;
+}
+details.prov-history-inline {
+  margin-top: 10px;
+}
+.prov-summary {
+  font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; user-select: none; list-style: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.prov-summary::-webkit-details-marker { display: none; }
+.prov-summary::before {
+  content: '▶'; font-size: 0.6rem; transition: transform .15s;
+  color: var(--text-muted);
+}
+details[open] > .prov-summary::before { transform: rotate(90deg); }
+.prov-history-entries {
+  margin-top: 8px; padding-left: 4px;
+}
+.ph-entry {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.ph-entry:last-child { border-bottom: none; }
+.ph-annotator { font-weight: 600; color: var(--text); }
+.ph-ann-link  { cursor: pointer; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.ph-ann-link:hover { opacity: 0.75; }
+.ph-datetime  { font-size: 0.75rem; font-family: var(--mono); color: var(--text-muted); margin-left: auto; }
+/* Highlighted row in Annotators / Sources views (navigated from chips) */
+.ann-row-focus { background: var(--accent-dim); }
+.src-row-focus { background: var(--accent-dim); }
+.ph-morph-label { font-family: var(--mono); color: var(--text); }
+.prov-morpheme-header {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 6px;
+}
+details.prov-morpheme-inline {
+  margin-top: 6px; padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+
+/* ── Annotators view ─────────────────────────────────────────────────────── */
+.ann-view-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+/* edit-page-title inside a topbar row: suppress the standalone form-header styling */
+.ann-view-topbar .edit-page-title,
+.src-view-topbar .edit-page-title { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.ann-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.ann-table th {
+  text-align: left; padding: 8px 12px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--text-muted);
+  border-bottom: 2px solid var(--border-strong);
+  user-select: none; white-space: nowrap;
+}
+/* I9: the pointer and the hover colour belong to headers that actually sort.
+   Scoped to the attribute the sort handler reads, so a header that does not sort
+   does not offer a click.
+
+   B-115 (v3.14.309) removed the reason this used to name: the Sources view had
+   no sorting at all, and now sorts through the same handler — so the attribute
+   is `data-psort` on both tables and the affordance follows it to both. The
+   scoping rule is unchanged and still earns its place: the edit column's blank
+   header carries no attribute and gets no cursor. */
+.ann-table th[data-psort] { cursor: pointer; }
+.ann-table th[data-psort]:hover { color: var(--accent); }
+.ann-table th.sorted-asc::after { content: ' ▲'; }
+.ann-table th.sorted-desc::after { content: ' ▼'; }
+.ann-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ann-table tr:last-child td { border-bottom: none; }
+.ann-table tr:hover td { background: var(--surface-dim); }
+.ann-active-badge {
+  display: inline-block; padding: 1px 7px; font-size: 0.7rem; font-weight: 700;
+  background: var(--accent-dim); color: var(--accent); border-radius: 8px; margin-left: 6px;
+}
+
+/* ── Project dropdown button ─────────────────────────────────────────────── */
+/* The look, and the reason it must be explicit, moved to `.hdr-btn` at
+   v3.14.359 (B-188). That reason is worth carrying with it: an explicit
+   background and border override the browser default so `:active` never gets
+   stuck — PyWebView / WebKit does not always fire mouseup cleanly after a click
+   that triggers a render. `#gaps-btn` had no such rule, so it was exposed to
+   exactly that as well as looking wrong. What is left here is placement. */
+#project-menu-wrap {
+  position: relative;
+  display: none;          /* hidden until corpus is loaded */
+}
+#project-menu-wrap.visible { display: flex; align-items: center; }
+
+/* The dropdown panel itself */
+#project-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 148px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  z-index: 300;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+#project-dropdown.open { display: block; }
+
+/* Individual menu items */
+.proj-menu-item {
+  /* flex (was block) so icon+text get the standard 9px gap (B7, 2026-06-10) */
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 14px;
+  text-align: left;
+  font-size: 0.81rem; font-family: var(--font);
+  color: var(--text);
+  background: none; border: none;
+  cursor: pointer;
+}
+.proj-menu-item:hover { background: var(--surface-dim); }
+
+/* ── File dropdown (S3) ──────────────────────────────────────────────────── */
+/* Always visible; mirrors the Project dropdown pattern. */
+#file-menu-wrap { position: relative; display: inline-flex; align-items: center; }
+
+#file-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 152px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  z-index: 300;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+#file-dropdown.open { display: block; }
+
+.file-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 14px;
+  text-align: left;
+  font-size: 0.81rem; font-family: var(--font);
+  color: var(--text);
+  background: none; border: none;
+  cursor: pointer;
+}
+.file-menu-item:hover { background: var(--surface-dim); }
+
+/* Save row — hidden until a corpus is loaded */
+#file-save-item { display: none; }
+#file-save-item.visible { display: flex; }
+
+/* Separator inside the dropdown */
+.file-menu-sep { height: 1px; background: var(--border); margin: 4px 0; display: none; }
+.file-menu-sep.visible { display: block; }
+/* The separator between Open/New and the theme toggle is always visible */
+.file-menu-sep:last-of-type { display: block; }
+
+/* ── Sources view, picker & chips ───────────────────────────────────────── */
+
+/* Clickable chip via data-action (navigation, not toggle) */
+
+/* Inline picker — selected source chips inside edit forms */
+.src-picker-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 30px; }
+/* D44: the selected-source chip is a token, styled by .chip.chip-token. */
+.src-add-btn {
+  font-size: 0.82rem; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+  border: 1px dashed var(--border); background: none; color: var(--text-muted);
+}
+.src-add-btn:hover, .src-add-btn.spp-open { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+/* Floating picker panel (multi-select, anchored to the + Add source button) */
+#src-pick-panel {
+  position: fixed; z-index: 900; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 4px 18px rgba(0,0,0,.18);
+  min-width: 230px; max-width: 320px; max-height: 300px;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none; transform: translateY(-6px);
+  transition: opacity .15s, transform .15s;
+}
+#src-pick-panel.spp-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#src-pick-header { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.spp-title { flex-basis: 100%; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
+#src-pick-filter {
+  flex: 1; border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px;
+  font-size: 0.83rem; background: var(--surface); color: var(--text);
+}
+#src-pick-filter:focus { outline: none; border-color: var(--accent); }
+#src-pick-chips { overflow-y: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+.src-pick-chip {
+  padding: 5px 10px; border-radius: 12px; cursor: pointer; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid transparent;
+}
+.src-pick-chip:hover { background: var(--surface-dim); }
+.src-pick-chip.spc-sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.src-pick-chip .spc-type { font-size: 0.71rem; color: var(--text-muted); margin-left: 4px; }
+.src-pick-chip.spc-sel .spc-type { color: var(--on-accent); opacity: 0.75; }
+#src-pick-add-new { margin: 6px 8px 8px; font-size: 0.82rem; padding: 4px 10px; cursor: pointer;
+                    border: 1px dashed var(--border); border-radius: 6px; background: none;
+                    color: var(--text-muted); text-align: left; width: calc(100% - 16px); }
+#src-pick-add-new:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* Sources list table (mirrors .ann-table) */
+.src-view-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+
+/* ── Annotators rollup (read-only, used in edit + render views) ──────────── */
+.ann-rollup-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.ann-rollup-chip {
+  padding: 2px 9px; border-radius: 12px; font-size: 0.78rem;
+  border: 1px solid var(--border); background: var(--surface-dim); color: var(--text-dim);
+}
+/* Clickable annotator chip (when data-action is present) */
+.ann-rollup-chip[data-action] { cursor: pointer; }
+.ann-rollup-chip[data-action]:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* ── Annotator preview panel (floating, read-only, anchored to chip in edit views) ── */
+#ann-preview-panel {
+  position: fixed; z-index: 910; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 2px 14px rgba(0,0,0,.15);
+  min-width: 210px; max-width: 300px;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none; transform: translateY(-6px);
+  transition: opacity .14s, transform .14s;
+}
+#ann-preview-panel.app-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#about-app-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+#app-close-btn {
+  background: none; border: none; cursor: pointer; color: var(--text-muted);
+  font-size: 0.88rem; padding: 2px 6px; border-radius: 4px; line-height: 1;
+}
+#app-close-btn:hover { background: var(--surface-dim); color: var(--text); }
+#app-fields { padding: 8px 12px 4px; display: flex; flex-direction: column; gap: 5px; }
+.app-row { display: flex; gap: 8px; font-size: 0.81rem; }
+.app-key { color: var(--text-muted); min-width: 72px; flex-shrink: 0; }
+.app-val { color: var(--text); }
+#app-actions { padding: 6px 10px 10px; }
+#app-edit-btn {
+  width: 100%; font-size: 0.81rem; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: none; color: var(--text);
+  cursor: pointer; text-align: left;
+}
+#app-edit-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* ── Comments editor (reusable multi-entry component) ───────────────────── */
+.comments-editor { display: flex; flex-direction: column; gap: 8px; }
+.comment-row {
+  display: flex; flex-direction: column; gap: 4px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 12px; background: var(--surface-dim);
+  position: relative;
+}
+.comment-text {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 8px; font-size: 0.88rem; font-family: inherit;
+  background: var(--surface); color: var(--text);
+  resize: vertical; min-height: 56px;
+}
+.comment-text:focus { outline: none; border-color: var(--accent); }
+.comment-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px;
+}
+/* Source picker for comment rows reuses .trans-src-wrap / .trans-src-chip
+   (defined with translation row styles below) — no extra rules needed here. */
+.comment-date {
+  width: 120px; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 6px; font-size: 0.82rem;
+  background: var(--surface); color: var(--text);
+}
+.comment-date:focus { outline: none; border-color: var(--accent); }
+.comment-remove {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
+  flex-shrink: 0;
+}
+.comment-remove:hover { color: var(--text); background: var(--surface-dim); }
+.comment-add-btn {
+  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px;
+  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
+  background: none; color: var(--text-muted); margin-top: 2px;
+}
+.comment-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* Read-only comment display in render views */
+.comment-view-row { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.comment-view-row:last-child { border-bottom: none; }
+.comment-view-meta { font-size: 0.77rem; color: var(--text-muted); margin-top: 3px; }
+
+/* ── Transliterations editor (reusable multi-entry component) ──────────────── */
+.transliterations-editor { display: flex; flex-direction: column; gap: 5px; }
+.translit-row { display: flex; align-items: center; gap: 8px; }
+.translit-label {
+  width: 150px; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 8px; font-size: 0.85rem;
+  background: var(--surface); color: var(--text);
+}
+.translit-label:focus { outline: none; border-color: var(--accent); }
+.translit-text {
+  flex: 1; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 8px; font-size: 0.85rem; font-family: inherit;
+  background: var(--surface); color: var(--text);
+}
+.translit-text:focus { outline: none; border-color: var(--accent); }
+.translit-remove {
+  background: none; border: none; cursor: pointer; flex-shrink: 0;
+  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
+}
+.translit-remove:hover { color: var(--text); background: var(--surface-dim); }
+.translit-add-btn {
+  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px; margin-top: 2px;
+  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
+  background: none; color: var(--text-muted);
+}
+.translit-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+/* Read-only transliteration display in render views */
+.translit-view-row { display: flex; gap: 8px; font-size: 0.87rem; padding: 3px 0; }
+.translit-view-label {
+  font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+  padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border);
+  white-space: nowrap; align-self: flex-start; margin-top: 1px;
+}
+
+/* ── Translations editor (reusable multi-entry component) ────────────────── */
+.translations-editor { display: flex; flex-direction: column; gap: 8px; }
+.translation-row {
+  display: flex; flex-direction: column; gap: 4px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 12px; background: var(--surface-dim); position: relative;
+}
+.translation-text {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 8px; font-size: 0.88rem; font-family: inherit;
+  background: var(--surface); color: var(--text);
+  resize: vertical; min-height: 48px;
+}
+.translation-text:focus { outline: none; border-color: var(--accent); }
+.translation-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+/* Single-source picker for translation rows — replaces the old <select> */
+.trans-src-wrap {
+  display: inline-flex; align-items: center; gap: 5px;
+  flex: 1; min-width: 140px; max-width: 260px;
+}
+/* D44: the row's source is a token too, not a bare text span. */
+.trans-src-wrap .chip-token { max-width: 100%; overflow: hidden; }
+.trans-src-wrap .chip-token .chip-label { overflow: hidden; text-overflow: ellipsis; }
+.trans-src-wrap .src-add-btn { flex-shrink: 0; white-space: nowrap; }
+.translation-date {
+  width: 120px; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 6px; font-size: 0.82rem;
+  background: var(--surface); color: var(--text);
+}
+.translation-date:focus { outline: none; border-color: var(--accent); }
+.translation-remove {
+  margin-left: auto; background: none; border: none; cursor: pointer; flex-shrink: 0;
+  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
+}
+.translation-remove:hover { color: var(--text); background: var(--surface-dim); }
+.translation-add-btn {
+  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px; margin-top: 2px;
+  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
+  background: none; color: var(--text-muted);
+}
+.translation-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+/* Read-only translation display in render views */
+.translation-view-row { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-style: italic; }
+.translation-view-row:last-child { border-bottom: none; }
+.translation-view-meta { font-size: 0.76rem; color: var(--text-muted); font-style: normal; margin-top: 2px; }
+
+/* ── Gloss autocomplete dropdown ─────────────────────────────────────────── */
+#gloss-ac-drop {
+  position: fixed; z-index: 9600;
+  min-width: 220px; max-width: 340px; max-height: 240px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r); box-shadow: 0 4px 16px rgba(0,0,0,.16);
+  opacity: 0; pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity .1s, transform .1s;
+}
+#gloss-ac-drop.ac-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.gloss-ac-item {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 5px 10px; cursor: pointer; font-size: 0.83rem;
+}
+.gloss-ac-item:hover, .gloss-ac-item.ac-focused {
+  background: var(--accent-dim); color: var(--accent);
+}
+.ac-abbr { font-family: var(--mono); font-weight: 700; flex-shrink: 0; }
+.ac-meaning { color: var(--text-dim); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── D42: the one offer strip ─────────────────────────────────────────────
+   Replaced .lemma-strip (one field) and .morph-suggest-panel (one other). They
+   did the same job in two vocabularies, two chip shapes (12px and 20px) and two
+   conventions for "already taken". A strip has a verdict, offers, or both. */
+.offer-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 6px; padding: 7px 11px;
+  border: 1px solid var(--border); border-left: 3px solid var(--text-muted);
+  border-radius: var(--r); background: var(--surface-dim);
+  font-size: 0.78rem; color: var(--text-dim);
+}
+.offer-will { border-left-color: var(--success); }
+.offer-new  { border-left-color: var(--warn-border); background: var(--warn-bg); color: var(--warn-text); }
+.offer-stop { border-left-color: #a2402f; }
+.offer-verdict { display: inline-flex; align-items: baseline; gap: 7px; }
+.offer-mark { font-family: var(--mono); font-weight: 700; }
+.offer-will .offer-mark { color: var(--success); }
+.offer-new  .offer-mark { color: var(--warn-text); }
+.offer-list { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.offer-lbl  { color: var(--text-muted); }
+/* An offer from the lexicon is violet, because taking it stamps derived
+   provenance and typing your own does not. The colour marks a consequence,
+   which is why it is not simply the accent. */
+.offer-chip.offer-lex { border-color: var(--dict-accent); color: var(--dict-accent); }
+.offer-chip.offer-lex .chip-meta { color: var(--dict-accent); opacity: 0.7; }
+/* B-108: set when the offer can fill nothing, which is both "you just took
+   this" (taking rebuilds the strip, so the chip you took now offers nothing
+   new) and "this row already agreed with the lexicon". One state, because from
+   the annotator's side they are the same statement: the row and the entry say
+   the same thing.
+
+   Reads as chosen — a filled accent — never as dimmed. Reduced opacity means
+   disabled in this stylesheet (.seg.chip-disabled) and nothing else. */
+/* D55: `offer-taken` means "this row already says everything the entry does",
+   which since v3.14.330 means "clicking would write the same values back" —
+   harmless, and still a real button. `cursor: default` said INERT about a
+   control that is not, which is the same lie B-108 filed in reverse. */
+.offer-chip.offer-taken { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.offer-chip.offer-taken .chip-meta { color: var(--on-accent); opacity: 0.72; }
+
+/* D57 §3: the way from the add panel into the entry editor. On the summary row,
+   after the state chip, so it reads as a property of THIS form — the panel can
+   hold several rows and only some of them have an entry to edit. Quiet until
+   hovered: it is the minority path, and the primary act here is still the tick. */
+.pk-edit {
+  margin-left: auto; flex: 0 0 auto;
+  background: none; border: 1px solid transparent; border-radius: var(--r);
+  color: var(--dict-accent); font-size: 0.78rem; padding: 2px 7px; cursor: pointer;
+  opacity: 0.75; white-space: nowrap;
+}
+.pk-edit:hover, .pk-edit:focus-visible {
+  opacity: 1; border-color: var(--dict-accent); background: var(--surface-dim);
+}
+
+/* ── Annotations display ─────────────────────────────────────────────────── */
+.annotations-block {
+  margin-top: 10px; padding: 10px 14px;
+  background: var(--surface-dim); border: 1px solid var(--border); border-radius: var(--r);
+}
+.ann-row {
+  display: flex; gap: 10px; align-items: baseline;
+  font-size: 0.82rem; padding: 2px 0; border-bottom: 1px solid var(--border);
+}
+.ann-row:last-child { border-bottom: none; }
+.ann-key  { font-family: var(--mono); color: var(--text-muted); min-width: 100px; flex-shrink: 0; }
+.ann-val  { color: var(--text); word-break: break-word; }
+
+/* ── Selection view (D27 P2, read-only dict view) ────────────────────────── */
+/* One table per entry, not per frame, so alternations line up.  No header row:
+   "NOUN / subject" reads as itself. */
+.dict-selection { margin-bottom: 14px; }
+.dsel-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 2px; }
+.dsel-table td {
+  padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: top;
+  color: var(--text);
+}
+.dsel-table tr:last-child td { border-bottom: none; }
+/* Heavier rule marks the boundary between alternative frames. */
+.dsel-table tr.dsel-boundary td { border-top: 1px solid var(--border-strong); }
+.dsel-label {
+  width: 31%; font-weight: 600; color: var(--dict-accent);
+  line-height: 1.45;
+}
+.dsel-cat { width: 26%; font-weight: 600; }
+.dsel-nolabel .dsel-cat { width: 32%; }
+.dsel-rel { color: var(--text-dim); }
+/* Only `optional` is tagged — obligatory stays silent so the common case is
+   quiet, and an unannotated status renders bare and stays distinguishable. */
+.dsel-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px;
+  font-size: 0.68rem; border-radius: var(--r);
+  background: var(--surface-dim); color: var(--text-muted);
+}
+.dsel-note {
+  font-size: 0.72rem; color: var(--text-dim); font-style: italic;
+  line-height: 1.5; padding-top: 2px;
+}
+
+/* ── Selection editor (D27 P1) ───────────────────────────────────────────── */
+/* Outer collapsible section, same <details> treatment as the dependency parse
+   editor — open only when the entry already has frames. */
+.sel-fold { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); }
+.sel-summary-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; cursor: pointer; list-style: none; border-radius: var(--r);
+}
+.sel-summary-bar::-webkit-details-marker { display: none; }
+.sel-summary-bar::before {
+  content: '›'; display: inline-block; font-size: 1.1rem; line-height: 1;
+  color: var(--text-dim); transition: transform 0.12s ease;
+}
+.sel-fold[open] > .sel-summary-bar::before { transform: rotate(90deg); }
+.sel-summary-bar:hover { background: var(--surface-dim); }
+.sel-summary-bar .edit-label { margin: 0; cursor: pointer; }
+.sel-fold-count { margin-left: auto; font-size: 0.75rem; color: var(--text-dim); }
+.sel-fold-body  { padding: 4px 12px 12px; }
+
+/* Template chips.  Non-matching PoS templates are hidden until "show all". */
+.sel-templates { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 8px 0 10px; }
+.sel-tpl-pos   { font-size: 0.72rem; color: var(--text-muted); margin-right: 2px; }
+.sel-tpl-other { display: none; }
+.sel-templates.sel-show-all .sel-tpl-other { display: inline-flex; }
+
+.sel-frames { display: flex; flex-direction: column; gap: 7px; }
+.sel-frame  { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-dim); }
+.sel-frame-head { display: flex; align-items: center; gap: 7px; padding: 7px 9px; }
+.sel-frame-body { padding: 0 9px 9px; }
+.sel-fold-btn {
+  background: none; border: none; cursor: pointer; padding: 0 2px;
+  color: var(--text-dim); display: flex; align-items: center;
+  transition: transform 0.12s ease;
+}
+.sel-frame:not(.collapsed) .sel-fold-btn { transform: rotate(90deg); }
+/* Expanded shows the editable label + derived hint; collapsed shows the summary
+   line.  Swapping by CSS keeps both in the DOM so nothing is lost on toggle. */
+.sel-frame.collapsed .sel-frame-body,
+.sel-frame.collapsed .sel-label,
+.sel-frame.collapsed .sel-derived { display: none; }
+.sel-frame:not(.collapsed) .sel-summary { display: none; }
+.sel-label   { flex: 1; min-width: 0; height: 28px; font-size: 0.85rem; }
+.sel-summary { flex: 1; min-width: 0; font-size: 0.86rem; color: var(--text);
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-derived { font-size: 0.75rem; color: var(--text-dim); font-style: italic;
+               max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-count   { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+
+/* One selection, laid out as a phrase: "obligatory NOUN as subject". */
+.sel-rows { display: flex; flex-direction: column; gap: 5px; }
+.sel-row  { display: flex; align-items: center; gap: 6px; }
+.sel-row .edit-input { height: 28px; font-size: 0.82rem; margin: 0; }
+.sel-status { width: 104px; flex-shrink: 0; }
+.sel-cat    { width: 104px; flex-shrink: 0; }
+.sel-rel    { flex: 1; min-width: 90px; }
+.sel-as     { font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0; }
+.sel-notes  { margin-top: 6px; font-size: 0.8rem; min-height: 40px; }
+
+/* ── Dependency arc diagram (D25 P2, read-only) ──────────────────────────── */
+/* Two stacked layers: an SVG for the arcs and a flex row of real token spans
+   beneath it.  The tokens are ordinary DOM, so the browser handles layout,
+   bidi and font fallback; _depDrawArcs() measures them and draws to match.
+   Horizontal scroll for long sentences, matching .igt-wrap. */
+.dep-arc-wrap { overflow-x: auto; padding: 4px 0 2px; }
+.dep-arc-svg  { display: block; overflow: visible; }
+.dep-arc-row  { display: flex; gap: 14px; white-space: nowrap; padding-bottom: 2px; }
+.dep-arc-token {
+  font-size: 0.92rem; padding: 3px 8px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: var(--surface); color: var(--text);
+  transition: border-color .12s, background .12s;
+}
+.dep-arc-token:hover { border-color: var(--accent); background: var(--surface-dim); }
+/* Arc styling lives here rather than on SVG presentation attributes so the
+   theme tokens apply — `stroke="var(--x)"` as an attribute is not reliable. */
+.dep-arc      { fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-linecap: round; }
+/* B-034: the dart is drawn as a concave quad. `stroke-linejoin: round` softens
+   the two barbs, which at this size is the difference between an arrowhead and
+   a shard; the notch stays sharp because it is where the stroke arrives. */
+.dep-arc-tip  { fill: var(--accent); stroke: var(--accent); stroke-width: 0.6; stroke-linejoin: round; }
+.dep-root-tip { fill: var(--accent); stroke: none; }
+.dep-root-text { fill: var(--accent); font-size: 11px; font-weight: 600; }
+.dep-rel-box  { fill: var(--surface); stroke: var(--border); stroke-width: 0.5; }
+.dep-rel-text { fill: var(--text-dim); font-size: 11px; }
+/* ── NLLB server failure diagnostic (D29 P1) ─────────
+   Shown in the translation-settings status strip when the managed server
+   process has died. Before D29 P1 the app discarded the server's stderr, so
+   every failure looked like a plain "server down". */
+.xlate-srv-diag {
+  margin-top: 8px; padding: 10px 12px;
+  border: 1px solid var(--danger); border-radius: var(--r);
+  background: var(--surface);
+}
+.xlate-srv-diag-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; font-weight: 700; color: var(--danger); margin-bottom: 6px;
+}
+.xlate-srv-diag-pre {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 180px; overflow: auto; margin: 0 0 4px;
+}
+
+.dep-arc-caption { font-size: 0.72rem; color: var(--text-muted); padding-top: 4px; }
+
+/* ── Dependency parse editor (D25 P1) ────────────────────────────────────── */
+/* Collapsible via native <details>, so no JS state and nothing to reset on nav.
+   Open state is derived from the data: depHasParse() adds the `open` attribute
+   when any token already carries head/dep_rel. */
+.dep-fold { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); }
+.dep-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; cursor: pointer; list-style: none;
+  border-radius: var(--r);
+}
+.dep-summary::-webkit-details-marker { display: none; }
+/* Disclosure triangle drawn manually so it matches the app's chevron idiom
+   rather than the platform default marker. */
+.dep-summary::before {
+  content: '›'; display: inline-block; font-size: 1.1rem; line-height: 1;
+  color: var(--text-dim); transition: transform 0.12s ease;
+}
+.dep-fold[open] > .dep-summary::before { transform: rotate(90deg); }
+.dep-summary:hover { background: var(--surface-dim); }
+.dep-summary .edit-label { margin: 0; cursor: pointer; }
+.dep-count { margin-left: auto; font-size: 0.75rem; color: var(--text-dim); }
+.dep-body  { padding: 4px 12px 12px; }
+
+.dep-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.dep-table th {
+  text-align: left; font-weight: 500; font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); padding: 0 6px 5px; border-bottom: 1px solid var(--border);
+}
+.dep-table td { padding: 3px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.dep-table tr:last-child td { border-bottom: none; }
+/* Fixed narrow index column; Head and Relation take the remaining width evenly
+   so the five columns still fit inside --content-max. */
+.dep-table th.dep-idx, .dep-table td.dep-idx {
+  width: 2rem; font-family: var(--mono); font-size: 0.75rem;
+  color: var(--text-dim); text-align: right; padding-right: 8px;
+}
+.dep-form  { font-weight: 500; font-size: 0.9rem; max-width: 8rem;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dep-gloss { font-size: 0.78rem; color: var(--text-dim); font-style: italic;
+             max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dep-empty { color: var(--border-strong); }
+.dep-table .edit-input { height: 28px; font-size: 0.82rem; padding: 2px 6px; margin: 0; }
+.dep-head-select { width: 100%; min-width: 0; }
+.dep-rel-input   { width: 100%; min-width: 0; }
+/* Readable relation name echoed beside the input — WebKit ignores <option label>
+   inside <datalist>, so this is what actually surfaces the descriptions. */
+.dep-rel-name { display: block; font-size: 0.7rem; color: var(--text-dim);
+                line-height: 1.3; padding: 1px 2px 0; min-height: 0.9rem; }
+/* Shown only while the tokenization field differs from what the table was built
+   from; the table itself deliberately does not rebuild. */
+.dep-stale-notice {
+  margin-top: 8px; padding: 6px 10px; font-size: 0.78rem;
+  color: var(--warn-text); background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--r);
+}
+.dep-stale-notice[hidden] { display: none; }
+
+/* ── Help sidebar ─────────────────────────────────────────────────────────── */
+/* Circled ? button, fixed just below the header at the right edge of viewport */
+#help-btn {
+  position: fixed; top: 60px; right: 14px;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong); background: var(--surface);
+  color: var(--text-muted); font-size: 0.78rem; font-weight: 700;
+  /* B-039: was 400, which put it above the File and Project dropdowns and above
+     every modal backdrop (all z-index 300) — the button floated in front of an
+     open menu. A persistent affordance belongs BELOW transient overlays. 250
+     keeps it above the sticky header (200) and below anything that opens. */
+  cursor: pointer; z-index: 250;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+  transition: background .12s, color .12s, border-color .12s;
+}
+#help-btn:hover { background: var(--surface-dim); color: var(--text); }
+#help-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+/* Semi-transparent backdrop closes the sidebar on click */
+#help-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.22); z-index: 1100; display: none;
+}
+#help-backdrop.open { display: block; }
+/* Sidebar panel — slides in from the right */
+#help-sidebar {
+  position: fixed; top: 0; right: 0;
+  width: 300px; max-width: 92vw; height: 100vh;
+  background: var(--surface); border-left: 1px solid var(--border-strong);
+  z-index: 1200; display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform .2s ease;
+}
+#help-sidebar.open { transform: translateX(0); }
+#help-sidebar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  font-weight: 600; font-size: 0.88rem; background: var(--surface);
+}
+#help-sidebar-close {
+  background: none; border: none; cursor: pointer; padding: 2px 6px;
+  border-radius: var(--r); color: var(--text-muted); font-size: 1rem; line-height: 1;
+}
+#help-sidebar-close:hover { background: var(--surface-dim); color: var(--text); }
+#help-sidebar-body {
+  flex: 1; overflow-y: auto; padding: 0;
+  font-size: 0.8rem; line-height: 1.65; color: var(--text-dim);
+}
+/* View-specific content block */
+#help-view-content { padding: 14px 14px 2px; }
+#help-view-content p { margin: 0 0 7px; }
+#help-view-content p:last-child { margin-bottom: 0; }
+/* Section headings inside help content */
+.help-h {
+  font-weight: 600; color: var(--text); font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  margin: 10px 0 4px;
+}
+.help-h:first-child { margin-top: 0; }
+/* Bullet list */
+.help-list { margin: 0 0 6px; padding-left: 16px; }
+.help-list li { margin-bottom: 3px; }
+/* Key–value field rows */
+.help-kv { margin-bottom: 4px; }
+.help-kv strong { color: var(--text); }
+/* Compact syntax reference table (used in Search help) */
+.help-table { border-collapse: collapse; margin: 4px 0 6px; font-size: .82em; width: 100%; }
+.help-table td { padding: 2px 6px 2px 0; vertical-align: top; }
+.help-table td:first-child { white-space: nowrap; color: var(--text); font-family: monospace; padding-right: 10px; }
+/* Global FAQ accordions (always visible at the bottom of the sidebar) */
+#help-global-faq { border-top: 1px solid var(--border); margin-top: 10px; padding: 0 14px 14px; }
+.help-faq + .help-faq { border-top: 1px solid var(--border); }
+.help-faq-btn {
+  width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 9px 0; font-size: 0.8rem; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+}
+.help-faq-btn:hover { color: var(--accent); }
+.faq-arrow {
+  font-size: 0.58rem; color: var(--text-muted); flex-shrink: 0;
+  transition: transform .15s;
+}
+.help-faq-btn[aria-expanded="true"] .faq-arrow { transform: rotate(90deg); }
+.help-faq-body { padding-bottom: 8px; }
+.help-faq-body.faq-hidden { display: none; }
+
+/* Result cards */
+.srch-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 12px; overflow: hidden; }
+.srch-ctx { padding: 6px 14px; font-size: 0.84rem; color: var(--text-muted); background: var(--surface-dim); border-bottom: 1px solid var(--border); line-height: 1.5; }
+.srch-ctx-after { border-top: 1px solid var(--border); border-bottom: none; }
+.srch-card-body { padding: 12px 14px; }
+
+/* Compact IGT inside result cards */
+.srch-igt-wrap { display: flex; flex-wrap: wrap; gap: 0 10px; }
+.srch-igt-word { display: flex; flex-direction: column; align-items: center; padding: 4px 6px; border-radius: 4px; }
+.srch-igt-word.srch-hit { background: var(--hi-bg); outline: 1px solid var(--hi-ring); }
+.srch-igt-word.punct { opacity: 0.45; }
+.srch-igt-form { font-size: 0.92rem; color: var(--text); line-height: 1.4; }
+.srch-igt-translit { font-size: 0.78rem; color: var(--text-muted); line-height: 1.3; font-style: italic; }
+.srch-igt-gloss { font-size: 0.78rem; color: var(--text-dim); line-height: 1.3; min-height: 1em; }
+.srch-card-trans { margin-top: 8px; font-size: 0.84rem; color: var(--trans-color); font-style: italic; }
+/* Highlight matched substring inside the translation/translit display line */
+.srch-card-trans mark { background: var(--hi-bg); border-radius: 2px; color: inherit; font-style: inherit; padding: 0 1px; }
+.srch-ctx-text { font-size: 0.9rem; color: var(--text); }  /* fallback: no words, show raw text */
+
+/* Card footer: breadcrumb + navigate button */
+.srch-card-footer { display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; border-top: 1px solid var(--border); background: var(--surface-dim); gap: 10px; flex-wrap: wrap; }
+.srch-bc { font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.srch-bc-link { color: var(--accent); cursor: pointer; }
+.srch-bc-link:hover { text-decoration: underline; }
+.srch-bc-sep { color: var(--text-muted); }
+.srch-go-sent { font-size: 0.8rem; color: var(--accent); cursor: pointer; white-space: nowrap; border-bottom: 1px solid transparent; }
+.srch-go-sent:hover { border-color: var(--accent); }
+
+/* Sentence-break divider inside result cards (cross-sentence hits) */
+.srch-card-sent-break { display: flex; align-items: center; gap: 8px; padding: 3px 14px; background: var(--surface-dim); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.srch-card-sent-break-line { flex: 1; border-top: 1px dashed var(--border); }
+.srch-card-sent-break-label { font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SEARCH-B (F3 KWIC + F4 frequency) — concordance view
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* GUI-S1: width + frame come from #content; keep only a small top offset. */
+.srch-view { padding-top: 4px; }
+.srch-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.srch-badge { font-weight: 600; font-size: 0.95rem; color: var(--accent); border: 1px solid var(--accent); border-radius: var(--r); padding: 1px 8px; }
+.srch-sub { font-size: 0.8rem; color: var(--text-dim); }
+/* S4: help button + popover */
+.srch-help-btn {
+  margin-left: auto; padding: 1px 7px; font-size: 0.78rem; font-weight: 700;
+  border: 1px solid var(--border-strong); border-radius: 50%;
+  background: var(--surface); color: var(--text-muted); cursor: pointer;
+  line-height: 1.4; transition: background .12s, color .12s;
+}
+.srch-help-btn:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.srch-help-popover {
+  margin-bottom: 10px; padding: 10px 14px;
+  font-size: 0.8rem; line-height: 1.7; color: var(--text-dim);
+  background: var(--surface-dim); border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.srch-querybar { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.srch-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.srch-row-lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); width: 60px; flex-shrink: 0; }
+
+.srch-runrow { display: flex; gap: 8px; margin-top: 2px; }
+.srch-input { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r); font-size: 0.9rem; font-family: var(--font); color: var(--text); background: var(--surface); min-width: 0; }
+.srch-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+
+.srch-msg { color: var(--text-dim); font-size: 0.85rem; padding: 10px 2px; }
+.srch-msg.srch-err { color: #b03030; }
+.srch-msg.srch-cap { font-style: italic; }
+
+/* KWIC table — monospace context, centered node */
+.srch-kwicwrap { overflow-x: auto; }
+.srch-kwic { width: 100%; border-collapse: collapse; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.82rem; table-layout: fixed; }
+.srch-krow { cursor: pointer; border-bottom: 1px solid var(--surface-dim); }
+.srch-krow:hover { background: var(--accent-dim); }
+.srch-kleft  { text-align: right; white-space: nowrap; color: var(--text-dim); padding: 3px 6px; width: 42%; overflow: hidden; text-overflow: ellipsis; direction: rtl; }
+.srch-knode  { text-align: center; white-space: nowrap; font-weight: 700; color: var(--accent); padding: 3px 8px; width: 16%; }
+.srch-kright { text-align: left; white-space: nowrap; color: var(--text-dim); padding: 3px 6px; width: 42%; overflow: hidden; text-overflow: ellipsis; }
+.srch-ksentcell { padding: 4px 6px; color: var(--text); white-space: normal; }
+.srch-bound { color: var(--accent); font-weight: 700; opacity: 0.6; }
+
+/* Frequency / distribution */
+.srch-ftotal { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 8px; }
+.srch-fgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.srch-fcol h4 { margin: 0 0 6px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); }
+.srch-ftable { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.srch-ftable td { padding: 3px 6px; border-bottom: 1px solid var(--surface-dim); }
+.srch-ftable .srch-num { text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; width: 48px; }
+.srch-ftable th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); padding: 2px 6px; border-bottom: 1px solid var(--border); }
+.srch-ftable th.srch-num { text-align: right; }
+.srch-num.srch-dim { color: var(--text-dim); }
+.srch-colltable { max-width: 480px; }
+
+/* F5 — sort-by-context bar */
+.srch-sortbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   B1 — Dark-mode overrides for component colours that were hardcoded (not tokens).
+   Light rules above are untouched; these only apply under [data-theme="dark"] and
+   re-tint each status family (red/green/blue), prov badges, and IGT tiers to read
+   on the warm-ink surfaces. Grouped by family.
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* — Red (delete / error) — */
+:root[data-theme="dark"] .btn.btn-danger { border-color: #6e4040; background: #2e1f1f; color: #e29a9a; }
+:root[data-theme="dark"] .btn.btn-danger:hover { background: #3a2424; border-color: #9a5050; }
+:root[data-theme="dark"] .srch-msg.srch-err { color: #e29a9a; }
+
+/* — Green (LaTeX / success) — */
+:root[data-theme="dark"] .latex-btn { border-color: #4d6b3d; background: #22301c; color: #9fc77f; }
+:root[data-theme="dark"] .latex-btn:hover,
+:root[data-theme="dark"] .latex-btn.active { background: #2a3a22; border-color: #5a8048; }
+/* B-001 follow-up (2026-08-06): these three targeted .latex-section*, which no
+   element has ever carried — the markup and the light-mode rules both use
+   .latex-panel*.  The override therefore never applied, leaving the export panel
+   on its hardcoded near-white background (#f8fcf5) while .latex-pre inherited
+   var(--text) — near-white text on a near-white panel, i.e. invisible.
+   Renamed to the selectors that actually exist. */
+:root[data-theme="dark"] .latex-panel { border-color: #3d5530; background: #1d2618; }
+:root[data-theme="dark"] .latex-panel-header { background: #22301c; border-bottom-color: #3d5530; color: #9fc77f; }
+:root[data-theme="dark"] .latex-copy-btn { border-color: #4d6b3d; background: var(--surface); color: #9fc77f; }
+:root[data-theme="dark"] .latex-copy-btn:hover { background: #2a3a22; }
+:root[data-theme="dark"] .latex-copy-btn.copied { color: #7fd06a; border-color: #7fd06a; }
+:root[data-theme="dark"] .latex-panel-divider { background: #3d5530; }
+
+/* — Blue (translate / info / xlate) — */
+:root[data-theme="dark"] .translate-btn { border-color: #3a5f86; background: #1f2c3a; color: #7aa6d6; }
+:root[data-theme="dark"] .translate-btn:hover,
+:root[data-theme="dark"] .xlate-radio-row.selected { border-color: #5c9ad4; background: #1f2c3a; }
+
+/* — Provenance badges + legend — */
+:root[data-theme="dark"] .prov-claude  { background: #1f3346; color: #9bc0e8; }
+:root[data-theme="dark"] .prov-human   { background: #1d3a2a; color: #8fd4a8; }
+:root[data-theme="dark"] .prov-unknown { background: #2b2620; color: #a8a298; }
+
+/* — IGT translation / transliteration tiers — */
+:root[data-theme="dark"] .legend-translit { background: #5a9882; }
+:root[data-theme="dark"] .igt-t-translit  { color: #6fbf9f; }
+
+/* — Misc tints — */
+:root[data-theme="dark"] .edit-btn:hover { background: #3a3318; }
+:root[data-theme="dark"] .dict-morph-badge.linked:hover { background: #3a3350; }
+
+/* ── B1 — theme toggle (S3: moved into File▾ dropdown as a .file-menu-item) ── */
+/* .file-menu-item handles layout; these rules add icon sizing and color. */
+.theme-toggle { color: var(--text-muted); font-size: 0.8rem; }
+.theme-toggle:hover { color: var(--accent); }
+.theme-toggle svg { width: 16px; height: 16px; display: block; }
+
+/* ── S2 — Unified button / segmented / tab / chip system ────────────────── */
+
+/* Base button */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 18px; border-radius: var(--r);
+  font-size: 0.88rem; font-family: var(--font);
+  cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--surface-dim); }
+
+/* Primary — accent fill (replaces btn-save, btn-accent, companion-btn-load, btn-large, xlate-modal-save, srch-run) */
+.btn.btn-primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.btn.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* Ghost — neutral secondary (replaces btn-cancel, btn-secondary, companion-btn-skip) */
+.btn.btn-ghost { color: var(--text-muted); }
+.btn.btn-ghost:hover { background: var(--surface-dim); color: var(--text); }
+
+/* Outline — accent-bordered, lower emphasis than primary (replaces btn-add) */
+.btn.btn-outline { border-color: var(--accent); background: var(--surface); color: var(--accent); }
+.btn.btn-outline:hover { background: var(--accent-dim); }
+
+/* Danger — destructive action */
+.btn.btn-danger { border-color: #e0a0a0; background: #fff5f5; color: #b03030; }
+.btn.btn-danger:hover { background: #ffe0e0; border-color: #c04040; }
+
+/* Size modifiers */
+.btn.btn-sm { padding: 4px 12px; font-size: 0.8rem; }
+.btn.btn-lg { padding: 10px 24px; font-size: 0.95rem; }
+
+/* Segmented control — fixed pick-one set (replaces .srch-group/.srch-toggle) */
+.seg-group { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.seg {
+  padding: 4px 11px; border: none; border-right: 1px solid var(--border);
+  background: var(--surface); color: var(--text-dim);
+  font-size: 0.82rem; font-family: var(--font);
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.seg:last-child { border-right: none; }
+.seg:hover { background: var(--surface-dim); }
+.seg.active { background: var(--accent); color: var(--on-accent); }
+.seg.chip-disabled { opacity: 0.4; pointer-events: none; }
+/* Monospace variant used in the sort-anchor row */
+.srch-sortbar .seg { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+/* Underline tabs — result-panel switcher (replaces .srch-tabs/.srch-tab) */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.tab {
+  padding: 6px 14px; border: none; background: none;
+  color: var(--text-dim); font-size: 0.85rem; font-family: var(--font);
+  cursor: pointer; border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* Chip system — large/open-ended pick sets + read-only info chips */
+/* (replaces pos-chip, ann-chip, lp-chip, dict-type-chip, src-chip, xlate-chip, morph-chip) */
+.chip-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+/* ── D45: the tag drawer ──────────────────────────────────────────────────
+   Resting height is one small button, so a field costs no more than it did
+   with six chips and an ellipsis. The inventory is one click away and never
+   reorders: alphabetical inside every group, and a tag changes tier only the
+   first time it is used. */
+.tag-drawer-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text-dim); border-radius: var(--r);
+  padding: 3px 10px; font-size: 0.75rem; font-family: var(--font); cursor: pointer;
+}
+.tag-drawer-btn:hover, .tag-drawer-btn.open {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-dim);
+}
+.tag-caret { font-size: 0.65rem; opacity: 0.7; }
+.tag-drawer {
+  flex-basis: 100%; margin-top: 6px; padding: 11px 13px;
+  border: 1px solid var(--border); border-radius: var(--r); background: var(--surface-dim);
+}
+.tag-group + .tag-group { margin-top: 11px; }
+.tag-group-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+  font-weight: 700; color: var(--text-muted); margin-bottom: 6px;
+}
+.tag-group-label::after { content: ""; flex: 1; height: 1px; background: var(--border); order: 3; }
+.tag-group-n { font-family: var(--mono); opacity: 0.7; letter-spacing: 0; order: 2; }
+.tag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 5px; }
+/* B-027: the value the project's list does not have, and the two readings of it.
+   Marked rather than merely first, because "there is something to decide here"
+   is the whole message and a plain chip row says the opposite. */
+.tag-unknown .tag-group-label { color: var(--warn-text); }
+.tag-unknown .tag-grid { grid-template-columns: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-adopt { border-style: dashed; }
+.tag-grid .chip { justify-content: flex-start; }
+
+/* ══ D44: one chip, in two kinds ═══════════════════════════════════════════
+   A CHOICE is one of a set you are picking from: it toggles, and it is filled
+   with the accent when chosen. A TOKEN is a thing already attached: it shows as
+   attached and carries an × that detaches it. Everything that used to be a chip
+   is one or the other.
+
+   Three values, settled once. Radius 12px. Chosen is a filled accent. Reduced
+   opacity means DISABLED and nothing else — the suggestion panel used to dim a
+   taken chip to 55%, which reads as "you cannot have this" in a stylesheet where
+   .seg.chip-disabled uses opacity for exactly that. */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 0.79rem; font-family: var(--font);
+  border: 1px solid var(--border); background: var(--surface-dim);
+  color: var(--text); white-space: nowrap;
+}
+/* A choice: clickable, filled when it is the current value. */
+.chip-choice { cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
+.chip-choice:hover  { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.chip-choice.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.chip-choice.active .chip-meta { color: var(--on-accent); opacity: 0.72; }
+/* A token: already attached, and detachable. */
+.chip-token { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); padding-right: 5px; }
+.chip-token .chip-x {
+  background: none; border: none; cursor: pointer; padding: 0 3px;
+  color: inherit; font-size: 1rem; line-height: 1; opacity: 0.65;
+}
+.chip-token .chip-x:hover { opacity: 1; }
+.chip-token.chip-empty { background: none; border-style: dashed; border-color: var(--border-strong); color: var(--text-muted); }
+/* From the lexicon: taking it stamps derived provenance, typing your own does
+   not. The colour marks that consequence, which is why it is not the accent. */
+.chip-lex { border-color: var(--dict-accent); color: var(--dict-accent); }
+.chip-lex .chip-meta { color: var(--dict-accent); opacity: 0.7; }
+/* Interactive chip (toggle) */
+/* Semantic read-only chip variants */
+.chip.chip-warn { background: var(--edit-bg); color: var(--edit-accent); border-color: var(--edit-border); }
+.chip.chip-ok   { background: #e6f3ec; color: #1a6640; border-color: #b9e0c9; }
+/* Inner meta/type label inside a chip */
+.chip-meta { font-size: 0.7rem; color: var(--text-muted); }
+
+/* ── S4 — Collapsible secondary sections in sentence view ────────────────── */
+/* Row that holds all collapsed-or-expanded secondary section controls */
+.sec-fold-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+/* Collapsed state: .sec-fold without .open — rendered as a .chip.chip-choice
+   (those classes are already on the element, CSS here is the shared base) */
+/* Expanded state wrapper */
+.sec-fold.open {
+  width: 100%; display: flex; flex-direction: column; gap: 6px;
+}
+/* Expanded header button — mimics a small section label with a caret */
+.sec-fold-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--text-muted); background: none; border: none;
+  padding: 0; cursor: pointer; font-family: var(--font);
+  transition: color .12s;
+}
+.sec-fold-btn:hover { color: var(--accent); }
+.sec-fold-btn i { font-size: 14px; }
+/* Body shown when expanded */
+.sec-fold-body { margin-left: 2px; }
+
+/* ── S5 — Type scale + spacing scale ────────────────────────────────────── */
+/* Tokens (added to :root alongside the existing palette tokens above) */
+:root {
+  /* 5-step type scale */
+  --t-xs:   0.72rem;   /* prov meta, captions */
+  --t-sm:   0.80rem;   /* secondary labels, chips, small UI text */
+  --t-base: 0.88rem;   /* default component text */
+  --t-md:   0.92rem;   /* prominent labels, edit inputs */
+  --t-lg:   1.00rem;   /* section headings */
+
+  /* 5-step spacing scale */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+}
+
+/* Type utilities */
+.text-xs   { font-size: var(--t-xs); }
+.text-sm   { font-size: var(--t-sm); }
+.text-base { font-size: var(--t-base); }
+.text-md   { font-size: var(--t-md); }
+.text-lg   { font-size: var(--t-lg); }
+
+/* Colour utilities */
+.text-muted  { color: var(--text-muted); }
+.text-dim    { color: var(--text-dim); }
+.text-accent { color: var(--accent); }
+
+/* Style utilities */
+.text-italic { font-style: italic; }
+
+/* Spacing utilities — margin-top */
+.mt-1 { margin-top: var(--sp-1); }
+.mt-2 { margin-top: var(--sp-2); }
+.mt-3 { margin-top: var(--sp-3); }
+.mt-4 { margin-top: var(--sp-4); }
+.mt-5 { margin-top: var(--sp-5); }
+
+/* Spacing utilities — margin-bottom */
+.mb-1 { margin-bottom: var(--sp-1); }
+.mb-2 { margin-bottom: var(--sp-2); }
+.mb-3 { margin-bottom: var(--sp-3); }
+
+/* ── S6 — App footer (replaces inline style block) ───────────────────────── */
+#app-footer {
+  margin-top: 2rem; padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--t-sm); color: var(--text-muted);
+  display: flex; flex-wrap: wrap;
+  gap: 0.4rem 1.2rem; align-items: baseline;
+}
+#app-footer a { color: var(--text-muted); }
+#app-footer a:hover { color: var(--accent); }
+
+/* ── B2 — Translation settings: live status strip (R2) ───────────────────── */
+.xlate-status-strip {
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.xlate-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+.xlate-status-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.xlate-status-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+}
+.xlate-status-note {
+  color: var(--text-muted);
+  margin-left: auto;
+}
+/* Status indicator dot */
+.xlate-status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.xlate-status-dot.ok      { background: #2d8a55; }
+.xlate-status-dot.err     { background: #c04040; }
+.xlate-status-dot.warn    { background: var(--edit-accent); }
+.xlate-status-dot.checking { background: var(--text-muted); }
+:root[data-theme="dark"] .xlate-status-dot.ok  { background: #5fc489; }
+:root[data-theme="dark"] .xlate-status-dot.err { background: #e06060; }
+
+/* ── B2 — NLLB setup cmd rows with copy buttons (R3) ────────────────────── */
+.xlate-cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+.xlate-cmd-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  min-width: 74px;
+  flex-shrink: 0;
+}
+.xlate-cmd-code {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--surface-dim);
+  border-radius: 3px;
+  padding: 3px 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+/* ── B2 — In-pane language-fit warning in sentence view (R4) ─────────────── */
+.xlate-lang-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: var(--edit-bg);
+  border: 0.5px solid var(--edit-border);
+  border-radius: var(--r);
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  color: var(--edit-accent);
+  margin-top: 8px;
+}
+.xlate-lang-warn i { font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+
+/* D22/D — configurable server URL row inside NLLB hint */
+.xlate-url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.xlate-url-row .xlate-cmd-label { flex-shrink: 0; }
+.xlate-url-input {
+  flex: 1;
+  font-size: 0.82rem;
+  font-family: var(--mono);
+  padding: 3px 7px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  min-width: 0;
+}
+.xlate-url-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* D22/A — inline Start/Stop button in status strip server row */
+.xlate-srv-btn {
+  margin-left: 6px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ── D23 P3: pinned examples ─────────────────────────────────────────────── */
+
+/* Pin/unpin button — sits inline at the right of example rows */
+.dict-pin-btn {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  font-size: 0.8rem;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.12s, color 0.12s;
+}
+.dict-example:hover .dict-pin-btn,
+.dict-pin-btn:focus { opacity: 1; }
+.dict-pin-btn.unpin { opacity: 0.7; color: var(--dict-accent); border-color: var(--dict-accent); }
+.dict-pin-btn.unpin:hover { opacity: 1; }
+
+/* Auto-discovered example: nav span takes flex:1, pin button sits at the right */
+.dict-example-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+.dict-example-nav:hover .dict-example-text { text-decoration: underline; }
+
+/* Pinned examples section */
+.dict-pinned-section { margin-bottom: 2px; }
+.dict-pinned-example {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  padding-right: 34px;   /* space for the unpin button */
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 5px;
+  font-size: 0.88rem;
+}
+.dict-pinned-example .dict-pin-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.dict-pinned-nav { cursor: pointer; }
+.dict-pinned-nav:hover .dict-pinned-text { text-decoration: underline; }
+.dict-pinned-text { line-height: 1.5; }
+.dict-pinned-trans {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.dict-pinned-gloss {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* "Add typed example" button */
+.dict-add-manual-btn {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+.dict-add-manual-btn:hover { opacity: 1; }
+
+/* Inline manual example form */
+.dict-manual-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 10px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg);
+}
+.dict-mf-textarea { resize: vertical; min-height: 48px; }
+.dict-mf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* ── D23 P1: dict entry — new fields ─────────────────────────────────────── */
+
+/* Semantic domain chip in the entry head row */
+.dict-domain-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--dict-dim);
+  color: var(--dict-accent);
+  border: 0.5px solid var(--dict-accent);
+  white-space: nowrap;
+}
+
+/* Small label prefix used before meaning, usage_notes, allomorphs in the view */
+.dict-section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Usage notes block */
+.dict-usage-notes {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Allomorphs container in dict view */
+.dict-allomorphs {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+}
+.allomorphs-view { display: flex; flex-direction: column; gap: 2px; }
+.allomorph-view-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+.allomorph-view-form {
+  font-family: var(--mono);
+  font-size: 0.83rem;
+}
+.allomorph-view-env {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* Allomorphs editor rows (D23 P2) */
+.allomorph-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.allomorph-row .allomorph-form { flex: 1; min-width: 0; }
+.allomorph-row .allomorph-env  { flex: 2; min-width: 0; }
+
+/* Version footer in the help sidebar (v3.14.88).
+   NB: --font-mono and --surface-raised do NOT exist — they were B-006 and B-003,
+   fixed in v3.14.51 by removing their uses. Written here on first draft anyway;
+   theme_audit_test.js caught both. Use --surface-dim and a literal mono stack. */
+/*
+   Deliberately quiet — it is reference information, not a control — but
+   clickable, because copying the build string is the point. */
+#help-version {
+  padding: var(--sp-2, .5rem) var(--sp-3, .75rem);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: all;
+  word-break: break-word;
+}
+#help-version:hover  { color: var(--text); background: var(--surface-dim); }
+#help-version:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ── S1 · lemma resolution strip (LINKING_AUDIT §8 S1) ───────────────────────
+   Says what saving WILL do, under the lemma field, before the save. Uses only
+   tokens that exist in :root — B-003 and B-006 were both invented variables
+   that silently rendered as nothing, and theme_audit_test.js checks for it. */
+
+/* S2 · a morpheme row that carries a real dictionary link */
+.morph-link-badge { display: inline-flex; align-items: center; margin-left: var(--sp-1); color: var(--dict-accent); }
+.morph-link-badge .ph-icon { width: 0.9em; height: 0.9em; }
+/* B-197: the linked entry disagrees with what this row now says. Beside the
+   link badge, because it is a statement ABOUT that link. */
+.morph-link-clash { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--sp-1); }
+.mlc-warn { font-size: 0.72rem; color: var(--warn-text); }
+.mlc-unlink {
+  padding: 0 6px; font: inherit; font-size: 0.7rem; line-height: 1.6;
+  border: 1px solid var(--border-strong); border-radius: var(--r);
+  background: var(--surface); color: var(--accent); cursor: pointer;
+}
+.mlc-unlink:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+/* ── D35 stage B: the homograph chooser (v3.14.277) ──────────────────────────
+   Deliberately .lex-card's shell with a list body. An ambiguous form and a
+   resolved one are the same kind of object in two states, so they share a
+   border, a fill and a header rule; only the body differs. Everything here is a
+   token, so dark mode needs no override of its own. */
+.amb-card {
+  margin-top: 24px; border: 1px solid var(--dict-accent);
+  border-radius: calc(var(--r) * 2); background: var(--dict-dim); overflow: hidden;
+}
+.amb-hdr {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 7px 14px; border-bottom: 1px solid var(--dict-accent);
+}
+.amb-title { font-size: 0.7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--dict-accent); }
+.amb-state { font-size: 0.72rem; color: var(--dict-accent); opacity: .8; }
+.amb-list  { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+/* A <button>, so it is tabbable and operable without a keyboard handler of its
+   own (ui_wiring_test.js). The hover is .morph-col.clickable's — the app's
+   existing "this dictionary thing responds" treatment. */
+.amb-row {
+  display: grid; grid-template-columns: auto auto 1fr auto;
+  align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 9px 12px; border-radius: var(--r);
+  background: var(--surface); border: 1px solid transparent;
+  font-family: var(--font); font-size: 0.82rem; color: var(--text);
+  cursor: pointer; transition: box-shadow .12s, background .12s;
+}
+.amb-row:hover, .amb-row:focus-visible { box-shadow: 0 0 0 1px var(--dict-accent); outline: none; }
+.amb-form    { font-family: var(--mono); font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.amb-mid     { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.amb-gloss   { font-family: var(--mono); font-size: 0.82rem; color: var(--accent); font-weight: 500; }
+.amb-meaning { font-size: 0.78rem; color: var(--text-muted); font-style: italic;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Not a .chip: a chip is a value you take (D44), this is an action on a row. */
+.amb-pick {
+  font-size: 0.75rem; color: var(--dict-accent); border: 1px solid var(--dict-accent);
+  border-radius: 99px; padding: 3px 11px; white-space: nowrap; transition: background .12s, color .12s;
+}
+.amb-row:hover .amb-pick, .amb-row:focus-visible .amb-pick { background: var(--dict-accent); color: var(--on-accent); }
+
+.amb-foot { padding: 6px 14px; border-top: 1px solid var(--dict-accent); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.amb-new  { font-size: 0.76rem; color: var(--dict-accent); background: none; border: none;
+            padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-family: var(--font); }
+.amb-new:hover { color: var(--text); }
+.amb-note { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+
+/* D45: candidates past the fourth fold rather than truncate. */
+.amb-fold-sum { list-style: none; cursor: pointer; padding: 4px 14px 8px;
+                font-size: 0.75rem; color: var(--dict-accent); }
+.amb-fold-sum::-webkit-details-marker { display: none; }
+.amb-fold-sum::before { content: '▸ '; }
+.amb-fold[open] > .amb-fold-sum::before { content: '▾ '; }
+.amb-fold[open] > .amb-fold-sum { padding-bottom: 0; }
+
+/* D35 B3: the card is a derived value, so it takes D43's mark for one — quiet,
+   on the label, with who and when on hover. */
+.auto-mark { font-size: 0.68rem; font-weight: 400; letter-spacing: 0; text-transform: none;
+             color: var(--text-muted); font-style: italic; }
+.lex-card-acts { display: flex; align-items: baseline; gap: 14px; }
+.lex-card-not  { font-size: 0.76rem; color: var(--dict-accent); background: none; border: none;
+                 padding: 0; cursor: pointer; opacity: .85; font-family: var(--font);
+                 text-decoration: underline; text-underline-offset: 2px; }
+.lex-card-not:hover, .lex-card-not:focus-visible { opacity: 1; }
+
+/* ── D35 B5: the lemma group view (v3.14.282) ────────────────────────────────
+   A lemma is not a dictionary entry (A2), so this is not the dict view with a
+   different title. It is two lists that make two different claims — an ENTRY
+   carrying `lemma_id` is a statement about the lexeme, a TOKEN carrying it is a
+   per-occurrence annotation — and they are drawn apart for that reason. Violet
+   throughout, because a lemma belongs to the lexicon side. Tokens only. */
+.lg-head { margin-bottom: 18px; }
+.lg-title { font-size: 1.8rem; font-weight: 700; line-height: 1.2; font-family: var(--mono); }
+.lg-sub   { font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.lg-section { margin-top: 18px; border: 1px solid var(--dict-accent);
+              border-radius: calc(var(--r) * 2); background: var(--dict-dim); overflow: hidden; }
+.lg-section-hdr { display: flex; align-items: center; justify-content: space-between;
+                  padding: 7px 14px; border-bottom: 1px solid var(--dict-accent); }
+.lg-section-title { font-size: 0.7rem; font-weight: 700; letter-spacing: .06em;
+                    text-transform: uppercase; color: var(--dict-accent); }
+.lg-count { font-size: 0.72rem; color: var(--dict-accent); opacity: .8; font-family: var(--mono); }
+
+/* Same row component as the homograph chooser, and deliberately so: both are
+   "one of several things you can go to from here". */
+.lg-row { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center;
+          gap: 10px; width: 100%; text-align: left;
+          padding: 9px 12px; margin: 6px 8px; width: calc(100% - 16px);
+          border-radius: var(--r); background: var(--surface); border: 1px solid transparent;
+          font-family: var(--font); font-size: 0.82rem; color: var(--text); cursor: pointer;
+          transition: box-shadow .12s; }
+.lg-row:hover, .lg-row:focus-visible { box-shadow: 0 0 0 1px var(--dict-accent); outline: none; }
+.lg-form  { font-family: var(--mono); font-size: 0.95rem; font-weight: 600; }
+.lg-mid   { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.lg-gloss { font-family: var(--mono); font-size: 0.82rem; color: var(--accent); font-weight: 500; }
+.lg-ctx   { font-size: 0.78rem; color: var(--text-muted); font-style: italic;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The arrow is decoration and comes from here, not from the markup: a literal
+   in a renderer ships in English in every locale (locale_key_test.js). */
+.lg-go::after { content: '\2192'; color: var(--dict-accent); font-size: 0.9rem; }
+.lg-empty { padding: 10px 14px; font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+/* D35 B6: offered, never swept. */
+.lg-orphan { margin-top: 14px; padding: 9px 14px; display: flex; align-items: center;
+             gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--warn-text);
+             background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: var(--r); }
+.lg-del { margin-left: auto; font-size: 0.76rem; font-family: var(--font);
+          color: var(--danger); background: none; border: 1px solid var(--danger);
+          border-radius: var(--r); padding: 3px 11px; cursor: pointer; }
+.lg-del:hover, .lg-del:focus-visible { background: var(--danger); color: var(--on-accent); }
+
+/* The lemma value on the Lexicon card navigates; it read as plain text until
+   B5 gave it somewhere to go. */
+.lg-link { background: none; border: none; padding: 0; cursor: pointer;
+           font-family: var(--mono); font-size: inherit; color: var(--dict-accent);
+           text-decoration: underline; text-underline-offset: 2px; text-align: left; }
+.lg-link:hover, .lg-link:focus-visible { color: var(--text); }
+
+/* ── D34 progress panel (v3.14.308) ───────────────────────────────────────────
+   The queue, decided at v3.14.305. Colour comes from the same tokens the rest of
+   the app uses, so both themes are covered by the palette rather than by a
+   second set of dark overrides — the hazard theme_audit_test exists for. Every
+   interactive element sets `color` explicitly, because a <button> does not
+   inherit it (B-001). */
+/* B-162, v3.14.332. The shared modal rule above sets `overflow: hidden` and no
+   height, which is safe for `#save-panel-box`, `#ncs-box` and `#mf-box` because
+   each holds a fixed number of rows — by accident, not by rule. This one's
+   height is a function of the field table and of how many fields the annotator
+   has chosen to track, so it was always going to outgrow it; v3.14.319's
+   tracking toggle, which put ~13 untracked rows in the fold, is simply when.
+
+   A CENTRED BOX GROWS OFF BOTH EDGES. `translate(-50%, -50%)` means passing the
+   viewport pushes rows off the bottom AND the panel's own header off the top, so
+   there was nothing left to scroll with even if it had scrolled.
+
+   The header stays put and the BODY scrolls: a close button that leaves with the
+   content is how a panel becomes a trap. `min-height: 0` because a flex child's
+   default `min-height: auto` refuses to shrink below its content, which is the
+   usual reason an `overflow-y: auto` inside a flex column does nothing. */
+#gap-panel-box {
+  width: 420px;
+  max-height: 82vh;
+  display: flex; flex-direction: column;
+}
+#gap-panel-box .sp-header { flex: 0 0 auto; }
+#gap-panel-box .sp-body   { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+#gap-panel-body { gap: 18px; }
+
+.gq-sec { display: flex; flex-direction: column; gap: 7px; }
+.gq-lab {
+  font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.gq-list { display: flex; flex-direction: column; gap: 5px; }
+
+/* One live row. The count leads, the verb carries it. */
+.gq-row {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  text-align: left; font: inherit; color: var(--text);
+  padding: 7px 9px; border: 1px solid var(--border);
+  border-radius: var(--r); background: var(--surface); cursor: pointer;
+}
+.gq-row:hover { border-color: var(--accent); background: var(--accent-dim); }
+/* A row with nowhere to go: reported, not clickable. Flat rather than disabled,
+   because there is nothing wrong with it — D30 simply does not traverse
+   sections and paragraphs yet. */
+.gq-row-flat { cursor: default; background: none; border-style: dashed; }
+.gq-row-flat:hover { border-color: var(--border); background: none; }
+
+/* D34 stage E: the × that stops tracking a row. A sibling of the row rather than
+   a child — a button inside a button is invalid markup and the inner click never
+   arrives. Hidden until hover or keyboard focus, so the resting queue is exactly
+   what v3.14.305 decided; `:focus-visible` is what keeps it reachable without a
+   mouse. Every one of these sets `color` explicitly: a <button> does not inherit
+   it, which is B-001. */
+.gq-wrap { display: flex; align-items: center; gap: 2px; margin-bottom: 5px; }
+.gq-wrap > .gq-row, .gq-wrap > .gq-row-flat { flex: 1; margin-bottom: 0; }
+.gq-off {
+  flex: 0 0 auto; background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 3px 4px; border-radius: 4px;
+  display: flex; opacity: 0;
+}
+.gq-wrap:hover .gq-off, .gq-off:focus-visible { opacity: 1; }
+.gq-off:hover { color: var(--danger); background: var(--surface-dim); }
+
+/* The fold's buttons stay visible: it is the list you open in order to change
+   what is counted, so hiding the control there would hide the feature. */
+.gq-on {
+  margin-left: 8px; flex: 0 0 auto; font: inherit; font-size: 0.68rem;
+  padding: 0 6px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--accent);
+}
+.gq-on:hover { background: var(--accent-dim); color: var(--accent-hover); }
+.gq-on-off { color: var(--text-muted); }
+.gq-on-off:hover { color: var(--danger); background: var(--surface-dim); }
+.gq-n {
+  font-weight: 700; font-size: 0.95rem; color: var(--accent);
+  min-width: 34px; text-align: right;
+}
+.gq-t { flex: 1; font-size: 0.85rem; }
+.gq-go { color: var(--text-muted); display: flex; }
+.gq-row:hover .gq-go { color: var(--accent); }
+.gq-done { font-size: 0.85rem; color: var(--success); }
+
+/* The collapsed line. It names every row it hides and why; shortening it to a
+   count is what would make the panel untrustworthy when it is doubted. */
+.gq-fold { margin-top: 3px; }
+.gq-fold summary {
+  cursor: pointer; font-size: 0.75rem; color: var(--text-muted); list-style: none;
+}
+.gq-fold summary::-webkit-details-marker { display: none; }
+.gq-fold summary::before { content: '\25B8\00A0'; }
+.gq-fold[open] summary::before { content: '\25BE\00A0'; }
+.gq-why {
+  font-size: 0.75rem; color: var(--text-dim);
+  padding: 3px 0 0 14px; display: flex; gap: 6px;
+}
+.gq-why b { color: var(--text); font-weight: 600; }
+.gq-why-r { margin-left: auto; color: var(--text-muted); font-style: italic; }
+
+/* This session */
+.gq-srow { display: flex; gap: 8px; font-size: 0.83rem; color: var(--text); }
+.gq-sk { color: var(--text-muted); min-width: 62px; }
+.gq-none { font-size: 0.83rem; color: var(--text-muted); font-style: italic; }

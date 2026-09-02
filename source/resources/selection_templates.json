@@ -1,0 +1,252 @@
+[
+  {
+    "pos": "VERB",
+    "label": "intransitive",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "VERB",
+    "label": "transitive",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      },
+      {
+        "category": "NOUN",
+        "relation": "direct object",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "VERB",
+    "label": "ditransitive",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      },
+      {
+        "category": "NOUN",
+        "relation": "direct object",
+        "status": "obligatory"
+      },
+      {
+        "category": "NOUN",
+        "relation": "indirect object",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "VERB",
+    "label": "clausal complement",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      },
+      {
+        "category": "CLAUSE",
+        "relation": "complement",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "VERB",
+    "label": "adpositional argument",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      },
+      {
+        "category": "ADP",
+        "relation": "oblique",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADJ",
+    "label": "attributive",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "modification",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADJ",
+    "label": "predicative",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "subject",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADJ",
+    "label": "adpositional complement",
+    "selects": [
+      {
+        "category": "ADP",
+        "relation": "complement",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADV",
+    "label": "verb modifier",
+    "selects": [
+      {
+        "category": "VERB",
+        "relation": "modification",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADV",
+    "label": "clause modifier",
+    "selects": [
+      {
+        "category": "CLAUSE",
+        "relation": "modification",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "NOUN",
+    "label": "clausal complement",
+    "selects": [
+      {
+        "category": "CLAUSE",
+        "relation": "complement",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "NOUN",
+    "label": "adpositional complement",
+    "selects": [
+      {
+        "category": "ADP",
+        "relation": "complement",
+        "status": "optional"
+      }
+    ]
+  },
+  {
+    "pos": "NOUN",
+    "label": "possessor",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "possessor",
+        "status": "optional"
+      }
+    ]
+  },
+  {
+    "pos": "ADP",
+    "label": "nominal complement",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "complement",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "ADP",
+    "label": "case marking",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "case marking",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "DET",
+    "label": "determination",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "determination",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "NUM",
+    "label": "quantification",
+    "selects": [
+      {
+        "category": "NOUN",
+        "relation": "quantification",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "LINK",
+    "label": "clause linking",
+    "selects": [
+      {
+        "category": "CLAUSE",
+        "relation": "linking",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "COORD",
+    "label": "coordination",
+    "selects": [
+      {
+        "category": "PHRASE",
+        "relation": "linking",
+        "status": "obligatory"
+      },
+      {
+        "category": "PHRASE",
+        "relation": "linking",
+        "status": "obligatory"
+      }
+    ]
+  },
+  {
+    "pos": "AUX",
+    "label": "verbal complement",
+    "selects": [
+      {
+        "category": "VERB",
+        "relation": "complement",
+        "status": "obligatory"
+      }
+    ]
+  }
+]

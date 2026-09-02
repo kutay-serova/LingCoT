@@ -1,0 +1,11 @@
+[
+  { "tag": "word",            "description": "standard dictionary word entry" },
+  { "tag": "bound.morpheme",  "description": "affix or bound morpheme (prefix, suffix, infix)" },
+  { "tag": "phrase",          "description": "multi-word expression or idiom" },
+  { "tag": "functional.word", "description": "grammatical function word (article, conjunction, etc.)" },
+  { "tag": "root",            "description": "lexical root (cannot stand alone)" },
+  { "tag": "stem",            "description": "inflectional or derivational stem" },
+  { "tag": "interjection",    "description": "exclamation or discourse marker" },
+  { "tag": "symbol",          "description": "symbol or non-alphabetic token" },
+  { "tag": "punctuation",     "description": "punctuation mark" }
+]

@@ -1,0 +1,95 @@
+MIT License
+
+Copyright (c) 2026 Kutay Serova
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+───────────────────────────────────────────────────────────────────────────────
+Third-Party Tools and Acknowledgements
+───────────────────────────────────────────────────────────────────────────────
+
+This software makes use of the following third-party tools and services.
+Their licenses and terms apply independently to their respective components.
+
+NLLB-200 (No Language Left Behind)
+  Offline neural machine translation model by Meta AI.
+  Used in: corpus_annotate.py, corpus_optimize.py, LingCoT.html
+  Model: nllb-200-distilled-600M (CTranslate2 format)
+  Source: https://github.com/facebookresearch/fairseq/tree/nllb
+  Paper:  https://arxiv.org/abs/2207.04672
+  License: CC-BY-NC 4.0 (model weights); MIT (fairseq code)
+
+Google Translate
+  Online neural machine translation service by Google LLC.
+  Used in: corpus_annotate.py, LingCoT.html
+  Access via the deep-translator Python library (MIT) or the Translate API.
+  Terms of service: https://policies.google.com/terms
+
+Noto Sans (Regular, Bold)
+  Typeface by Google, bundled for PDF export so exported IGT renders the same
+  on any machine. Version 2.008.
+  Used in: source/resources/fonts/, corpus PDF export
+  Copyright 2015-2021 Google LLC. All Rights Reserved.
+  Source: https://fonts.google.com/noto
+  License: SIL Open Font License 1.1
+  Full text: source/resources/fonts/OFL.txt
+
+Phosphor Icons
+  Icon set by Phosphor Icons. 35 Regular-weight glyphs are embedded as an
+  inline SVG sprite so the app needs no CDN.
+  Used in: source/LingCoT.html (#ph-sprite)
+  Copyright (c) 2023 Phosphor Icons
+  Source: https://github.com/phosphor-icons/core
+  License: MIT
+
+Claude (Anthropic)
+  Large language model used to aid software development of this project.
+  https://www.anthropic.com/claude
+  Claude assisted with architecture decisions, code generation, debugging,
+  documentation, and UI/UX design throughout this project.
+
+─────────────────────────────────────────────────────────────────────────────
+Standards and Reference Data
+─────────────────────────────────────────────────────────────────────────────
+
+The tag sets below follow published linguistic standards. The tag names are the
+standards' own; the descriptions and examples in the JSON files were written for
+this project. Listed for attribution, not because a licence requires it.
+
+Leipzig Glossing Rules
+  Gloss abbreviations in source/resources/leipzig_glosses.json.
+  Max Planck Institute for Evolutionary Anthropology and the University of
+  Leipzig. https://www.eva.mpg.de/lingua/resources/glossing-rules.php
+
+Universal Dependencies
+  POS tags (source/resources/pos_tags.json) and dependency relations
+  (source/resources/dep_relations.json). https://universaldependencies.org
+
+ISO 639 language codes
+  Code and alias table in source/resources/language_codes.json, alongside
+  BCP-47 tags and the NLLB and Stanza code sets.
+
+─────────────────────────────────────────────────────────────────────────────
+Not Distributed With This Repository
+─────────────────────────────────────────────────────────────────────────────
+
+The NLLB-200 model weights are CC-BY-NC 4.0, which is not compatible with an
+MIT repository. They are downloaded to source/models/ at setup time and that
+path is excluded by .gitignore. Do not commit them, and note that the
+non-commercial term follows the weights, not this software.

@@ -1,0 +1,120 @@
+# =============================================================================
+#  .gitignore
+# =============================================================================
+#  NOTE ON SYNTAX, learned the hard way at v3.14.153: git does NOT support a
+#  trailing comment on a pattern line. `source/models/  # weights` is the literal
+#  pattern "source/models/  # weights" and matches nothing. Every commented line
+#  in this file was therefore inert, including the two that keep 601 MB of
+#  CC-BY-NC model weights and 103 MB of developer history out of the repository.
+#  Comments go on their OWN line. Verified by `git check-ignore`, not by reading.
+# =============================================================================
+
+# ── Large / generated ─────────────────────────────────────────────────────────
+# dev/ SHIPS. The plans, the bug list, the edit log and all 68 guards are what
+# make this contributable; excluding the whole directory leaves a cloner with the
+# application and nothing else. Two parts of it do not ship.
+dev/archive/
+
+# repair_prov_dates.py keeps the pre-repair file beside the repaired one. The
+# repaired file is what ships; the backup is a local safety net, and the real
+# record of the change is the pre-edit copy in dev/archive/ plus the receipt in
+# .prov_date_repair.json. Shipping both would put two versions of the same
+# fixture in the repo, one of them known-wrong.
+*.b105-bak
+
+dev/_to_delete/
+
+# Stale pandoc renders of dev/BUGS.md and dev/DEV_PLAN.md, made once on
+# 2026-08-27. Nothing generates them, no edit-log entry records them, no guard
+# reads them, and BUGS.html's newest version reference is v3.14.99 — so they are
+# 1.3 MB of out-of-date duplicates of the two documents this project calls its
+# single source of truth. Scoped to `dev/`, deliberately: `source/LingCoT.html`
+# IS the application, and a bare `*.html` would exclude it.
+dev/*.html
+
+# NLLB weights, ~601 MB, CC-BY-NC 4.0 and so incompatible with an MIT repository.
+# LICENSE.txt states they are not distributed; this is what makes that true.
+source/models/
+
+# ── Python environment ────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ── Runtime / generated ───────────────────────────────────────────────────────
+# Machine-specific NLLB tuning, written by corpus_optimize.py.
+annotator_config.json
+# Holds only the generated config above, so nothing here is ever tracked.
+source/config/
+# Annotation resume files, written by corpus_annotate.py.
+*.cursor
+
+# ── Fieldwork: never commit ───────────────────────────────────────────────────
+# A participants file holds real people's names, affiliations, birth decades and
+# contact details, usually under a consent agreement that did not anticipate
+# worldwide publication. A corpus holds their recorded speech. Committed once,
+# either is in the history and in every fork and clone already taken.
+#
+# This is a DEFAULT, not a guarantee: `git add -f` overrides it, and a file that
+# is already tracked ignores it entirely. hooks/pre-commit is the check that
+# refuses; see the install line at the top of that file. Both, because each one
+# alone has a way past it.
+*_participants.jsonl
+*_corpus.jsonl
+*_dictionary.jsonl
+# Except the cleared, synthetic fixtures the guard suite runs against.
+#
+# B-156, v3.14.312: this negation is BROADER THAN ITS PURPOSE. It was written to
+# re-admit the three fixture files above, and because it names a whole subtree it
+# also re-admits anything else that lands there — including `*.b105-bak` (line
+# 23), which is ignored everywhere in the repository except under `samples/`,
+# where a later pattern won. Three backup files, 72 KB, would have gone into the
+# first commit: two versions of the same fixture, one of them the known-wrong one
+# line 23 exists to keep out.
+#
+# The same shape as the v3.14.153 defect this file's header commemorates — a
+# pattern that reads as active and is inert — except that here it is inert only
+# for a subset of paths, which is why reading the file did not show it. Found by
+# `dev/tools/ship_disclosure.py` on its first run, before `git init` rather than
+# after, which is the whole argument for running it.
+#
+# Re-stated after the negation rather than by narrowing it: `!samples/**` is
+# doing a job, and a cleverer glob that did both jobs would be one nobody could
+# read. `gitignore_test.js` holds BOTH directions, so neither this line nor the
+# negation above can be widened without a failure.
+!samples/**
+samples/**/*.b105-bak
+
+# And the purpose-built specimens under dev/tests/fixtures/, for the same reason
+# and by the same mechanism.
+#
+# B-205, v3.14.389: `cli_ingested/` is `corpus_ingest.py`'s own output, built at
+# v3.14.386 so `prov_intern_test`'s "not yet interned, must shrink" branch has a
+# fixture again. It is named `cli-ingested_corpus.jsonl`, because that is the
+# name the CLI writes and the loader resolves — so `*_corpus.jsonl` above caught
+# it, and **the first commit would have shipped a guard that fails on a fresh
+# clone**: the guard checks the file exists and fails when it does not, which is
+# correct and would have been the cloner's first impression of this project.
+#
+# The same shape as B-156, and found the same way — by asking git rather than by
+# reading this file. The negation is scoped to the fixture directory rather than
+# widened, and `gitignore_test.js` holds both directions.
+!dev/tests/fixtures/**
+dev/tests/fixtures/**/*.b105-bak
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+# Ignored as a DIRECTORY rather than by extension: session logs record absolute
+# paths, so they carry a home directory (328 occurrences across 28 files as of
+# v3.14.153), and a non-.log file dropped in here would otherwise be committed.
+logs/*
+!logs/.gitkeep
+
+# ── Packaging output ──────────────────────────────────────────────────────────
+# Build artefacts belong in dev/archive/packaging/, not at the repository root.
+# An abandoned zip temp sat at the root for two days before anyone noticed it.
+*.zip
+
+# ── OS noise ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

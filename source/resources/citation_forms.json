@@ -1,0 +1,67 @@
+{
+  "_doc": [
+    "D61 source 3: how a lemma is WRITTEN, per language. Keyed by the canonical",
+    "language code that refreshFoldContext resolves metadata.language to (tur, zho, …).",
+    "",
+    "This file exists so the app can propose a citation form from the root the",
+    "morphological parse already names — 'yürü-' + this table = 'yürümek'. It is",
+    "data and not code for the same reason pos_tags.json is: a project working on",
+    "a language nobody has written a rule for should be able to add one without",
+    "touching the app.",
+    "",
+    "IT MUST BE ABLE TO SAY NOTHING. A language with no entry, or an entry with no",
+    "rule for the part of speech in hand, yields NO proposal — not a guess. That is",
+    "the whole reason source 3 is separable from sources 1 and 2: a suggestion",
+    "mechanism that cannot say 'I have nothing' is the one that gets believed when",
+    "it is wrong. `zho` below is present and empty on purpose: Mandarin has no",
+    "citation morphology, and an empty object is the honest answer, not an omission.",
+    "",
+    "SHAPE",
+    "  <lang>.vowels   optional. Named vowel classes, for harmony. Each value is a",
+    "                  string of the vowels in that class.",
+    "  <lang>.pos      part-of-speech tag (as pos_tags.json spells it) → rule.",
+    "  rule.suffix     a fixed suffix. '' means the citation form IS the root.",
+    "  rule.harmony    the name of a vowels class set to choose between, by the",
+    "                  LAST vowel of the root. Requires rule.alternants.",
+    "  rule.alternants class name → suffix, for a harmony rule.",
+    "",
+    "Nothing here changes a stored value. A proposal is text in a field until the",
+    "annotator accepts it, and an accepted one is stamped derived (B-165)."
+  ],
+
+  "tr": {
+    "vowels": {
+      "back":  "aıouâû",
+      "front": "eiöü"
+    },
+    "pos": {
+      "VERB": { "harmony": "back/front", "alternants": { "back": "mak", "front": "mek" } },
+      "AUX":  { "harmony": "back/front", "alternants": { "back": "mak", "front": "mek" } },
+      "NOUN": { "suffix": "" },
+      "PROPN": { "suffix": "" },
+      "ADJ":  { "suffix": "" },
+      "ADV":  { "suffix": "" },
+      "NUM":  { "suffix": "" },
+      "PRON": { "suffix": "" }
+    }
+  },
+
+  "zh": {},
+
+  "en": {
+    "pos": {
+      "VERB": { "suffix": "" },
+      "NOUN": { "suffix": "" },
+      "ADJ":  { "suffix": "" },
+      "ADV":  { "suffix": "" }
+    }
+  },
+
+  "ko": {
+    "pos": {
+      "VERB": { "suffix": "다" },
+      "ADJ":  { "suffix": "다" },
+      "NOUN": { "suffix": "" }
+    }
+  }
+}

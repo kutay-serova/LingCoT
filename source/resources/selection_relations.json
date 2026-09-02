@@ -1,0 +1,16 @@
+[
+  { "tag": "subject",         "description": "The selected item is the subject." },
+  { "tag": "direct object",   "description": "The selected item is the direct object." },
+  { "tag": "indirect object", "description": "The selected item is the indirect object, typically a recipient." },
+  { "tag": "complement",      "description": "A non-subject argument selected by this entry, contributing its own lexical content. 'rumour that he left'. For an adposition or affix that only marks a role, use 'case marking'." },
+  { "tag": "argument",        "description": "An argument whose more specific relation is not being distinguished." },
+  { "tag": "modification",    "description": "This entry adds a property to the selected item. Adjective-noun, adverb-verb, and adjuncts. Not determiners or numerals — see 'determination' and 'quantification'." },
+  { "tag": "adjunct",         "description": "An optional non-selected dependent, when you want it distinguished from modification." },
+  { "tag": "oblique",         "description": "A non-core argument of this entry, often case- or adposition-marked. This is the ARGUMENT's relation to its verb; for the marker's own relation to what it marks, use 'case marking'." },
+  { "tag": "possessor",       "description": "The selected item is the possessor." },
+
+  { "tag": "determination",   "description": "This entry fixes the reference of the selected item — definiteness, deixis or specificity. Determiner-noun: 'the dog', 'this dog'. Adds no property, so it is not modification." },
+  { "tag": "quantification",  "description": "This entry specifies the quantity or amount of the selected item. Numeral- or quantifier-noun: 'three dogs', 'many dogs'." },
+  { "tag": "case marking",    "description": "This entry marks the grammatical role of the selected item without contributing lexical content of its own. Case-marking adpositions, clitics and affixes. Contrast 'complement', where the adposition has its own meaning." },
+  { "tag": "linking",         "description": "This entry joins the selected item into a larger structure — subordinator, complementizer or coordinator." }
+]

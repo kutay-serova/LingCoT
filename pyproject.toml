@@ -1,0 +1,94 @@
+[project]
+name = "corpus-builder"
+version = "1.2.0"
+description = "Linguistic corpus builder — ingestion, translation, and glossing pipeline"
+requires-python = ">=3.9"
+
+# ── Dependency tiers ───────────────────────────────────────────────────────────
+#
+# LingCoT ships in two installable tiers.  Pick one at environment-build time
+# (and upgrade in place later if you change your mind).
+#
+# minimal  (default)
+#   Ingestion (TXT/EPUB), online translation via Google Translate, and the
+#   LingCoT.html browser GUI.  Small install (~30 MB), no ML, no big downloads.
+#   Install with:   python3 build_env.py
+#   Install with:   python3 build_env.py --tier minimal   (same thing, explicit)
+#
+# nllb
+#   Everything in "minimal", plus the packages needed to run NLLB-200 offline
+#   translation (ctranslate2 + sentencepiece + numpy) and the one-time
+#   conversion pipeline (huggingface_hub + transformers + torch CPU wheel).
+#   After installing, download the model itself with:
+#       .venv/bin/python3 setup.py --nllb
+#   Install with:   python3 build_env.py --tier nllb
+#
+#   The upgrade path minimal → nllb is supported: just re-run
+#       python3 build_env.py --tier nllb
+#   (or .venv/bin/python3 setup.py --nllb, which will pull the tier up first).
+
+dependencies = [
+    # ── Desktop app ───────────────────────────────────────────────────────────
+    "pywebview>=4.0",            # native OS window wrapping LingCoT.html
+
+    # ── Ingestion ──────────────────────────────────────────────────────────────
+    "ebooklib>=0.18",            # EPUB reading
+    "beautifulsoup4>=4.12",      # HTML/EPUB extraction
+    "lxml>=4.9",                 # fast XML/HTML parser (beautifulsoup backend)
+
+    # ── Online translation ─────────────────────────────────────────────────────
+    "deep-translator>=1.11",     # thin wrapper around Google Translate free API
+    "requests>=2.28",            # HTTP client (online APIs)
+
+    # ── Shared utilities ───────────────────────────────────────────────────────
+    "tqdm>=4.65",                # progress bars (batch loops, downloads)
+]
+
+# ── Optional extras ────────────────────────────────────────────────────────────
+[project.optional-dependencies]
+
+# Offline translation — NLLB-200 via CTranslate2
+# These packages are needed both to RUN NLLB (ctranslate2 + sentencepiece +
+# numpy) and to DOWNLOAD + CONVERT the model once (huggingface_hub +
+# transformers + torch).  The conversion packages are only used during the
+# `setup.py --nllb` step, but we install them permanently so that re-running
+# the converter (e.g. after moving machines) doesn't require re-resolving.
+#
+# After installing, download the model weights:
+#     .venv/bin/python3 setup.py --nllb   (~1.2 GB transient → ~600 MB on disk)
+nllb = [
+    "ctranslate2>=4.7,<5",       # fast inference engine for NLLB-200 (runtime)
+    "sentencepiece>=0.2",        # FLORES-200 / NLLB tokeniser     (runtime)
+    "numpy>=1.24,<3",            # numerical; 1.24+ satisfies both torch and ct2 4.x
+    "huggingface_hub>=0.24",     # snapshot_download for HF model (one-time use)
+    "transformers>=4.40",        # required by ct2-transformers-converter (one-time)
+    "torch>=2.2",                # required by transformers for .bin model loading
+                                 #   (CPU-only wheel pulled via [tool.uv.sources])
+]
+
+# PDF dictionary export — fpdf2 renders entries; python-bidi reorders RTL text
+# (Arabic, Hebrew, etc.) before fpdf2 draws it, since fpdf2 has no built-in bidi.
+# Install with:   python3 build_env.py --tier pdf
+pdf = [
+    "fpdf2>=2.7",                  # PDF generation (pure Python, supports TTF fonts)
+    "python-bidi>=0.6",            # Unicode bidi algorithm for RTL script support
+]
+
+# Development tools
+dev = [
+    "pytest>=8",
+    "mypy>=1.9",
+]
+
+# ── uv configuration ───────────────────────────────────────────────────────────
+[tool.uv]
+# PyTorch ships its own package index.  We always pull the CPU-only wheels,
+# which are ~200 MB instead of the ~2 GB CUDA builds.  No GPU is needed for
+# NLLB inference on typical hardware (ctranslate2 does its own CPU threading).
+[[tool.uv.index]]
+name     = "pytorch-cpu"
+url      = "https://download.pytorch.org/whl/cpu"
+explicit = true            # only used for packages listed in [tool.uv.sources]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  pre-commit — refuse to commit fieldwork participant records
+# =============================================================================
+#  .gitignore already excludes *_participants.jsonl. This exists because
+#  .gitignore is a default, not a guarantee: `git add -f` overrides it, a file
+#  already tracked ignores it entirely, and a path typed by hand can slip past a
+#  pattern. A participants file holds real people's names, affiliations, birth
+#  decades and contact details, usually collected under a consent agreement that
+#  did not anticipate worldwide publication — and a file committed once stays in
+#  the repository's history and in every fork and clone already taken.
+#
+#  Install (both commands, from the repository root):
+#      git config core.hooksPath hooks
+#      chmod +x hooks/pre-commit
+#
+#  `core.hooksPath` is used rather than copying into .git/hooks so the hook is
+#  versioned, reviewable, and present for anyone who clones. It is NOT automatic:
+#  git will not run a hook a clone has not opted into, so the config line is part
+#  of setting up a working copy.
+#
+#  To bypass deliberately (think first, then say why in the commit message):
+#      git commit --no-verify
+# =============================================================================
+set -u
+
+fail=0
+
+# ── 1. Participant records ────────────────────────────────────────────────────
+# samples/ is exempt BY PATH: the shipped fixture is synthetic and is the corpus
+# the guard suite runs against. Nothing else is exempt, and the exemption is one
+# literal prefix so it cannot quietly widen.
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *_participants.jsonl)
+      case "$f" in
+        samples/*) printf '  note: %s is the synthetic sample fixture, allowed\n' "$f" ;;
+        *)
+          printf '\n  REFUSED: %s\n' "$f"
+          printf '    A participants file holds real people'"'"'s names, affiliations and\n'
+          printf '    contact details. Committed once, it is in the history and in every\n'
+          printf '    fork forever. Corpora belong in ~/LingCoT-Data, not in this folder.\n'
+          fail=1 ;;
+      esac ;;
+  esac
+done <<< "$staged"
+
+# ── 2. Corpus files outside the two cleared locations ─────────────────────────
+# The same reasoning one step earlier: a corpus is the speech those participants
+# consented to record. B-041 put fieldwork inside this repository once already.
+#
+# B-206, v3.14.392: this listed `samples/` alone and refused the FIRST COMMIT.
+# `dev/tests/fixtures/` was created at v3.14.386 and admitted to .gitignore at
+# v3.14.389 (B-205); nothing told this file, so .gitignore and this hook — two
+# writers of one rule, "which cleared data may ship" — disagreed by one
+# directory. PRACTICES §4, and the third instance of the shape: B-156, B-205 and
+# this one are each a rule that named `samples/` and did not know about the
+# second legitimate location. All three were found by EXECUTING rather than
+# reading, and this one by the hook doing its job at the moment it exists for.
+#
+# Both prefixes are literal and neither ends in a wildcard segment, so the
+# exemption still cannot quietly widen. `gitignore_test.js` §B now executes THIS
+# FILE against every path .gitignore admits, so the two cannot drift again.
+#
+# NOTE the deliberate asymmetry with section 1: a participants file is exempt
+# under `samples/` ONLY. dev/tests/fixtures/ holds none today, and a hook that is
+# STRICTER than .gitignore fails safe — the looser direction is what B-206 was.
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    samples/*|dev/tests/fixtures/*) ;;
+    *_corpus.jsonl|*_dictionary.jsonl)
+      printf '\n  REFUSED: %s\n' "$f"
+      printf '    Corpora and dictionaries live in ~/LingCoT-Data. Only the cleared\n'
+      printf '    fixtures under samples/ and dev/tests/fixtures/ are distributed.\n'
+      fail=1 ;;
+  esac
+done <<< "$staged"
+
+# ── 3. Session logs ───────────────────────────────────────────────────────────
+# They record absolute paths, so they carry the developer's home directory, and
+# they are retained for many sessions unaudited.
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    logs/*.log)
+      printf '\n  REFUSED: %s\n' "$f"
+      printf '    Session logs contain absolute paths, so they leak a home directory.\n'
+      fail=1 ;;
+  esac
+done <<< "$staged"
+
+if [ "$fail" -ne 0 ]; then
+  printf '\n  Commit refused. Use --no-verify only if you know why this is wrong.\n\n'
+  exit 1
+fi
+exit 0
