@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  prepare-commit-msg — put the version in the subject line
+# =============================================================================
+#  WHY THIS EXISTS. `doc_integrity_test.js` §8b asks git the question the
+#  archive used to ask the filesystem — *did every file an entry says it touched
+#  actually change in that version?* — and it finds a version's commit by looking
+#  for the version string in the commit message. Seven versions of work were
+#  outside its reach because three commit messages did not carry one, so the
+#  check reported "across 1 version(s) with a commit" and was honest about
+#  covering almost nothing.
+#
+#  The alternative was to ask a person to type it. This project has been bitten
+#  three times by exactly that — BUGS.md would have rotted "if the bump did not
+#  own it" (new_version.py's own comment), RENAMES.md did rot five versions after
+#  being added by hand, and four root documents carried no stamp at all (B-208).
+#  **A rule stated in a comment and enforced by memory is not enforced.**
+#
+#  It EDITS, it never refuses. Unlike hooks/pre-commit this cannot block a
+#  commit: the worst it can do is leave the message as you wrote it.
+#
+#  Install (same as pre-commit — one config line covers both):
+#      git config core.hooksPath hooks
+#      chmod +x hooks/prepare-commit-msg
+#
+#  The version comes from source/version.py, which has been the single source of
+#  truth since v3.14.88. Never from a document header: those are bumped copies.
+# =============================================================================
+set -u
+
+MSG_FILE="$1"
+SOURCE="${2-}"
+
+# A merge or a squash writes its own subject and it is not one version's work.
+case "$SOURCE" in
+  merge|squash) exit 0 ;;
+esac
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+VERSION_PY="$ROOT/source/version.py"
+[ -f "$VERSION_PY" ] || exit 0
+
+# `__version__ = "3.14.401"` -> v3.14.401
+VER=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([0-9.]*\)".*/v\1/p' "$VERSION_PY" | head -1)
+[ -n "$VER" ] || exit 0
+
+# The first line that is neither blank nor a git comment is the subject. For a
+# `-m` commit that is line 1; for an editor commit the template sits below it.
+SUBJECT_NO=$(grep -n -m1 -vE '^[[:space:]]*($|#)' "$MSG_FILE" | cut -d: -f1)
+[ -n "$SUBJECT_NO" ] || exit 0
+SUBJECT=$(sed -n "${SUBJECT_NO}p" "$MSG_FILE")
+
+# Already carries A version — any version, not only the current one. An amend or
+# a reworded message must not collect a second stamp.
+case "$SUBJECT" in
+  *v[0-9].[0-9][0-9].[0-9]*|*v[0-9].[0-9].[0-9]*) exit 0 ;;
+esac
+
+# Prepend in place. `sed -i` is avoided: BSD and GNU disagree about its argument.
+TMP="$MSG_FILE.lingcot"
+awk -v n="$SUBJECT_NO" -v v="$VER" 'NR==n{print v " — " $0; next} {print}' "$MSG_FILE" > "$TMP" \
+  && cat "$TMP" > "$MSG_FILE" && rm -f "$TMP"
+exit 0

@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-09-03 · **Version:** v3.14.400
+**Updated:** 2026-09-03 · **Version:** v3.14.401
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its
@@ -77,8 +77,8 @@ table that did not before.
 
 ## 6. Guards
 
-**91 in `dev/tests/`. `run_all.sh` runs 89 by default — 89 pass, 0 disabled;
-`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 91.** Run `--slow`
+**92 in `dev/tests/`. `run_all.sh` runs 90 by default — 90 pass, 0 disabled;
+`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 92.** Run `--slow`
 before a release.
 
 **Two guards came out of gate 2 rather than out of the code.**
@@ -211,6 +211,7 @@ invisible to source-reading entirely.
 | **Launch it** | B-022–B-025 were all found this way, guards green throughout |
 | **Read `logs/`** | `node dev/tests/log_triage.js` does it; it caught B-024 unprompted and fails the suite on any unacknowledged WARNING+. Verbosity was deliberately not increased |
 | **Never log annotation content** | human-source fieldwork with publication restrictions, in files that persist 20 sessions unaudited |
+| **Install the hooks, and check git's mode not the file's** | `git config core.hooksPath hooks` covers both. Then `git update-index --chmod=+x hooks/*` — **not `chmod`**: git runs a hook only if it is executable *in the index*, says nothing when it is not, and `chmod` changes only the checkout. That divergence is **B-209**, and it meant the fieldwork refusal never ran on a clone. `hooks_executable_test.js` asks git |
 | **Package to a clean machine before believing green** | one hour found B-062, which eight versions of local work missed: `log()` never existed, but a corpus was already open locally so `applyCorpus` was never re-entered |
 
 ## 9. Writing docs

@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-03 · **Version:** v3.14.400
+**Updated:** 2026-09-03 · **Version:** v3.14.401
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,49 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## B-209 — the privacy hook has never run on a clone (2026-09-03)
+**Version:** v3.14.401 · **Type:** fix · **Archives:** `dev/archive/changes/b209_hooks_are_not_executable_in_git/` (v3.14.400)
+**Touched:** hooks/pre-commit · hooks/prepare-commit-msg (new) · dev/tests/hooks_executable_test.js (new) · dev/tests/gitignore_test.js · dev/BUGS.md · dev/PRACTICES.md
+
+**What was being built.** `hooks/prepare-commit-msg`, which puts the version from
+`source/version.py` into the subject line so `doc_integrity` §8b can find a
+version's commit. It edits and never refuses; merges and already-stamped messages
+are left alone. Executed against five message shapes, including an editor
+template and a multi-line body.
+
+**What building it found, and it is much worse.** `hooks/pre-commit` is mode
+**100644 in every commit, including the first.** Git runs a hook only if it is
+executable and **says nothing when it is not** — so the second of the two layers
+refusing fieldwork has never existed for anyone who cloned this repository, which
+has been public since v3.14.392.
+
+**Why nothing caught it: it fired.** B-206 was this hook refusing the first
+commit, for real. That worked because the author's WORKING COPY carried the bit
+from a `chmod +x` while the index recorded 100644 — and the working copy is the
+one git runs. A clone gets the index's version. Verified by cloning: the hook
+arrives `-rw-r--r--` and `[ -x ]` is false.
+
+**`chmod` is the trap.** It changes the checkout and leaves the index at 100644,
+which is exactly the state that produced this. The fix is
+`git update-index --chmod=+x`, and it is now the second half of the install line
+in PRACTICES §8 rather than a thing to know.
+
+**Guard.** `hooks_executable_test.js` asks **git** for the recorded mode
+(`ls-files -s`), not the filesystem — `statSync` answers about the checkout,
+which was the half that was already right and is not what ships. It also names
+the two hooks that must be tracked, so losing one is a failure rather than a
+smaller sweep. **Guard count 91 → 92.**
+
+**This guard is RED until the repository is repaired**, deliberately: the defect
+is in the index, not in a file I can edit, and index writes from this session
+have wedged the repository before. The command is in the guard's own failure
+output.
+
+**Verification.** `run_all.sh` — 88 passed, 2 failed: `hooks_executable_test.js`
+reporting B-209, and `doc_integrity` on this entry before it was written.
 
 ---
 

@@ -1,12 +1,12 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-03 · **Version:** v3.14.400
+**Updated:** 2026-09-03 · **Version:** v3.14.401
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **201 fixed**  |  **1 withdrawn** (B-096)
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **202 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -268,6 +268,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-209** | **S1** | v3.14.401 | **The privacy hook has never run on a clone.** `hooks/pre-commit` was mode **100644 in every commit**, including the first, and git skips a non-executable hook *silently* — so the second of the two layers refusing fieldwork did not exist for anyone who cloned. It looked fine because it fired for real at v3.14.392 (B-206): the author's working copy had the bit from a `chmod`, while the index recorded 100644, and the working copy is the one that ran. **`chmod` alone is the trap** — the fix is `git update-index --chmod=+x` |
 | **B-208** | S3 | v3.14.399 | **Four live documents carried no version stamp at all**, `README.md` and `setup.md` among them — the two a cloner reads first. `new_version.py`'s tuple never owned them, and its own comment already stated the rule after BUGS.md and RENAMES.md rotted the same way: *a live document the bump does not own rots by the next version.* **Third occurrence, so the fix is not another list**: `doc_integrity_test.js` now parses the bumper's tuple and asserts it against the tree |
 | **B-207** | S2 | v3.14.394 | **Every command setup printed failed.** `build_env.py` and `setup.py` live in `source/`, so their usage lines named paths relative to themselves — but `setup.command` leaves the user at the PROJECT ROOT, where `scripts/corpus_annotate.py` and `setup.py` do not exist. **67 occurrences across six files**, including the literal next step after a successful install. The `.command`/`.bat` launchers had it right, which is what hid it. Found by doing gate 2's fresh-machine install for real: clone the published repo, run setup, then run what it tells you |
 | **B-206** | S1 | v3.14.392 | **The hook refused the first commit.** `hooks/pre-commit` exempted `samples/` alone, so the CLI specimen admitted to `.gitignore` at B-205 was tracked by git and refused by the hook. Two writers of one rule — *which cleared data may ship* — disagreeing by one directory (PRACTICES §4), and the third instance of the shape after B-156 and B-205. `gitignore_test.js` §B now EXECUTES the hook against every path `.gitignore` admits, so they cannot drift again |
