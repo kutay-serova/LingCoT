@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-02 · **Version:** v3.14.397
+**Updated:** 2026-09-03 · **Version:** v3.14.400
 
 | § | What is in it |
 |---|---|
@@ -23,109 +23,20 @@ for any new cache.*
 
 ## 1. NEXT UP
 
-### The queue
+**Everything up to gate 2 is finished.** Gate 1 taken and published
+(v3.14.391–392), chains A and B closed (v3.14.358–379), the fixture swap executed
+(v3.14.384–386). **§5 indexes all of it.** What follows is only what is not done.
 
-**Chains A and B are complete at v3.14.294. Steps 7 and 8 closed at
-v3.14.384–385**, which empties this queue.
-Set v3.14.288, closed v3.14.294; the ordering held — each step made the next
-safe, and the bulk write went last.
+*Restructured v3.14.398: this section was 348 lines and 172 of them described
+finished work, so the answer to "what is next" was below the fold. Finished
+accounts are in §5 and in `edit_log.md`; procedures that outlive their occasion
+are in `PRACTICES.md`.*
 
-| # | Item | What | Why here |
-|---|---|---|---|
-| 1 | ~~**the save path** — B-110, B-149, B-150~~ | ✅ v3.14.289 | `source/modules/project_files.js` + its Python twin; `project_files_test.js` compares them |
-| 2 | ~~**B-143** number loaded homographs~~ | ✅ v3.14.290 | `buildDictIndex` numbers what it indexes. It was the prerequisite for 3–6 in general; it was **not** what made the reported 的 pair indistinguishable — those were numbered already |
-| 3 | ~~**D52** merge two entries~~ | ✅ v3.14.291 (A–C) | stage D remains, and it is step 4 |
-| 4 | ~~**B-154** the missing lemma record~~ | ✅ v3.14.292 | pinned to `applyDict`'s wholesale replace; D52 stage D is the repair |
-| 5 | ~~**B-114** a lemma discriminator~~ | ✅ v3.14.293 | the strip asks instead of refusing, and "a different one" is sayable |
-| 6 | ~~**B-123** the auto-link backfill~~ | ✅ v3.14.294 | ran last, as planned. `linkTo` over every unlinked token, previewed before it writes |
-| 7 | ~~**the fixture swap**~~ | ✅ **v3.14.384**, steps 1–4 of the procedure. `samples/` is `turkish-test` + `chinese-test`, byte-identical to the live corpora | the post-swap run matched the rehearsal **check for check** — the point of rehearsing. Step 5 (`ship_disclosure.py`, sign-off, `git init`) is gate 1's other half and is not this item |
-| 8 | ~~**the two Korean guards**~~ | ✅ **v3.14.385**, one version after the swap rather than in it. Both re-pointed at `turkish-test` + `chinese-test`, every golden rewritten by hand | **the suite has nothing disabled for the first time: 87 pass, 0 fail, 0 disabled.** They had been dark for 265 versions. Rewriting them found **B-203** — only the first transliteration under a label was searchable — which is the second bug the multi-element list has paid for |
+### What to do next
 
-**What the ordering bought.** B-143 first meant every later step could ask
-"which of these two?" and be answered. D52 before B-123 meant the backfill could
-not manufacture duplicates that nothing could undo — and the two 的 are exactly
-why: `chinese-test` has 3 tokens the backfill will not touch until they are one
-entry. B-123 last meant its bulk write ran against a lexicon every earlier step
-had already made legible.
-
-**Not blockers:** the remaining hollow guards (`suggest_mechanism`'s static half,
-`required_marker`'s §2–7), the retired-spelling absence assertions, the id-sort
-work. Tracked in `dev/audits/UNIFIED_AUDIT.md` — §1 ranks every open item and §2
-carries the bodies, reorganised by subject at v3.14.334.
-
-**The audit's small items are cleared, v3.14.337–338.** L-018, L-025, L-026,
-L-028, L-029 and L-037 closed, L-019 half; **B-174** was found by the dead-code
-pass and fixed with it — `#app-name` was on two elements, so opening an annotator
-preview replaced the application's own header title with the annotator's name.
-The audit is down to **13 open findings and 2 half** from 23, and the remainder
-is work rather than tidying: L-034's form-at-a-time pass, L-036's section merge,
-L-006's mutation score and L-007/L-021's fixture, which is D58 and gate 1.
-
-### The four gates
-
-Each gate exists because crossing it makes the previous stage's mistakes
-permanent or expensive. The question is not *what is left* but *what has to be
-true before each audience sees this*. Set v3.14.188.
-
-| Gate | Before | The question | Open |
-|---|---|---|---|
-| ~~[1](#gate-1--before-git-init)~~ | `git init` | can history start clean? | **✅ TAKEN v3.14.391–392** — 214 files, disclosed, signed off, and **B-206** found by the hook on the first commit |
-| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 4 |
-| [3](#gate-3--before-the-first-stable-version) | the first stable version | is the data model settled enough that users' files keep opening? | 8 |
-| [4](#gate-4--can-wait-for-the-next-stable) | — | new capability and the cosmetic tail | 12 |
-
-**Format decisions are all closed.** They were tracked separately because their
-cost is driven by time rather than audience — every corpus annotated in the
-current shape makes changing that shape dearer. B-116 ✅ v3.14.253 · interning
-✅ v3.14.225–226 · file layout ✅ v3.14.233 (`dev/design/file_layout_options.md`)
-· save format ✅ v3.14.233 (`dev/design/save_format_decision.md`, with the
-options in `dev/design/save_architecture_options.md`) · B-135 ✅ v3.14.258 ·
-B-121 + B-122 ✅ v3.14.260.
-
-**What can run in parallel.** Gate 1 needs no code, so corpus building proceeds
-alongside anything. Both holds on this claim are lifted (gate 1's own
-prerequisites at v3.14.250; D50's migration at v3.14.249).
-
----
-
-### What to do next, clustered — re-taken v3.14.387
-
-The gates say what must be true before a milestone. This says what is worth doing
-first, which is a different question: **6 open bugs, 7 open findings and 5 live
-conflicts, sorted by what each one buys.** Ordered within each cluster.
+**6 open bugs, 7 open findings, 3 live conflicts**, sorted by what each buys.
 *`BUGS.md` and `UNIFIED_AUDIT.md` are the sources — take the counts from their
 tables rather than from this line, which has been wrong twice.*
-
-**Clusters A and B are both finished** (v3.14.358–v3.14.379), and so is the
-fixture swap that A existed to enable (v3.14.384–386).
-
-#### A and B · both closed — ✅ v3.14.358–v3.14.379
-
-*Compressed v3.14.387. The item tables are in `dev/edit_log.md` under their own
-versions; what is kept here is what a re-reader would otherwise re-derive wrongly.*
-
-**A finished the corpora, and therefore gate 1.** A1 the missing 只 lemma, A2
-`metadata.tracked` stripped, A3 dependency parses, A4 the neutral participant
-identity, A5 the free translations, A6 **B-169**. **B made finishing them
-faster**: D61's lemma chip (sources 1–3), B-108, L-040/B-191, L-038.
-
-**Two things they cost to learn, and both are still live warnings.**
-
-- **A3's first re-measurement reported zero roots in both corpora and was wrong
-  twice over.** It looked for `dep_head`, where the field is `head`; and it
-  counted `dep_rel === 'root'`, which **B-015 decided is never stored** — root is
-  derived from `head === null`. *A check whose answer is fixed by a design
-  decision, read as a measurement.* `dep_root_test.js` exists and says so.
-- **D61's source 1 fires on ZERO tokens in these corpora**, because every linked
-  token already carries a lemma. Anyone building further on source 1 should
-  re-measure first rather than assume it is idle only for now. Source 3 shipped
-  beyond the sketch because it turned out cheap once the parse was trusted, but
-  it needs vowel harmony, which lives in `citation_forms.json` as data.
-
-**And one rule the cluster established:** every re-measurement in A moved a line,
-and two of its six items were already done before anyone looked. That is the
-argument for re-taking figures at every comb rather than carrying them forward.
-
 
 #### C · Provenance honesty — becomes urgent the moment A5 is machine-assisted
 
@@ -171,95 +82,58 @@ it is the point rather than a detour.
 
 ---
 
+### The four gates
+
+Each gate exists because crossing it makes the previous stage's mistakes
+permanent or expensive. The question is not *what is left* but *what has to be
+true before each audience sees this*. Set v3.14.188.
+
+| Gate | Before | The question | Open |
+|---|---|---|---|
+| ~~[1](#gate-1--before-git-init)~~ | `git init` | can history start clean? | **✅ TAKEN v3.14.391–392** — 214 files, disclosed, signed off, and **B-206** found by the hook on the first commit |
+| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 4 |
+| [3](#gate-3--before-the-first-stable-version) | the first stable version | is the data model settled enough that users' files keep opening? | 8 |
+| [4](#gate-4--can-wait-for-the-next-stable) | — | new capability and the cosmetic tail | 12 |
+
+**Format decisions are all closed.** They were tracked separately because their
+cost is driven by time rather than audience — every corpus annotated in the
+current shape makes changing that shape dearer. B-116 ✅ v3.14.253 · interning
+✅ v3.14.225–226 · file layout ✅ v3.14.233 (`dev/design/file_layout_options.md`)
+· save format ✅ v3.14.233 (`dev/design/save_format_decision.md`, with the
+options in `dev/design/save_architecture_options.md`) · B-135 ✅ v3.14.258 ·
+B-121 + B-122 ✅ v3.14.260.
+
+**What can run in parallel.** Gate 1 needs no code, so corpus building proceeds
+alongside anything. Both holds on this claim are lifted (gate 1's own
+prerequisites at v3.14.250; D50's migration at v3.14.249).
+
+---
+
 #### Gate 1 — ✅ TAKEN v3.14.391–392
 
-A corpus or participant file committed once lives in every fork forever.
-
-**Both halves done.** Fieldwork: the fixture swap, v3.14.384 (D58). Disclosure:
-`ship_disclosure.py` run twice and signed off, v3.14.391. **214 files, 6.4 MB**,
-and the staged set diffed **empty** against the list the disclosure printed before
-`.git` existed. First commit `51658b8`; `PIPELINE_AUDIT` **S1 closes with it**.
-Full account: `edit_log.md` v3.14.391–392, `dev/design/D58_fixture_set.md` §§7–10.
+**Both halves done**, and the repository is published: first commit `51658b8`,
+214 files, 6.4 MB, `github.com/kutay-serova/LingCoT`. `PIPELINE_AUDIT` **S1**
+closes with it. Account: `edit_log.md` v3.14.391–397, `dev/design/D58_fixture_set.md` §§7–10.
 
 **What the gate bought — the argument for having one.** Three defects found
-before the first commit landed rather than after: **B-156** (v3.14.312),
-**B-205** (v3.14.389), **B-206** (v3.14.392). All one shape — *a rule that named
-`samples/` and did not know about the second cleared location*. Two were
-`.gitignore` patterns that read as active and were inert; the third was
-`hooks/pre-commit` disagreeing with `.gitignore`, and it surfaced **by refusing
-the first commit**. None was findable by reading. Any would have been permanent.
+before the first commit landed rather than after: **B-156**, **B-205**, **B-206**.
+All one shape — *a rule that named `samples/` and did not know about the second
+cleared location*. Two were `.gitignore` patterns that read as active and were
+inert; the third was `hooks/pre-commit`, and it surfaced **by refusing the first
+commit**. None was findable by reading. Any would have been permanent.
 
-**`dev/archive/` — 280 MB, and now a disk question, not a guard question.**
-PIPELINE 2.1 wanted it frozen the day git arrived; UNIFIED ⑪ objected that
-freezing kills `new_version.py`'s purpose and `doc_integrity`'s strongest check.
-**v3.14.393 took neither horn**: §8b asks git *did every **Touched:** file really
-change*, which works on any clone. The archive checks stay until several versions
-carry their own commit. **Do not freeze it before then**, and not in the same
-version as anything else.
+**Two things it left behind, both live.** The swap procedure moved to
+`dev/PRACTICES.md` §10, because it is written for the next swap rather than as
+history. And `dev/archive/` — **280 MB** — is now a disk question rather than a
+guard question: v3.14.393 kept the property those checks defended by asking git
+instead (`doc_integrity_test.js` §8b), so PIPELINE 2.1's freeze can be decided on
+its own merits. **Not before several versions carry their own commit**, and not
+in the same version as anything else.
 
-##### The fixture swap, step by step — decided v3.14.326, executed v3.14.384
-
-**The risk was never the corpus, it was the redirection.** Twenty guards resolve
-their input through `_fixture.js`, and until **B-168** (v3.14.326) that resolver
-returned the first substring match in a recursive sorted walk — so pointing
-`LINGCOT_TEST_CORPUS` at a directory holding an `archive/` handed the suite an
-archived corpus and reported the language's name.
-
-**Keep this procedure.** It is written for the next swap, not kept as history:
-
-| | step | why |
-|---|---|---|
-| **1** | `unset LINGCOT_TEST_CORPUS`, run the suite, record the tally | `corpusDir()` prefers the env var over `samples/`, so a stale export silently keeps the old data through the entire swap |
-| **2** | stage the candidates in a directory holding **only** them, and rehearse: `LINGCOT_TEST_CORPUS=<staging> ./dev/tests/run_all.sh` | the whole migration, reversibly, before a file moves. **"Only them" is load-bearing**: a directory with an `archive/` beside the candidates is what B-168 refuses to guess between, and **B-199**'s fork put two `turkish-test` corpora in one directory for six versions — six guards refused and one could not find a companion |
-| **3** | fix what step 2 names — in the CORPUS where it is a data problem, in the code where it is a code problem | the distinction matters: a guard failing on real data is usually the guard being right |
-| **4** | replace `samples/`, `unset`, run again, and compare to step 1's tally | the two runs must differ only where step 3 predicted |
-| **5** | `python3 dev/tools/ship_disclosure.py`, sign off, `git init` | gate 1's other half. **✅ TAKEN v3.14.391**, and the first commit refused by `hooks/pre-commit` — **B-206** ✅ v3.14.392 |
-
-**What it bought, measured.** Steps 1–4 ran at v3.14.384: the post-swap run was
-**identical to the step-2 rehearsal, check for check** — `diff` of the two
-per-guard tallies was empty. Against step 1's baseline five guards moved, all in
-check COUNTS and none in outcome.
-
-##### The shipping disclosure — decided v3.14.311, and what it binds
-
-**`samples/` ships a participants file on purpose**: it is the file structure a
-user will actually have, and a sample set omitting one of the four teaches the
-wrong shape. Its contents being synthetic is a fieldwork decision, not one the
-repository can make.
-
-**So the check DISCLOSES; it does not exclude.** No `.gitignore` rule, no
-allow-list of acceptable names, no pattern for what "synthetic" looks like — a
-pattern would be a claim about what a real name can be, wrong the same way
-`POS_VISIBLE_MORPH` was. The tool enumerates; a person decides; there is no pass.
-
-**Why a filename exclusion was never the instrument**, measured 2026-08-31: the
-participants file held **3** named records and the corpus and dictionary beside
-it held **269 occurrences** of those same names inlined in provenance. A check
-scoped to `*_participants.jsonl` would have read 3 and missed 269. The live
-corpora hold **0** — interning (v3.14.225–226) thins provenance into
-`prov_events` — so the swap fixed it by construction and the disclosure verified
-it. **The v3.14.391 run found 2 names in 58 places across 20 files**, which is
-the same argument with the current numbers.
-
-**Not in `run_all.sh`, deliberately.** A guard reading participant data would
-print it on every run and would become a guard that cannot fail the day the data
-is clean. One-time, before an irreversible act, to a terminal and nowhere else —
-never `logs/`.
-
-**The sign-off is the record**, on the `**Examined:**` line of the version that
-takes it. *Corrected v3.14.397: this said a `decision` entry. It is a `chore` —
-`doc_integrity` refuses a `finding` that touches anything outside `dev/audits/`,
-and `--examined` renders only for a `finding`, so the line was hand-written.
-**That is a real rough edge in `new_version.py`**, not a documentation slip.*
-
-*Compressed v3.14.397, 188 lines → 90, half of that the two subsections kept whole. What went was reasoning written in
-prospect that the event has since settled: whether to substitute the neutral
-identity before or after annotating (done first, v3.14.384), what the corpora
-hold (`samples/README.md` carries the measured table — do not copy figures here),
-and whether the swap would leave `isDocument`'s no-`record_type` fallback and
-`splitEvents`' no-events path untested. **That last one is answered:**
-`dev/tests/fixtures/cli_ingested/` is a real `corpus_ingest.py` file with no
-`prov_events` line, and `prov_intern_test.js` reads it.*
+*The shipping-disclosure section that stood here is gone, v3.14.398: every
+argument in it — why it discloses rather than excludes, why no filename scope,
+why it is not in `run_all.sh` — is in `dev/tools/ship_disclosure.py`'s own
+docstring, where it is read at the point of use. Two writers of one thing.*
 
 #### Gate 2 — before a testers' build
 
@@ -301,37 +175,13 @@ New capability rather than model correctness, plus the cosmetic tail.
 
 ---
 
-### Data integrity · measured 2026-08-30
+### Data integrity · the model gaps that remain
 
-Two sweeps at v3.14.254: `dev/audits/retired/DATA_INTEGRITY_2026-08-30.md`
-measured both corpora through the app's own loaders, and
-`dev/audits/retired/L_STATUS_2026-08-30.md` re-verified every `L-nnn` finding
-against the code. **Both retired v3.14.390** — the corpora they measured were
-replaced by the fixture swap, so their figures describe files that no longer
-exist. What follows is the part that was about the *format* rather than the data,
-which is why it is still here.
-
-**Referential integrity is clean.** Zero dangling `dict_id`, `lemma_id`,
-`annotator_id` or `source_ids`; zero duplicate ids; zero unreferenced provenance
-events; `morphological_parse` agrees with the morpheme list; word forms
-concatenate to sentence text. A load-then-save loses nothing. **The format is not
-losing data** — what follows is about what it never captured.
-
-#### Attribution — all five findings closed, v3.14.260–280
-
-`dict_id` links carrying a stamp (1 of 92) → **B-121** · paragraph field stamps
-(0) and list fields stampable at all (none) → **B-138** · morphemes with a
-revision trail (0 of 77) → **B-134** · derived word fields signed by a person
-(13 of 13 glosses, 6 of 6 translits) → **B-141**. Figures are as measured on the
-now-retired corpora; the fixes are what carried forward.
-
-**The rule that survives them: seed-on-next-write, not migrate.** A stamp records
-what was believed when it was written, so nothing is retro-corrected — the counts
-stayed until an object was next edited, by decision.
-
-*B-134 turned out to be three defects — nothing appended, `applyProvToObj`
-overwrote the creation stamp before seeding an empty trail, and no script ever
-wrote `prov_history` at all.*
+*The 2026-08-30 sweeps are retired (`dev/audits/retired/`) — they measured corpora
+that no longer exist. Their five attribution findings all closed at v3.14.260–280
+(**B-121**, **B-138**, **B-134**, **B-141**), and the rule that survives them is
+**seed-on-next-write, not migrate**: a stamp records what was believed when it was
+written, so nothing is retro-corrected. What is still open is below.*
 
 #### Model gaps, not data errors — re-measured v3.14.397
 
@@ -348,19 +198,27 @@ shipped pair, both files, today.*
 ### Where things stand
 
 **The guard count and the suite's standing state live in `dev/PRACTICES.md` §6**,
-which is the only place either is written down — this paragraph held a second
-copy and was 9 guards stale. The 2 disabled are the Search-B pair, whose
-assertions are hand-typed Korean, waiting on the replacement corpus (D58). Setup,
-fixtures and the corpus variable are in the same section.
+which is the only place either is written down. Setup, fixtures and the corpus
+variable are in the same section.
+
+*And it went stale again, v3.14.398.* This paragraph named "the 2 disabled" as
+the Search-B pair waiting on a replacement corpus — **nothing has been disabled
+since v3.14.385**, when those two were rewritten against the new fixtures. It was
+already carrying a warning that it had been 9 guards stale, and it had drifted a
+second time under that warning. **The lesson is not "be careful"; it is that a
+sentence naming a number is a second writer whatever it says about itself.**
 
 ### The audits
 
 `dev/audits/AUDIT_INDEX.md` is the answer and the file to read: a verdict per
-document plus what in each is false. `UNIFIED_AUDIT.md` §1 carries the **24**
-`L-nnn` findings, 12 closed as of v3.14.272.
+document plus what in each is false. `UNIFIED_AUDIT.md` is the live audit of
+record and computes its own counts from its own tables.
 
 **No summary is kept here** — a second copy of the index is exactly what went
-stale, for 128 versions. Two items the index does not cover:
+stale, for 128 versions. *And the sentence declaring that kept one anyway: "the
+**24** `L-nnn` findings, 12 closed as of v3.14.272", against 42 and 35 today.
+Removed v3.14.398, 126 versions after it was written.* Two items the index does
+not cover:
 
 | | from | state |
 |---|---|---|
@@ -665,6 +523,8 @@ trigger is a tester annotating (gate 2), not a code change.
 
 | | Shipped | What, and where the reasoning is |
 |---|---|---|
+| **The queue · chains A and B** | v3.14.358–384 | the ordering that emptied gate 1. **A finished the corpora** — A1 the missing 只 lemma, A2 `metadata.tracked` stripped, A3 dependency parses, A4 the neutral participant identity, A5 the free translations, A6 **B-169** — and **B made finishing them faster**: D61's lemma chip, B-108, L-040/B-191, L-038. Then steps 1–8: the save path (B-110/149/150), **B-143** numbering loaded homographs, **D52**, **B-154**, **B-114**, **B-123**'s backfill last, the fixture swap, and the two search guards rewritten. **The ordering was the product**: B-143 first meant every later step could ask *which of these two?* and be answered; D52 before B-123 meant the backfill could not manufacture duplicates nothing could undo |
+| **Two warnings that outlived the chains** | — | **A3's first re-measurement reported zero roots in both corpora and was wrong twice over** — it looked for `dep_head` where the field is `head`, and counted `dep_rel === 'root'`, which **B-015** decided is never stored. *A check whose answer is fixed by a design decision, read as a measurement.* And **D61's source 1 fires on ZERO tokens in these corpora**, because every linked token already carries a lemma; anyone building on it should re-measure rather than assume it is idle only for now |
 | **D58** | v3.14.384–386 | the shipped test data: `samples/` is two typologically contrastive corpora, byte-identical to the live ones, and `dev/tests/fixtures/` holds specimens named for the guard or bug they serve. **The split is by AUDIENCE** — a user should see a corpus worth imitating, and several guards need data no user should imitate. §3's rule, *a specimen with no reader is not a keepsake*, deleted six reader paths, the `legacy` tier and `legacyKey`. `dev/design/D58_fixture_set.md` |
 | **D34** | v3.14.306–319 | session tracker & missing-annotation panel, all five stages. **"Missing" is three reasons, not one** — derived-when-applicable, inapplicable-to-the-project, genuinely missing; a counter built from the `core` tier would have opened by reporting 301 missing parses, every one wrong. The tracked set is the annotator's, not the table's. `dev/design/D34_session_tracker.md` |
 | **D53** | v3.14.298–302 | the fill pipeline, all six stages, closing **B-033**. The line that held throughout: **these stages offer, they do not apply.** `dev/design/D53_fill_pipeline.md` |

@@ -1,5 +1,8 @@
 # dev/tests/fixtures/ — specimens
 
+**Updated:** 2026-09-02 · **Version:** v3.14.386  
+*Frozen with the specimens it describes, not bumped with the build — the fixture is regenerated, not edited.*
+
 **Not examples.** Everything here is small, purpose-built and, where the guard
 needs it, degenerate on purpose. `samples/` is the folder a fieldworker should
 open and imitate; this is the folder a guard opens to reach a shape no annotator

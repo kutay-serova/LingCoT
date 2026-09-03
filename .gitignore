@@ -115,6 +115,22 @@ logs/*
 # An abandoned zip temp sat at the root for two days before anyone noticed it.
 *.zip
 
+# ── Delivered-file landing folder ─────────────────────────────────────────────
+# The desktop app writes files it hands back into "Claude outputs/", and when the
+# session's working folder IS this repository they land inside it. Measured at
+# v3.14.400: two files, and BOTH were copies of tracked ones — `README.md`
+# byte-identical to the live README, and `README-1.md` a renamed copy of
+# `samples/README.md` that collided with the first.
+#
+# So the risk is not disk, it is a SECOND COPY OF A TRACKED FILE inside the
+# working tree: someone edits the copy, and the edit is invisible to every guard
+# that reads the real path. That is the shape `dev/*.html` is ignored for.
+#
+# The name carries a space, which is fine mid-pattern — only a TRAILING space
+# needs escaping. Verified with `git check-ignore -v`, not by reading, per the
+# note at the top of this file.
+Claude outputs/
+
 # ── OS noise ──────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

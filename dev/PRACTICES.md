@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-09-02 · **Version:** v3.14.397
+**Updated:** 2026-09-03 · **Version:** v3.14.400
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its
@@ -253,3 +253,40 @@ the anchor and says nothing about what the range swallowed.
 file claimed one audit was open and five had residue. `dev/audits/AUDIT_INDEX.md`
 carries that status, is bumped with the version, and is **the only place it
 should be stated**.
+
+---
+
+## 10. Swapping the fixture corpora
+
+*Moved here from `DEV_PLAN.md` §1 at v3.14.398. It was written before the
+v3.14.384 swap and says of itself that it is **written for the next swap, not
+kept as history** — which makes it a practice, not a plan item. Gate 1 is taken;
+this procedure is not spent.*
+
+**The risk was never the corpus, it was the redirection.** Twenty guards resolve
+their input through `_fixture.js`, and until **B-168** (v3.14.326) that resolver
+returned the first substring match in a recursive sorted walk — so pointing
+`LINGCOT_TEST_CORPUS` at a directory holding an `archive/` handed the suite an
+archived corpus and reported the language's name.
+
+**Keep this procedure.** It is written for the next swap, not kept as history:
+
+| | step | why |
+|---|---|---|
+| **1** | `unset LINGCOT_TEST_CORPUS`, run the suite, record the tally | `corpusDir()` prefers the env var over `samples/`, so a stale export silently keeps the old data through the entire swap |
+| **2** | stage the candidates in a directory holding **only** them, and rehearse: `LINGCOT_TEST_CORPUS=<staging> ./dev/tests/run_all.sh` | the whole migration, reversibly, before a file moves. **"Only them" is load-bearing**: a directory with an `archive/` beside the candidates is what B-168 refuses to guess between, and **B-199**'s fork put two `turkish-test` corpora in one directory for six versions — six guards refused and one could not find a companion |
+| **3** | fix what step 2 names — in the CORPUS where it is a data problem, in the code where it is a code problem | the distinction matters: a guard failing on real data is usually the guard being right |
+| **4** | replace `samples/`, `unset`, run again, and compare to step 1's tally | the two runs must differ only where step 3 predicted |
+| **5** | `python3 dev/tools/ship_disclosure.py`, sign off, `git init` | gate 1's other half. **✅ TAKEN v3.14.391**, and the first commit refused by `hooks/pre-commit` — **B-206** ✅ v3.14.392 |
+
+**What it bought, measured.** Steps 1–4 ran at v3.14.384: the post-swap run was
+**identical to the step-2 rehearsal, check for check** — `diff` of the two
+per-guard tallies was empty. Against step 1's baseline five guards moved, all in
+check COUNTS and none in outcome.
+
+**What it bought, measured.** Steps 1–4 ran at v3.14.384: the post-swap run was
+**identical to the step-2 rehearsal, check for check** — `diff` of the two
+per-guard tallies was empty. Against step 1's baseline five guards moved, all in
+check COUNTS and none in outcome. That is what rehearsing is for, and it is the
+first time it was collected.
+

@@ -67,6 +67,13 @@ UNIFIED    = os.path.join(DEV, 'audits', 'UNIFIED_AUDIT.md')
 AUDITINDEX = os.path.join(DEV, 'audits', 'AUDIT_INDEX.md')
 RENAMES    = os.path.join(DEV, 'RENAMES.md')
 LOG_HDR    = os.path.join(DEV, 'edit_log.md')
+# v3.14.399, B-208. Four LIVE documents outside dev/ that this script never
+# owned, so none of them carried a stamp at all — README.md and setup.md are the
+# two a cloner reads first.
+RDM_ROOT   = os.path.join(ROOT, 'README.md')
+QUICKSTART = os.path.join(ROOT, 'QUICKSTART.md')
+SETUP_MD   = os.path.join(ROOT, 'setup.md')
+SAMPLES_RM = os.path.join(ROOT, 'samples', 'README.md')
 LOG = os.path.join(DEV, 'edit_log.md')
 
 
@@ -274,10 +281,18 @@ def main() -> int:
     # comment above says exactly that about BUGS.md, and it happened again five
     # versions later to a document added by hand. Found by the pre-`git init`
     # sweep, comparing every doc header against source/version.py.
+    #
+    # v3.14.399, B-208: and a THIRD time, to four documents this list had never
+    # owned — README.md, setup.md, QUICKSTART.md and samples/README.md carried no
+    # stamp at all. The comment above states the rule and the rule kept being
+    # broken by documents nobody thought to add, so `doc_integrity_test.js` now
+    # asserts the list against the tree instead of trusting anyone to remember.
     for label, doc in (('DEV_PLAN', PLAN), ('BUGS', BUGS),
                        ('PRACTICES', PRACTICES), ('dev/README', DEVREADME),
                        ('edit_log', LOG_HDR), ('RENAMES', RENAMES),
-                       ('UNIFIED_AUDIT', UNIFIED), ('AUDIT_INDEX', AUDITINDEX)):
+                       ('UNIFIED_AUDIT', UNIFIED), ('AUDIT_INDEX', AUDITINDEX),
+                       ('README', RDM_ROOT), ('QUICKSTART', QUICKSTART),
+                       ('setup.md', SETUP_MD), ('samples/README', SAMPLES_RM)):
         if not os.path.exists(doc):
             continue
         text = open(doc, encoding='utf-8').read()

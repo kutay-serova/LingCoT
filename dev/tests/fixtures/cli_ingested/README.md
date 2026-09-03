@@ -1,5 +1,8 @@
 # cli_ingested/ — `corpus_ingest.py`'s output, unmodified
 
+**Updated:** 2026-09-02 · **Version:** v3.14.386  
+*Frozen with the specimens it describes, not bumped with the build — the fixture is regenerated, not edited.*
+
 **Regenerate, do not edit.** From the repository root:
 
     python3 source/scripts/corpus_ingest.py <a .txt file> \

@@ -81,8 +81,14 @@ const NOT_A_CONTROL = new Set([
 /* Whitespace is collapsed because markdown wraps: `**Project\nFiles**` is one
    label to a reader and two lines to a regex. And a bold span may be a MENU
    PATH — `File → Save` — which is two labels, each of which must exist. */
+/* The version stamp is metadata, not prose about the UI, and its own
+   `**Updated:**` / `**Version:**` are bold spans that read as control labels —
+   B-208 added the stamp at v3.14.399 and this guard failed on it the same
+   minute. Dropped by SHAPE rather than by whitelisting the two words, so any
+   document that gains a stamp later does not break this again. */
+const body = md.replace(/^\*\*Updated:\*\*.*\*\*Version:\*\*.*$/gm, '');
 const spans = [...new Set(
-  [...md.matchAll(/\*\*([^*]+)\*\*/g)]
+  [...body.matchAll(/\*\*([^*]+)\*\*/g)]
     .map(m => m[1].replace(/\s+/g, ' ').trim())
     .flatMap(s => s.includes('→') ? s.split('→').map(x => x.trim()) : [s]))];
 

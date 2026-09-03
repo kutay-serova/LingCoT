@@ -94,6 +94,20 @@ const CASES = [
   ['dev/tests/fixtures/cli_ingested/cli-ingested_corpus.jsonl', false,
    'B-205: the CLI specimen prov_intern_test needs; without it a clone fails on its first run'],
   ['dev/tests/fixtures/cli_ingested/README.md', false, 'how to regenerate it'],
+
+  /* v3.14.400. The desktop app writes files it hands back into "Claude outputs/",
+     and when the session's working folder is this repository they land in it.
+     Both files found there were copies of TRACKED ones — `README.md` byte-for-byte
+     and `README-1.md` a renamed `samples/README.md`. The risk is a second copy of
+     a tracked file inside the working tree, which no guard reading the real path
+     can see. The name carries a space; only a TRAILING space needs escaping, and
+     this asks git rather than trusting that. */
+  ['Claude outputs/README.md',   true,  'a byte-identical copy of the live README, inside the repo'],
+  ['Claude outputs/README-1.md', true,  'a renamed copy of samples/README.md'],
+  ['Claude outputs/anything.txt', true, 'the whole folder, not two filenames'],
+  /* …and it must not swallow the real ones. */
+  ['README.md',         false, 'the actual README still ships'],
+  ['samples/README.md', false, 'and so does the one the copy was made from'],
   /* …and the negation must not become a hole. A corpus is ignored everywhere
      else, including one directory up from the fixtures. */
   ['dev/tests/other_corpus.jsonl', true,

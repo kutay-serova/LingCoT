@@ -719,6 +719,65 @@ console.log('\nevery dev document says when it was written and against what\n');
                  `         stamped ${m[2]}, current is ${cur}`);
   }
 
+  /* ── B-208, v3.14.399: the LIVE list is READ FROM new_version.py ──────────
+     The list above is `dev/`-scoped, so `README.md` in it means `dev/README.md`.
+     The repository's own README, `setup.md`, `QUICKSTART.md` and
+     `samples/README.md` were in no list at all and carried **no stamp of any
+     kind** — the first two being what a cloner reads first.
+
+     This is the third time. `new_version.py`'s own comment records the first two:
+     BUGS.md would have rotted "by the next version if the bump did not own it",
+     and RENAMES.md did rot, five versions after being added by hand. A rule
+     stated in a comment and enforced by memory is not enforced.
+
+     So the two writers become one: the bumper's tuple IS the list, parsed out of
+     it here. Add a document there and this guard covers it on the next run; put
+     one in this guard's scope that the bumper does not own and it fails. */
+  {
+    const nv = fs.readFileSync(path.join(DEV, 'new_version.py'), 'utf8');
+    const blk = nv.slice(nv.indexOf('for label, doc in ('));
+    const owned = [...blk.slice(0, blk.indexOf('):')).matchAll(/\('([^']+)',\s*([A-Z_]+)\)/g)]
+      .map(m => m[1]);
+    check(owned.length >= 12, `new_version.py owns ${owned.length} live document(s)`,
+          '         parsed too few — the tuple moved and this guard stopped seeing it');
+
+    /* The four outside dev/, resolved by the same names the bumper uses. */
+    const ROOTLIVE = { 'README': 'README.md', 'QUICKSTART': 'QUICKSTART.md',
+                       'setup.md': 'setup.md', 'samples/README': 'samples/README.md' };
+    for (const [label, rel] of Object.entries(ROOTLIVE)) {
+      check(owned.includes(label), `new_version.py bumps ${rel}`,
+            `         it is live and user-facing; unowned, it rots by the next version`);
+      const full = path.join(ROOT, rel);
+      if (!fs.existsSync(full)) { check(false, `${rel} exists`); continue; }
+      const head = fs.readFileSync(full, 'utf8').split('\n').slice(0, 10).join('\n');
+      const m = /\*\*Updated:\*\*\s*(\d{4}-\d{2}-\d{2})\s*·\s*\*\*Version:\*\*\s*(v[\d.]+)/.exec(head);
+      check(!!m, `${rel} carries a stamp`,
+            '         a cloner cannot tell which build these describe');
+      if (m) check(m[2] === cur, `${rel} is stamped ${cur}`,
+                   `         stamped ${m[2]}, current is ${cur}`);
+    }
+
+    /* And nothing new can appear unstamped beside them. Frozen exceptions are
+       named, so adding one is a decision rather than an omission. */
+    const FROZEN_OK = new Set(['dev/tests/fixtures/README.md',
+                               'dev/tests/fixtures/cli_ingested/README.md']);
+    const strays = [];
+    for (const dir of ['.', 'samples', 'dev/tests/fixtures', 'dev/tests/fixtures/cli_ingested']) {
+      const abs = path.join(ROOT, dir);
+      if (!fs.existsSync(abs)) continue;
+      for (const f of fs.readdirSync(abs)) {
+        if (!f.endsWith('.md')) continue;
+        const rel = dir === '.' ? f : `${dir}/${f}`;
+        if (Object.values(ROOTLIVE).includes(rel)) continue;
+        const head = fs.readFileSync(path.join(ROOT, rel), 'utf8').split('\n').slice(0, 10).join('\n');
+        if (!/\*\*Version:\*\*\s*v[\d.]+/.test(head) && !FROZEN_OK.has(rel)) strays.push(rel);
+      }
+    }
+    check(strays.length === 0, 'no unstamped markdown beside the live documents',
+          strays.map(f => `         ${f} has no version stamp`).join('\n')
+        + '\n         add it to new_version.py\'s tuple, or stamp it frozen and name it here');
+  }
+
   /* ── v3.14.278: documents that are OWNED but may be absent ────────────────
      `dev/archive/README.md` was in neither list, so nothing bumped it and no
      guard read it — while `source/version.py` and this very file send the

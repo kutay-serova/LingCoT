@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-02 · **Version:** v3.14.397
+**Updated:** 2026-09-03 · **Version:** v3.14.400
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,122 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## "Claude outputs/" is ignored (2026-09-03)
+**Version:** v3.14.400 · **Type:** chore · **Archives:** `dev/archive/changes/ignore_claude_outputs/` (v3.14.399)
+**Touched:** .gitignore · dev/tests/gitignore_test.js
+
+**What changed.** `Claude outputs/` is gitignored, with five cases in
+`gitignore_test.js`.
+
+**Why, and it is not about disk.** The desktop app writes files it hands back
+into `Claude outputs/`, and when the session's working folder is this repository
+they land inside it. Both files there were **copies of tracked ones**:
+`README.md` byte-identical to the live README, and `README-1.md` a renamed copy
+of `samples/README.md` that had collided with the first. 60 KB, and it would have
+gone into the next commit.
+
+**The risk is a second copy of a tracked file inside the working tree.** Someone
+edits the copy and the edit is invisible to every guard that reads the real path
+— which is the same reason `dev/*.html` is ignored, and PRACTICES §4 arriving
+through the filesystem rather than through the code. Disk was never the argument.
+
+**The name carries a space**, which is fine mid-pattern; only a *trailing* space
+needs escaping. That was verified with `git check-ignore -v` rather than by
+reading the file, per the note this `.gitignore` carries at its head — the
+v3.14.153 defect where every commented pattern was inert.
+
+**Guard.** Three cases that the folder is ignored — including
+`Claude outputs/anything.txt`, so the rule is the folder and not two filenames —
+and two that it does **not** swallow `README.md` or `samples/README.md`.
+
+**Verification.** `git check-ignore -v` resolves all three paths to
+`.gitignore:132`; `ls-files --others --exclude-standard` returns 0 under it and
+the rest of the commit set is unchanged. `gitignore_test.js` 49 passed.
+Mutation-tested in both directions: removing the pattern fails 3 cases, and a
+pattern widened to `README*` fails the two that keep the real files tracked.
+
+---
+
+## B-208 — four live documents the bump never owned (2026-09-03)
+**Version:** v3.14.399 · **Type:** fix · **Archives:** `dev/archive/changes/b208_live_docs_the_bump_does_not_own/` (v3.14.398)
+**Touched:** README.md · QUICKSTART.md · setup.md · samples/README.md · dev/new_version.py · dev/tests/doc_integrity_test.js · dev/tests/quickstart_labels_test.js · dev/tests/fixtures/README.md · dev/tests/fixtures/cli_ingested/README.md · dev/BUGS.md
+
+**What changed.** `README.md`, `setup.md`, `QUICKSTART.md` and
+`samples/README.md` carry an **Updated / Version** stamp, and `new_version.py`
+bumps all four — its tuple goes from 8 documents to 12.
+
+**Why.** They carried **no stamp of any kind.** Every live document under `dev/`
+had one; the four a *cloner* actually reads had none, so nothing said which build
+they describe. The version numbers a grep finds in `README.md` (v3.14.151) and
+`setup.md` (v3.14.81) are incidental mentions in body prose, which is worse than
+nothing — they read as stamps and are 248 and 318 versions old.
+
+**This is the third occurrence, and that is why the fix is not another list.**
+`new_version.py`'s own comment records the first two: BUGS.md "would have rotted
+by the next version if the bump did not own it", and RENAMES.md did rot, five
+versions after being added by hand. **A rule stated in a comment and enforced by
+memory is not enforced.**
+
+**Guard.** `doc_integrity_test.js` **reads the bumper's tuple** rather than
+keeping a second copy of it — the two writers become one. Add a document there
+and the guard covers it on the next run. It also sweeps the repository root,
+`samples/` and `dev/tests/fixtures/` for markdown with no stamp, so a new
+unstamped document cannot appear beside them; the two fixture READMEs are named
+as deliberate exceptions, **frozen with the specimens they describe** rather than
+bumped with the build, because `cli_ingested/README.md` says *regenerate, do not
+edit* and bumping its header would be editing it.
+
+**And adding a stamp broke a guard that reads one.** `quickstart_labels_test.js`
+parses bold spans out of `QUICKSTART.md` as claimed UI labels, so the stamp's own
+`**Updated:**` and `**Version:**` failed it within the minute. Fixed by dropping
+the stamp line **by shape**, not by whitelisting two words — any document that
+gains a stamp later will not break it again.
+
+**Verification.** `./dev/tests/run_all.sh` — 89 passed, 0 failed, 0 disabled;
+`doc_integrity` 73/0, up from 60. Mutation-tested 3/3: a stamp reverted to an old
+version FAILS, a document removed from the bumper's tuple FAILS, and a new
+unstamped `.md` at the root FAILS.
+
+---
+
+## NEXT UP holds only what is next (2026-09-03)
+**Version:** v3.14.398 · **Type:** chore · **Archives:** `dev/archive/changes/next_up_holds_only_what_is_next/` (v3.14.397)
+**Touched:** dev/DEV_PLAN.md · dev/PRACTICES.md
+
+**What changed.** §1: **348 lines → 198**, of which 172 had described finished
+work. Reported by the user, in the only terms that matter: the answer to *what is
+next* was below the fold.
+
+**Where it went, and nothing was deleted outright.**
+
+- **The queue and chains A and B** → two §5 rows. One indexes the work; the
+  other keeps the two warnings that outlived it — A3's re-measurement that read
+  `dep_head` for `head` and counted a `dep_rel` **B-015 decided is never stored**
+  (*a check whose answer is fixed by a design decision, read as a measurement*),
+  and D61's source 1 firing on zero tokens here.
+- **The fixture-swap procedure** → `PRACTICES.md` **§10**. It says of itself that
+  it is written for the next swap rather than kept as history, which makes it a
+  practice and not a plan item. Gate 1 is taken; the procedure is not spent.
+- **The shipping-disclosure section** → deleted, 41 lines. Every argument in it —
+  why it discloses rather than excludes, why no filename scope, why it is not in
+  `run_all.sh`, the 3-records-vs-269-strings measurement — is already in
+  `ship_disclosure.py`'s own docstring, where it is read at the point of use.
+  **Two writers of one thing** (PRACTICES §4).
+- **Gate 1** → 26 lines: what it bought, and the two live things it left behind.
+
+**Two paragraphs that exist to prevent stale copies had gone stale under their
+own warnings.** *Where things stand* named "the 2 disabled" guards — nothing has
+been disabled since v3.14.385 — while already carrying a note that it had once
+been 9 guards stale. *The audits* says **"no summary is kept here"** and then kept
+one: "the 24 `L-nnn` findings, 12 closed", against 42 and 35 today, 126 versions
+on. **The lesson is not "be careful": a sentence naming a number is a second
+writer whatever it says about itself.**
+
+**Verification.** `doc_integrity` 60/0, `./dev/tests/run_all.sh` — 89 passed, 0
+failed, 0 disabled. DEV_PLAN 900 → 555 lines across v3.14.397–398.
 
 ---
 
