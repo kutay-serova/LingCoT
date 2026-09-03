@@ -1,12 +1,15 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-02 · **Version:** v3.14.395
+**Updated:** 2026-09-02 · **Version:** v3.14.397
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **200 fixed**
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **200 fixed**  |  **1 withdrawn** (B-096)
+
+*Three states, not two. Counting ids without the third comes up one short — which
+is how a consistency script found it at v3.14.397.*
 
 | Sev | Count | What it means | Open |
 |---|---|---|---|
@@ -167,16 +170,28 @@ cannot fail is not a guard* (PRACTICES §7).
 
 ### B-136 · S3 · `word_index` is written by two writers and read by nobody
 
-**Found 2026-08-30**, same sweep (§3e). `makeWordObj` (`:8942`) and
-`corpus_ingest.py:1061` both write it, its comment says it is "used by search",
-and nothing in `source/`, `docs/` or `dev/tests/` reads it. It is on every word of
-every corpus. Same shape as `definition` before v3.14.249: a field whose comment
-claims a reader that does not exist.
+**Found 2026-08-30**, same sweep (§3e). `makeWordObj` (`LingCoT.html:12839`) and
+`corpus_ingest.py:1083` both write it; its comment says it is *"used by search"*,
+and **`search.js` contains zero references to it** — re-verified v3.14.397, along
+with the rest of `source/`, `docs/` and `dev/tests/`. Same shape as `definition`
+before v3.14.249: a field whose comment claims a reader that does not exist.
 
-**And it is already written inconsistently, which is the sharper form.** Counted
-v3.14.273: **160 of 162** live words carry it (`Karar`, `verdiler` do not) and
-**96 of 98** in `samples/` (`Merhaba`, `.`). Some path creates words without it.
-Either something should read it or it should follow `definition` out.
+**Re-measured v3.14.397 on the shipped pair, and it is sharper than first
+recorded.** Not "some path omits it sometimes" — it is **all or nothing, per
+corpus**:
+
+| | words carrying `word_index` |
+|---|---|
+| `turkish-test` | **108 of 108** |
+| `chinese-test` | **0 of 132** |
+
+The v3.14.273 figures (160 of 162, 96 of 98) were taken on corpora that have since
+been retired, and the two-stragglers reading they suggested was wrong. The
+mechanism is the producer: `chinese-test` was segmented with jieba and
+hand-corrected, so its words never passed through either writer. **So a reader
+added today would be correct on one shipped corpus and silently wrong on the
+other** — which is the argument for deciding it rather than leaving it. Either
+something should read it, or it should follow `definition` out.
 
 ---
 
@@ -220,6 +235,16 @@ One confirmed instance, true count unknown — the corpora live outside the repo
 
 **Do not auto-fix.** Some glosses are legitimately capitalised. A scan that
 reports candidates is the right first step, not a bulk rewrite.
+
+**Re-measured v3.14.397, and the premise has changed under it.** The corpora no
+longer live outside the repo — the fixture swap (v3.14.384) made the shipped pair
+the live pair, so "true count unknown" is now answerable, and the answer is
+**zero**: no capitalised gloss in either `samples/` corpus. The `ara` → `Interval`
+instance was in a corpus that has since been retired. **The bug is not closed** —
+it is about what B-009 did not clean in *a user's* stored data, and no user data
+is reachable from here. What changed is that it can no longer be reproduced on
+anything this repository ships, which is worth knowing before someone goes
+looking.
 
 ## Fixed
 

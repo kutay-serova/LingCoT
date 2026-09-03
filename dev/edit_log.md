@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-02 · **Version:** v3.14.395
+**Updated:** 2026-09-02 · **Version:** v3.14.397
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,92 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## A comb through the three live documents (2026-09-02)
+**Version:** v3.14.397 · **Type:** chore · **Archives:** `dev/archive/changes/comb_three_live_documents/` (v3.14.396)
+**Touched:** dev/audits/UNIFIED_AUDIT.md · dev/DEV_PLAN.md · dev/BUGS.md
+
+**What changed.** 2,233 lines → 1,999, and none of it by deleting an argument.
+
+**Method: a script first, prose second.** A sweep cross-checked every `B-nnn`,
+`L-nnn`, `Dnn`, path, version and stated count across the three files and the
+tree. **It came back almost clean** — every count already reconciled with the
+table holding it. Two flags were the sweep's own fault: bug-row severities appear
+as `-`, `S1` AND `**S1**` across three eras of that table, and `run_all.sh`
+enumerates `*_test.js log_triage.js *_test.py`, so PRACTICES's 91 was right and a
+naive glob was wrong. **A sweep that disagrees with a document is not yet
+evidence.**
+
+**The defects were structural, not numeric.**
+
+- **UNIFIED §3 "Conflicts, still live" held two settled ones.** ⑪ and ⑰,
+  settled v3.14.392–393, left there with SETTLED banners inside them — **the
+  exact failure §9 records about this document**: *a closed item under a live
+  heading, and the heading is what gets read.* Moved to §5.2.
+- **UNIFIED had no §2.2.** v3.14.387 deleted the heading *"Fill and timing"* and
+  left its bodies, so numbering ran 2.1 → 2.3 and L-034 and L-013 read as
+  provenance findings while §1's board filed them fill·timing. One heading, two
+  errors. §2.1, which had no open findings left, is a pointer now.
+- **DEV_PLAN §2 broke its own written rule** — *a feature that has shipped leaves
+  this section*. D53, D34, D58 were there with 120 lines of finished work. One
+  line each in §5; **residue moved to §3, not deleted.**
+- **Gate 1: 188 → 90 lines.** What went was reasoning written in prospect that
+  the event has settled. The fixture-swap procedure is kept whole.
+
+**Three figures re-measured rather than carried; two had moved.** `homograph` is
+set on **6 of 77** entries, not 0 of 52 — B-143 numbered them at v3.14.290.
+Orphan lemma groups: **17 of 46, all Turkish**; `chinese-test` has none, which one
+corpus could not have shown. And **B-136** is sharper than recorded —
+`word_index` is on **108 of 108** Turkish words and **0 of 132** Mandarin.
+All-or-nothing per corpus, because jieba segmentation passes through neither
+writer, so a reader added today would be right on one shipped corpus and silently
+wrong on the other.
+
+**Verification.** Sweep clean both directions. `doc_integrity` 60/0,
+`run_all.sh` 89/0/0.
+
+---
+
+## §1's prose said open, §5's ledger said closed (2026-09-02)
+**Version:** v3.14.396 · **Type:** chore · **Archives:** `dev/archive/changes/l027_prose_says_open_ledger_says_closed/` (v3.14.395)
+**Touched:** dev/audits/UNIFIED_AUDIT.md
+
+**What changed.** Two stale claims in §1's summary paragraph. It said **L-027**
+"remains" — 31 versions after §5 recorded it ✅ v3.14.365 with **B-157** — and
+that L-033 closing left **L-036** open, 53 versions after D59 closed it at
+v3.14.343.
+
+**Why it matters more than two words.** §1's *table* never listed either as open,
+and §5's ledger had both closed. Board and ledger agreed; only the prose between
+them was wrong. **That is the worst place for it**, because a summary is what
+gets read *instead of* the table — and it did exactly that: it sent a reader to
+re-open two fixed bugs. This file's own header rule is that a count is computed
+from the table that holds the rows and never carried forward. A **status** is a
+count of one and obeys the same rule; prose that restates one is a second writer
+of it (PRACTICES §4).
+
+**How the second one was found, which is the part worth keeping.** Not by
+reading. The first correction rewrote the sentence containing L-027 and preserved
+"leaving L-036 and L-039" **verbatim**, because it was not what I was looking at.
+A sweep — every id §5 marks ✅, checked against §1's full text — is what caught
+it. Editing a stale summary is not the same as checking one, and the edit is what
+makes the survivors invisible.
+
+**Verified by execution, not by the ledger.** `cli_prov_test.py` §7 runs a real
+`--translate` write end to end and asserts the element arrives with a **derived**
+stamp and no `label` — B-157's whole content. 36 passed. `cli_schema_test.js`
+15 passed. So the ledger was right and the prose was wrong, established the way
+round PRACTICES §6 asks for.
+
+**Also checked, and already done:** **B-161** ✅ v3.14.370 — `lemmaStripHtml`'s
+`exact` branch offers the `lemma-new` door.
+
+**Verification.** Table and ledger now cross-checked by script in both
+directions: the seven ids §1 lists as open (L-006, L-013, L-022, L-030, L-034,
+L-039, L-041) appear nowhere in the closed ledger. `./dev/tests/run_all.sh` — 89
+passed, 0 failed, 0 disabled.
 
 ---
 

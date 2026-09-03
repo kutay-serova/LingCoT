@@ -1,5 +1,5 @@
 # UNIFIED AUDIT: the audit of record
-**Updated:** 2026-09-02 · **Version:** v3.14.395
+**Updated:** 2026-09-02 · **Version:** v3.14.397
 *LIVE. Started against v3.14.221 and bumped with every version since, because a
 stale audit of record is worse than none. Findings keep the build they were found
 against. `dev/audits/AUDIT_INDEX.md` indexes the frozen audits this replaced.*
@@ -66,13 +66,25 @@ and the fixture swap (v3.14.384) answered all four. What that line leaves behind
 is in §5.1 and in D58 §§8–10; **L-006's mutation score is the only guards item
 still open**, and it is about the guards rather than about the data.
 
-**Three subjects carry the weight.** Provenance of what the app writes was one
+**Two subjects carry the weight.** Provenance of what the app writes was one
 question in three places — *when the app supplies a value, does the record say
-so?* — and **two of the three closed at v3.14.335** (L-031, L-032). L-027, the
-one that crosses into Python, remains. References and integrity is a second — *what happens
-to the thing that pointed at it?* — and **L-033, the one that lost data, closed
-at v3.14.336**, leaving L-036 and L-039. And
-L-034 is on its own — not a defect, the largest measured lever in the document.
+so?* — and **all three are closed**: L-031 and L-032 at v3.14.335, and **L-027,
+the one that crosses into Python, at v3.14.365 with B-157**. References and
+integrity is the other — *what happens to the thing that pointed at it?* — and
+**L-033, the one that lost data, closed at v3.14.336** and **L-036 at v3.14.343
+with D59**, leaving **L-039** alone. And L-034 is on its own — not a defect, the largest measured lever in the
+document.
+
+*Corrected v3.14.396, twice over: this paragraph said L-027 "remains" for 31
+versions after §5's ledger recorded it closed, and said the same of L-036 for 53.
+The second was found only by sweeping every id the ledger marks ✅ against §1's
+text — the first correction had preserved it verbatim while fixing the sentence
+beside it, which is how a stale summary survives being edited. §1's own table never listed it, so the board and
+the ledger agreed and only the prose between them was wrong — which is the worst
+place for it, because a summary is what gets read instead of the table. It sent a
+reader to re-open a fixed bug. **A count belongs in one place** (this file's own
+header rule), and so does a status; prose that restates one is a second writer
+of it.*
 
 ---
 
@@ -88,15 +100,31 @@ until v3.14.358, and those four were sitting under a sentence that declared them
 already gone. The bodies below are kept whole: a body is the instruction for the
 work.*
 
-### 2.1 Provenance — does the record say who decided?
+### 2.1 Provenance — does the record say who decided? · ✅ CLOSED
 
 *One question in three places: when the app supplies a value, does the record say
-so? **Two of the three closed at v3.14.335** — L-031, a part of speech nobody
-chose, and L-032, a fill into a shared entry that left no trace. What remains is
-the one that crosses the language boundary, where the writer has no way to say
-"machine" at all.*
+so? **All three are closed** — L-031 (a part of speech nobody chose) and L-032
+(a fill into a shared entry that left no trace) at v3.14.335, and L-027, the one
+that crosses the language boundary, at v3.14.365 with **B-157**. Bodies are in
+§5.1; this heading stays so the numbering below it does not move.*
+
+*Compressed v3.14.397. It kept a ten-line intro whose last sentence — "what
+remains is the one that crosses the language boundary" — was **the third copy of
+the L-027 error**, after §1's prose and §5's own summary. A subject with nothing
+open does not need an argument, only a pointer.*
 
 
+
+### 2.2 Fill and timing — the right value, at the right moment
+
+*What the app proposes or writes on its own, in which direction, and when. L-034
+is the largest measured item in this document and is not a defect.*
+
+*Restored v3.14.397. This heading was deleted at v3.14.387 by a compression pass
+that removed the section and left both its bodies in place — so §2 ran 2.1 → 2.3
+with a hole, and L-034 and L-013 read as **provenance** findings when §1's own
+board files both as fill·timing. One heading, two errors, and neither was visible
+from the text either side of it.*
 
 #### L-034 · B · The unit of work is the token, and 44% of the work is re-work
 
@@ -355,6 +383,13 @@ init`:** ⑰ needed the disclosure run and signed, which happened at v3.14.392, 
 ⑪ needed the archive's property to survive on a clone, which v3.14.393 did by
 replacing it rather than by freezing anything.
 
+**⑪ and ⑰ moved to §5.2 at v3.14.397, and the move is the point.** Both were
+settled at v3.14.392–393 and both were left sitting here under a heading that
+says *still live*, with a SETTLED banner inside them — which is **exactly the
+failure §9 records about this document**: *a closed item under a live heading,
+and the heading is what gets read.* Two settled bodies were 86 of this section's
+lines. **Three remain: ⑥, ⑦, ⑫.**
+
 ### ⑥ Two shipped word field orders, neither matching the observed one
 
 `field_spec.js` declares `word: [form, morphological_parse, morphemes,
@@ -409,48 +444,6 @@ of them are. Marking it as wanted would nag on nearly every word in the app;
 D34's counter asks the derivation instead (stage B, rule 1). The mark's absence
 on the other three is still the regression this conflict names.
 
-### ⑪ Freezing the archive breaks the two mechanisms that substitute for git
-
-`PIPELINE_AUDIT` 2.1 recommends freezing `dev/archive/` once git holds history.
-But `doc_integrity_test.js` requires *"every touched file has a pre-edit copy in
-its archive folder"*, and archiving before the edit is `new_version.py`'s stated
-central purpose. On the day the archive freezes, that check fails on every new
-entry and the tool's main function is dead.
-
-Worse, `dev/archive/` is gitignored, so on any clone `archiveAvailable()` is
-false and the check prints `-- skipped`. **After `git init`, the project's
-strongest documentation guard is a silent no-op for every contributor but the
-author.** The transition must be in the same commit as the init, not after it.
-
-> **SETTLED v3.14.393 — right about the mechanism, wrong about one word.** The
-> transition was NOT in the same commit as the init: v3.14.392 shipped exactly
-> the state predicted here, and it was measured on a real clone the same hour —
-> **86 passed, 0 failed, 1 disabled**, with **Archives:** paths and pre-edit
-> copies both skipped.
->
-> The word to correct is **silent**. `doc_integrity_test.js` exits 2 and
-> `run_all.sh` names the disabled guard on every run, so the property was
-> *unverified* for contributors and never quietly claimed. That distinction is
-> the difference between a gap and a lie, and this project's guards were already
-> built for it.
->
-> **Resolved by replacing the property, not by freezing the archive.** *"A
-> pre-edit copy exists in a folder"* was always a proxy. The thing worth
-> asserting is **every file an entry says it touched actually changed in that
-> version** — and git answers that on any clone, from history, better than the
-> archive ever did. `doc_integrity_test.js` §8b does it: Touched ⊆ the commit's
-> diff, the root commit exempt **by name**, versions predating git counted rather
-> than ignored, and DISABLED rather than a pass while zero versions are
-> checkable — so it cannot report success before it is able to fail (PRACTICES
-> §7). Mutation-tested 2/2 in a scratch clone carrying a second commit.
->
-> **The archive checks are KEPT, and this is the sequencing the conflict did not
-> consider.** They work for the author today; §8b needs history before it bites.
-> Deleting the working half on the day the replacement is born leaves a window
-> with neither. **Delete them once several versions carry their own commit** — at
-> which point PIPELINE 2.1's freeze, and the 280 MB, become a live question on
-> their own merits rather than as a guard's hostage.
-
 ### ⑫ The interchange decision was taken on a miscounted key
 
 > **Narrowed v3.14.310.** `DEV_PLAN.md` no longer carries the miscount; only
@@ -478,50 +471,6 @@ The silent-wrong-link argument against interchange stands on its own and the
 decision should not be reopened. But one of its two supporting measurements does
 not survive checking, and it is the one quoted into DEV_PLAN §1, where both it
 and `file_layout_options.md` §0 still carry the miscount.
-
-### ⑰ The privacy constraint and the version-control plan carve out the same file
-
-> **Still live, unchanged at v3.14.310.** `.gitignore` still ignores
-> `*_participants.jsonl` and then re-admits `samples/**`; `hooks/pre-commit`
-> exempts `samples/*` by path; `gitignore_test.js` asserts the sample
-> participants file is **not** ignored. No guard checks its *contents*, and it
-> still carries `name`, `affiliation`, `contact_info` and `birth_decade` on three
-> records. The conflict is exactly as filed, and it is the one on this list that
-> ships something rather than merely leaving it undone.
-
-> **SETTLED v3.14.392 — by the act, which is all it was ever waiting for.** The
-> resolution was decided at v3.14.311: the carve-out is a **disclosure a person
-> signs**, not a rule the repository enforces on data it cannot read. That
-> disclosure ran twice before the first commit, printed both participants files
-> field by field — `name`, `affiliation`, `birth_decade`, `role`, and the source
-> records — and traced those two names to **58 occurrences across 20 files**.
-> That number is why an exclusion was never the answer: it would have covered one
-> file of twenty. Signed off 2026-09-02 on `Test Annotator #1` and `Google
-> Translate`, recorded on v3.14.391's `**Examined:**` line.
->
-> **"No guard checks its contents" is still true, and is now the point rather
-> than the defect.** A guard that judged those contents would be a guard deciding
-> what a person may publish about themselves and their consultants. What the
-> tooling owes is that nobody publishes it *unknowingly* — which is what the
-> disclosure does.
->
-> **Its own gap is now stated in its output (v3.14.393).** It greps text, so it
-> lists the files it could **not** read: a name in a screenshot is invisible to
-> it. Three ship — `docs/images/sentence-view.png` and the two Noto fonts — and
-> the screenshot was checked by eye before the first push. It shows `Deneme Metni
-> #1`, `Test Annotator #1`, `Test Source #1`; all synthetic.
-
-
-`.gitignore` blocks `*_participants.jsonl`, then `!samples/**` un-blocks it. The
-pre-commit hook refuses participants files, then allows `samples/*`.
-`gitignore_test.js` asserts the sample participants file **must be tracked**. And
-§2 of this audit notes *"one value in the sample's participants file is worth a
-glance before publication"*. All three mechanisms are configured to let through
-the one file with a flagged value, and no guard checks its contents. The
-replacement corpus will ship a participants file on the same path.
-
-
----
 
 ## 4. Combinable work
 
@@ -594,7 +543,7 @@ open keep their reasoning, because that is the instruction for doing them.*
 
 ### 5.2 Conflicts settled
 
-*The 15 settled. The three live ones are in §3 with the whole argument, because that argument is the instruction for resolving them.*
+*The 15 settled. The three live ones — ⑥, ⑦, ⑫ — are in §3 with the whole argument, because that argument is the instruction for resolving them. **⑪ and ⑰ moved here at v3.14.397**, having been settled at v3.14.392–393 and left under §3's live heading until this comb.*
 
 | # | conflict | state | what survives |
 |---|---|---|---|
@@ -611,6 +560,8 @@ open keep their reasoning, because that is the instruction for doing them.*
 | **⑮** | F5 was retired by a correction that only addressed half of it | ✅ v3.14.300 | delivered as a per-segment offer strip and one bulk fill, not the in-input ghost text F5 asked for — the substitution is recorded in D53 stage E |
 | **⑯** | The `--slow` flag is rejected and re-proposed in two current documents | ✅ dissolved v3.14.269 | the flag shipped and PRACTICES documents it; the rejection text is gone, so there is nothing left to re-litigate |
 | **⑱** | B-037 sits at gate 4 and is the cause of a gate-1 blocker | ✅ v3.14.237 | — |
+| **⑪** | Freezing the archive breaks the two mechanisms that substitute for git | ✅ **v3.14.393** | it predicted the state `git init` produced, and was measured on a real clone: **86 passed, 0 failed, 1 disabled**. Resolved by replacing the property rather than freezing anything — `doc_integrity_test.js` §8b asks GIT whether every **Touched:** file really changed, which works on any clone. **Its one wrong word was *silent***: the runner names the disabled guard every run. The archive checks are kept until several versions carry their own commit; PIPELINE 2.1's freeze and the 280 MB are then a disk question, not a guard's hostage |
+| **⑰** | The privacy constraint and the version-control plan carve out the same file | ✅ **v3.14.392** | settled by the act it was always waiting for. `ship_disclosure.py` ran twice before the first commit, printed both participants files field by field, and traced two names to **58 occurrences across 20 files** — the number that shows why an exclusion was never the answer. Signed off 2026-09-02. **"No guard checks its contents" is now the point rather than the defect**: a guard that judged them would be deciding what a person may publish about themselves. What the tooling owes is that nobody publishes unknowingly |
 
 ### 5.3 What the passes settled
 

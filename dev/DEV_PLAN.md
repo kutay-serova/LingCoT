@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-02 · **Version:** v3.14.395
+**Updated:** 2026-09-02 · **Version:** v3.14.397
 
 | § | What is in it |
 |---|---|
@@ -171,80 +171,39 @@ it is the point rather than a detour.
 
 ---
 
-#### Gate 1 — ✅ TAKEN v3.14.391
+#### Gate 1 — ✅ TAKEN v3.14.391–392
 
 A corpus or participant file committed once lives in every fork forever.
 
-**Both halves are done.** The fieldwork half shipped as the fixture swap at
-v3.14.384 (D58); the disclosure half was run twice and signed off at v3.14.391,
-recorded in that entry's `**Examined:**` line. **214 files, 6.4 MB**, and the
-staged set diffed empty against the list the disclosure printed before `.git`
-existed. `PIPELINE_AUDIT.md` **S1 closes with it.**
+**Both halves done.** Fieldwork: the fixture swap, v3.14.384 (D58). Disclosure:
+`ship_disclosure.py` run twice and signed off, v3.14.391. **214 files, 6.4 MB**,
+and the staged set diffed **empty** against the list the disclosure printed before
+`.git` existed. First commit `51658b8`; `PIPELINE_AUDIT` **S1 closes with it**.
+Full account: `edit_log.md` v3.14.391–392, `dev/design/D58_fixture_set.md` §§7–10.
 
-**What the gate bought, stated because it is the argument for having one.**
-**Three** defects were found before the first commit landed rather than after —
-**B-156** (v3.14.312), **B-205** (v3.14.389) and **B-206** (v3.14.392). All three
-are one shape: a rule that named `samples/` and did not know about the second
-legitimate location. The first two were `.gitignore` patterns that read as active
-and were inert; the third was `hooks/pre-commit` disagreeing with `.gitignore`
-about which cleared data may ship, **and it surfaced by refusing the first commit
-outright.** None was found by reading. Any of the three would have been permanent.
+**What the gate bought — the argument for having one.** Three defects found
+before the first commit landed rather than after: **B-156** (v3.14.312),
+**B-205** (v3.14.389), **B-206** (v3.14.392). All one shape — *a rule that named
+`samples/` and did not know about the second cleared location*. Two were
+`.gitignore` patterns that read as active and were inert; the third was
+`hooks/pre-commit` disagreeing with `.gitignore`, and it surfaced **by refusing
+the first commit**. None was findable by reading. Any would have been permanent.
 
-**`dev/archive/` — 280 MB, and now a disk question rather than a guard
-question.** `PIPELINE_AUDIT` 2.1 wanted it frozen the day git arrived, and
-UNIFIED ⑪ objected that freezing it kills `new_version.py`'s central purpose and
-`doc_integrity`'s strongest check. **v3.14.393 took neither horn**: the property
-those checks defended — *every file an entry says it touched actually changed in
-that version* — is now asserted against git, on any clone. The archive checks are
-kept until several versions carry their own commit, and then the 280 MB can be
-decided on its own merits. **Do not freeze it before then**, and do not delete it
-in the same version as anything else.
-
-**That the hook fired is the gate working, not the gate failing.** Two
-independent layers were built precisely because `.gitignore` is a default with
-known ways past it, and the layer that caught this is the one that only ever runs
-at the moment of commit — so nothing earlier could have executed it. The lasting
-fix is neither file: `gitignore_test.js` §B now runs the hook against every path
-`.gitignore` admits, which makes the two writers one checkable rule.
-
-**The section below is kept as written**, because it is the reasoning and the
-procedure, and the procedure is written for the next swap rather than as history.
-
-| | State |
-|---|---|
-| **the replacement corpus in `samples/`** | ✅ **v3.14.384.** The fieldwork item. **What it must contain is decided: D58** (`dev/design/D58_fixture_set.md`). Requirements fixed: open-licence text, synthetic or consent-cleared, no real participant data. Decided 2026-08-28 — an original translation of *The North Wind and the Sun*, with a Mandarin counterpart, under a neutral identity |
-| **the shipping disclosure** | ✅ **v3.14.391.** One deliberate run of `dev/tools/ship_disclosure.py` immediately before `git init`, and a human sign-off recorded in that version's entry. Specified below |
-
-- **It must carry dependency parses — a few, not all.** ✅ **Done, v3.14.379.**
-  `turkish-test` has 3 parsed sentences and `chinese-test` 2, each with exactly
-  one root, every token headed, and arcs = tokens − 1. That is what
-  `dep_root_test` and `dep_arc_test` need: a root that can be told from an
-  unparsed word, and a relation the no-dep_rel-on-a-root rule can be true of.
-  Parsing twenty-two sentences to satisfy a guard that needs two is the kind of
-  cost this plan should name rather than imply, and it was not paid.
-- **It will not re-enable the two Korean guards.** `search_b_concordance_test.js`
-  and `search_b_matcher_test.js` assert hand-typed Korean forms. Turkish +
-  Mandarin satisfies "typologically contrastive" and not those two.
-- **The swap is no longer expected to break anything** — B-119 ✅ v3.14.238 and
-  B-125 ✅ v3.14.250 fixed the defects L-007 predicted it would expose. Still
-  worth making for density: `samples/turkish-test` is 50,349 bytes against the
-  live corpus's 78,282 and predates `record_type` entirely.
-- Nothing else blocks the commit; every open bug is in gitignore-clean code.
-- **Conflict ⑰ resolves here rather than in `.gitignore`.** The audit framed it as
-  the privacy rule and the version-control plan carving out the same file; the
-  resolution is that they are not in conflict once the carve-out is a disclosure
-  a person signs rather than a rule the repository enforces on data it cannot
-  read.
+**`dev/archive/` — 280 MB, and now a disk question, not a guard question.**
+PIPELINE 2.1 wanted it frozen the day git arrived; UNIFIED ⑪ objected that
+freezing kills `new_version.py`'s purpose and `doc_integrity`'s strongest check.
+**v3.14.393 took neither horn**: §8b asks git *did every **Touched:** file really
+change*, which works on any clone. The archive checks stay until several versions
+carry their own commit. **Do not freeze it before then**, and not in the same
+version as anything else.
 
 ##### The fixture swap, step by step — decided v3.14.326, executed v3.14.384
 
-**The risk was never the corpus, it was the redirection.** Replacing `samples/`
-is a file operation; what made it dangerous is that twenty guards resolve their
-input through `_fixture.js`, and until **B-168** (v3.14.326) that resolver
+**The risk was never the corpus, it was the redirection.** Twenty guards resolve
+their input through `_fixture.js`, and until **B-168** (v3.14.326) that resolver
 returned the first substring match in a recursive sorted walk — so pointing
 `LINGCOT_TEST_CORPUS` at a directory holding an `archive/` handed the suite an
-archived corpus and reported the language's name. **The rehearsal is the
-migration's whole safety, and B-168 is what makes it trustworthy.**
+archived corpus and reported the language's name.
 
 **Keep this procedure.** It is written for the next swap, not kept as history:
 
@@ -256,108 +215,51 @@ migration's whole safety, and B-168 is what makes it trustworthy.**
 | **4** | replace `samples/`, `unset`, run again, and compare to step 1's tally | the two runs must differ only where step 3 predicted |
 | **5** | `python3 dev/tools/ship_disclosure.py`, sign off, `git init` | gate 1's other half. **✅ TAKEN v3.14.391**, and the first commit refused by `hooks/pre-commit` — **B-206** ✅ v3.14.392 |
 
-**What it bought, measured.** Steps 1–4 ran at v3.14.384: **the post-swap run was
-identical to the step-2 rehearsal, check for check** — `diff` of the two
-per-guard tallies was empty. That is the whole point of rehearsing, and it is the
-first time it has been collected. Against step 1's baseline five guards moved,
-all in check COUNTS and none in outcome; the two that moved DOWN were D58 §3's
-dead-reader branches, deleted at v3.14.386.
+**What it bought, measured.** Steps 1–4 ran at v3.14.384: the post-swap run was
+**identical to the step-2 rehearsal, check for check** — `diff` of the two
+per-guard tallies was empty. Against step 1's baseline five guards moved, all in
+check COUNTS and none in outcome.
 
-**Two things it surfaced that were not about the swap**, both recorded because
-they are the kind of thing a swap is good at finding: DEV_PLAN's own v3.14.363
-corpus figures did not reproduce (and no annotation was lost — checked id by id),
-and two shipped translations are stamped `auto-nllb-200`. **The licence question
-that raised was researched and closed: CC-BY-NC binds the weights, not the
-strings**, so the translations stay and the stamp is the honest record.
+##### The shipping disclosure — decided v3.14.311, and what it binds
 
-##### What the corpora hold
+**`samples/` ships a participants file on purpose**: it is the file structure a
+user will actually have, and a sample set omitting one of the four teaches the
+wrong shape. Its contents being synthetic is a fieldwork decision, not one the
+repository can make.
 
-**Do not copy the figures here.** `samples/README.md` carries the measured table
-and is re-taken when the fixtures change; a second copy is how this section spent
-three versions disagreeing with itself. Take them with
-`node dev/tests/schema_conformance_test.js`, which prints the object count and
-names the corpora it walked.
+**So the check DISCLOSES; it does not exclude.** No `.gitignore` rule, no
+allow-list of acceptable names, no pattern for what "synthetic" looks like — a
+pattern would be a claim about what a real name can be, wrong the same way
+`POS_VISIBLE_MORPH` was. The tool enumerates; a person decides; there is no pass.
 
-**What is worth stating rather than measuring:** both corpora are fully glossed
-and fully translated, both carry dependency parses with a root, and D58 §1's four
-measured gaps are closed. What they still lack is listed under D58 below, and it
-is annotation rather than code.
+**Why a filename exclusion was never the instrument**, measured 2026-08-31: the
+participants file held **3** named records and the corpus and dictionary beside
+it held **269 occurrences** of those same names inlined in provenance. A check
+scoped to `*_participants.jsonl` would have read 3 and missed 269. The live
+corpora hold **0** — interning (v3.14.225–226) thins provenance into
+`prov_events` — so the swap fixed it by construction and the disclosure verified
+it. **The v3.14.391 run found 2 names in 58 places across 20 files**, which is
+the same argument with the current numbers.
 
+**Not in `run_all.sh`, deliberately.** A guard reading participant data would
+print it on every run and would become a guard that cannot fail the day the data
+is clean. One-time, before an irreversible act, to a terminal and nowhere else —
+never `logs/`.
 
-##### Safe with respect to data — measured, and smaller than this gate assumed
+**The sign-off is the record**, on the `**Examined:**` line of the version that
+takes it. *Corrected v3.14.397: this said a `decision` entry. It is a `chore` —
+`doc_integrity` refuses a `finding` that touches anything outside `dev/audits/`,
+and `--examined` renders only for a `finding`, so the line was hand-written.
+**That is a real rough edge in `new_version.py`**, not a documentation slip.*
 
-The privacy prose above was written when `samples/` held **269 occurrences** of
-real names inlined in provenance. The live corpora hold **none**: interning
-(v3.14.225–226) thinned provenance into `prov_events`, and the only annotator
-strings there are `auto (lexicon)` and `automatically-parsed`, machine labels,
-against a single id `ann_001`.
-
-**So the entire exposure is two records per corpus** — one `annotator`, one
-`source` — carrying name, researcher, affiliation, role, `birth_decade` on one of
-them, and the source's publication restrictions. Substituting a neutral identity
-is editing four records, not sweeping a corpus.
-
-**Which argues for doing it FIRST, not at the disclosure.** Annotating the rest
-under the neutral identity keeps every new provenance event clean by
-construction; substituting afterwards is a rewrite of records the guards read.
-The disclosure then verifies a decision already taken rather than catching one
-not yet made.
-
-**What the swap costs that nothing has replaced.** `samples/turkish-test` is the
-only fixture that predates interning and `record_type`: no `prov_events` line,
-no `record_type: "document"`. `isDocument`'s `Array.isArray(r.sections)` fallback
-and `splitEvents`' no-events path exist for exactly that shape, and after the
-swap **nothing exercises either**. B-128 is what happens when a format path has
-no fixture. Decide at step 3: keep one small legacy-shape corpus in `samples/`
-for that coverage, or delete the fallbacks in the same version. Keeping a
-fallback nothing tests is the worse of the two.
-
-##### The shipping disclosure — decided v3.14.311
-
-**`samples/` ships a participants file on purpose.** It is the file structure a
-user will actually have — corpus, dictionary, participants, journal — and a
-sample set that omits one of the four teaches the wrong shape. The requirement is
-that its contents are not genuine, which is a fieldwork decision, not something
-the repository can decide for itself.
-
-**So the check discloses; it does not exclude.** No `.gitignore` rule, no
-allow-list of acceptable names, no pattern for what "synthetic" looks like. A
-pattern would be a claim about what a real name can be — the same kind of claim
-as `POS_VISIBLE_MORPH`, and wrong for the same reason. The tool enumerates and a
-person decides.
-
-**Why a filename exclusion would have been the wrong instrument anyway**, measured
-2026-08-31: the participants file holds **3** named records, and the corpus and
-dictionary beside it hold **269 occurrences** of those same names inlined in
-provenance — 205 and 64. A check scoped to `*_participants.jsonl` would have read
-3 records and missed 269 strings. The live corpora have **0**, because interning
-(v3.14.225–226) thins provenance into the `prov_events` table; `samples/` predates
-it, which is L-007's fixture-format finding arriving from the privacy side. **The
-corpus swap fixes this by construction — the disclosure is what verifies it did.**
-
-What the tool does, in one run, printing to the terminal and writing nothing:
-
-1. **Asks git what would ship**, via `git check-ignore` against a scratch repo —
-   the technique `gitignore_test.js` already uses. Not a hand-written list: a
-   check and a commit that disagree about what is being committed is two writers
-   of one thing.
-2. **Takes the names from the data, not from a pattern.** Every `name` on every
-   `annotator` and `source` record that would ship becomes the search set; the
-   tool then counts each one across every other shipping file. Derived from what
-   is there, the way `countedKeys` reads the field table rather than listing
-   fields.
-3. **Prints every field carrying a value** on every shipping participant record,
-   so the person signing off sees what they are signing off rather than a verdict.
-4. **Reports, and returns nothing to act on automatically.** There is no pass.
-
-**Not in `run_all.sh`, deliberately.** A guard that reads participant data would
-print it on every run, and would become a guard that cannot fail on the day the
-data is clean. This is a one-time disclosure before an irreversible act, and its
-output belongs on a terminal and nowhere else — never in `logs/`.
-
-**The sign-off is the record.** The `git init` version is a `decision` entry whose
-`--examined` names the disclosure and what was concluded. That is what stops the
-check from quietly not having been run.
+*Compressed v3.14.397, 188 lines → 90, half of that the two subsections kept whole. What went was reasoning written in
+prospect that the event has since settled: whether to substitute the neutral
+identity before or after annotating (done first, v3.14.384), what the corpora
+hold (`samples/README.md` carries the measured table — do not copy figures here),
+and whether the swap would leave `isDocument`'s no-`record_type` fallback and
+`splitEvents`' no-events path untested. **That last one is answered:**
+`dev/tests/fixtures/cli_ingested/` is a real `corpus_ingest.py` file with no
+`prov_events` line, and `prov_intern_test.js` reads it.*
 
 #### Gate 2 — before a testers' build
 
@@ -415,35 +317,33 @@ events; `morphological_parse` agrees with the morpheme list; word forms
 concatenate to sentence text. A load-then-save loses nothing. **The format is not
 losing data** — what follows is about what it never captured.
 
-#### Attribution — the sweep's findings, all closed
+#### Attribution — all five findings closed, v3.14.260–280
 
-| what the sweep measured | live at the time | closed by |
-|---|---|---|
-| `dict_id` links carrying a stamp | 1 of 92 | B-121, v3.14.260 |
-| paragraph-level field stamps | 0 | B-138, v3.14.261 |
-| list fields stampable at all | none | B-138, v3.14.261, per element |
-| morphemes with a revision trail | 0 of 77 | B-134, v3.14.276 |
-| derived word fields signed by a person | 13 of 13 glosses, 6 of 6 translits | B-141, v3.14.280 |
+`dict_id` links carrying a stamp (1 of 92) → **B-121** · paragraph field stamps
+(0) and list fields stampable at all (none) → **B-138** · morphemes with a
+revision trail (0 of 77) → **B-134** · derived word fields signed by a person
+(13 of 13 glosses, 6 of 6 translits) → **B-141**. Figures are as measured on the
+now-retired corpora; the fixes are what carried forward.
 
-**The counts stay until an object is next edited: decided seed-on-next-write, not
-migrate.** A stamp records what was believed when it was written, so nothing is
-retro-corrected.
+**The rule that survives them: seed-on-next-write, not migrate.** A stamp records
+what was believed when it was written, so nothing is retro-corrected — the counts
+stayed until an object was next edited, by decision.
 
 *B-134 turned out to be three defects — nothing appended, `applyProvToObj`
 overwrote the creation stamp before seeding an empty trail, and no script ever
-wrote `prov_history` at all. Its two prerequisites are closed: the SCHEMA prose is
-reconciled to the field table, and `sentence.text`'s path was verified rather than
-assumed — 0 of 12 means nobody has edited a sentence's text, not that the path is
-missing.*
+wrote `prov_history` at all.*
 
-#### Model gaps, not data errors
+#### Model gaps, not data errors — re-measured v3.14.397
+
+*The 2026-08-30 figures were taken on corpora that no longer exist. These are the
+shipped pair, both files, today.*
 
 | | |
 |---|---|
-| **19 of 33 lemma groups have no member entry** | tolerated by design (`lemma_id` is a per-occurrence annotation), but the group view shows nothing while the corpus claims membership. In 11 of the 19 an identically-formed entry was minted 1 ms later — one action, one half linked |
-| **`homograph` set on 0 of 52 entries** | two morphemes glossed "swim" and "peel" both link to the one `yüz` entry glossed "hundred". Nothing can adjudicate. D35's remaining half meeting real data |
+| **17 of 46 lemma groups have no member entry** | tolerated by design (`lemma_id` is a per-occurrence annotation), but the group view shows nothing while the corpus claims membership. **All 17 are in `turkish-test`; `chinese-test` has none of 13** — so this is a property of how one corpus was built, not of the model, which the single-corpus measurement could not have shown |
+| ~~**`homograph` set on 0 of 52 entries**~~ | **no longer true.** It is set on **6** of 77 — 4 Turkish, 2 Mandarin — since **B-143** numbered loaded homographs at v3.14.290. The example that made the point still stands as a *shape*: two morphemes glossed "swim" and "peel" linking to one `yüz` entry is what D35's remaining half is about |
 | **B-136** | `word_index` written by two writers, read by nobody |
-| **B-139** | `source_ids`, `variants`, `constituent_forms` hold plain strings, so no per-element stamp. Changing the element shape is a format decision; all three are empty in both corpora, so it becomes urgent the first time somebody types a variant |
+| **B-139** | `source_ids`, `variants`, `constituent_forms` hold plain strings, so no per-element stamp. Changing the element shape is a format decision; **all three are still empty in both corpora**, so it becomes urgent the first time somebody types a variant |
 
 ### Where things stand
 
@@ -478,9 +378,14 @@ to §5 as one line pointing at `dev/design/`, because a section headed OPEN that
 holds finished work makes the reader check each one to find out. Six left at
 v3.14.363 (D32, D55, D57, D59, D60, D61), which was 10 KB of this file.
 
+***Enforced again v3.14.397, and it had drifted back.* D53, D34 and D58 were
+still here with full bodies — 120 lines describing work that shipped at
+v3.14.298–302, v3.14.306–319 and v3.14.384–386. One line each in §5 now; their
+design records hold the detail. **Their genuine residue is not deleted** — it is
+in §3, because it is real open work that is no longer a feature in progress.*
+
 | id | What | Size | Blocked by | State | Spec |
 |---|---|---|---|---|---|
-| ~~[D53](#d53-the-fill-pipeline)~~ | the fill pipeline (**B-033**) | — | — | **✅ COMPLETE v3.14.298–302** | `dev/design/D53_fill_pipeline.md` |
 | [D54](#d54-interlinear-pinned-examples) | interlinear pinned examples | M | — (D32 ✅) | **PLANNED v3.14.301** | `dev/design/D54_igt_pinned_examples.md` |
 | [D49](#d49-machine-parseable-lexicon-export) | machine-parseable lexicon export | S | — | **UNGATED v3.14.282** | `dev/design/D49_lexicon_export.md` |
 | [D25 P3](#d25-p3-constituency-parse) | constituency parse | ? | — | unscoped | `dev/design/D25_dependency_parse.md` (P1/P2) |
@@ -490,55 +395,10 @@ v3.14.363 (D32, D55, D57, D59, D60, D61), which was 10 KB of this file.
 | [D39](#d39-standardized-keyboard-shortcuts) | standardized keyboard shortcuts | S | I2 | gate 3 | — |
 | [D37](#d37-derived-forms-and-paradigms) | derived forms and paradigms | ? | — | not scheduled; owns `variants` matching since D35 C | `dev/design/D37_paradigms.md` |
 | [D46](#d46-the-annotation-pipeline) | the annotation pipeline audit | M | — | gate 2, run it *during* annotation | `dev/design/D46_pipeline_ux.md` |
-| ~~[D34](#d34-session-tracker--missing-annotation-panel)~~ | session tracker & missing-annotation panel | — | — | **✅ A–E, v3.14.306–319** | `dev/design/D34_session_tracker.md` |
 | [D28](#d28-dictionary-senses) | dictionary senses | ? | — | findings only, not scheduled | `dev/audits/DICT_SENSE_AUDIT.md` |
 | [D29](#d29-nllb) | NLLB diagnostics, then in-GUI download | P2: M | — | **P1 ✅ v3.14.63–64**, P2 open | `dev/design/D29_nllb.md` |
 | [D24](#d24-language-porting) | language porting | ? | — | not scoped | — |
 | [D20](#d20-corpus-combiner) | corpus combiner | ? | — | not scoped | — |
-
-### D58: what the shipped test data contains
-
-**✅ SPECCED v3.14.327 · SWAPPED v3.14.384 · LEGACY READERS DELETED v3.14.386.**
-Full record: `dev/design/D58_fixture_set.md`, whose §§8–10 carry the execution.
-*Compressed v3.14.387: this was a 76-line paraphrase of a record that is now
-finished, and its "measured gaps" table had been re-taken twice in two places.*
-
-**The finding, which is the part worth keeping.** `samples/` was serving two
-audiences whose requirements are opposite: a user should see a corpus worth
-imitating, and several guards need data no user should imitate — an empty
-dictionary (**B-163**'s no-op is unreachable once a corpus is annotated once),
-dangling references, an ambiguous form (**B-122** passed on luck), a pre-interning
-file. Every
-unresolved question in the audit was that one conflict. **So they were split by
-audience:** `samples/` is exemplary and public; `dev/tests/fixtures/` holds
-specimens, each named for the guard or bug it serves.
-
-**What shipped.** Two typologically contrastive corpora — the pair is
-load-bearing, not decorative: B-120, B-144 and B-027 were each invisible in one
-of the two, and B-202 and B-203 were each invisible until one of them carried a
-**multi-element list**. That last gap was the one D58 §1 said no fixture could
-show the value of, and it has now paid for itself twice in three versions.
-
-**Two decisions that still bind.**
-
-- **No legacy parity, no legacy openability** (v3.14.329). The archived corpora
-  are not required to keep opening — measured at v3.14.386, they no longer do.
-  `samples/turkish-test` was **retired, not migrated**, and no old corpus is
-  copied into `dev/tests/fixtures/`: those specimens are purpose-built or
-  CLI-produced, which is the difference between a fixture and a keepsake.
-- **A specimen with no reader is not a keepsake — delete it.** That is §3, and
-  taking it deleted six reader paths, the `legacy` field tier and `legacyKey`.
-  The one shape that survived the question was `corpus_ingest.py`'s output, which
-  turned out to be a **current input format** standing in the audits as a
-  historical one because the only file in it happened to be old.
-
-**Still open, and it is annotation rather than code:** D58 §1 asked for one of
-each annotation layer against a visibly unfinished remainder, and several
-declared fields have no instance in either corpus — `comments` at every level,
-`variants`, `allomorphs`, `selection`, `semantic_domain`, `usage_notes`,
-`pinned_examples`, `section.source_ids`. **A field with no instance cannot tell a
-reader that works from a reader that does not**, which is exactly what B-202 and
-B-203 cost to learn.
 
 ### D56: Undo
 
@@ -580,46 +440,6 @@ ascending cost:
 also keeps the promise honest: an "Undo" control that covers takes and silently
 does not cover deletes would be worse than none, so whatever ships must say what
 it undoes.
-
-### D53: The fill pipeline
-
-**Specced 2026-08-31, complete v3.14.302.** **B-033** closed with it — the
-linking half finished at v3.14.108/138, this was the filling half from
-`ANNOTATION_FILL_AUDIT.md` §7.
-
-**A ✅ B-144.** F1's precondition: every later stage makes the app write more
-automatically, and doing that on inconsistent matching spreads the damage.
-B-057 ✅ v3.14.112 was F1's other half. Measured before the fix: `turkish-test`
-had **90 raw form keys against 85 folded** — the fable's content words, each
-split by a sentence-initial capital — and `chinese-test` lost nothing, having no
-case. Three accessors own the maps now.
-
-**C ✅** the derive preview, shipped with A rather than fourth: it was the stage
-silently rewriting data on every save.
-
-**B ✅ v3.14.299**, the gloss pool: 72 rows from `turkish-test` and 110 from
-Leipzig, own first, deduped as metalanguage.
-
-**E ✅ v3.14.300**, the parse guide: each segment marked `unique` / `ambiguous` /
-`none`, and one action that fills every unambiguous one and leaves the rest
-alone. The audit's highest-leverage change for annotation speed.
-
-**F ✅ v3.14.301**, and closing it took three answers rather than code. Its
-headline — a rendered placeholder, never a stored one — shipped as B-059 at
-v3.14.132; what sat under it was one real gap, one undecided format question and
-one undocumented choice. The gap is **D54**, split out because PDF column
-alignment is the whole of the work. The `-`-inside-a-gloss question is decided:
-**warn, never rewrite, and the eventual control belongs to the annotator.** The
-search choice is documented and guarded.
-
-**D ✅ v3.14.302, and it closes D53 and B-033 with it.** F4's proposal was
-already built in pieces under other numbers; what was left was the half F4 ruled
-*against* — `inferPos`, uncalled since before v3.14.21, asserting one language's
-gloss inventory and returning `N` for the rest. Deleted, and refused by shape.
-
-**All six stages are closed.** The line that held throughout: these stages
-*offer*, they do not apply. B-123's backfill writes links — derived-stamped,
-visible, repairable — where a gloss or a part of speech becomes the record.
 
 ### D54: Interlinear pinned examples
 
@@ -755,42 +575,6 @@ push. Two long moves and two short ones — **and it is a change to markup, not 
 the table**, because five levels take their order from `FIELD_SPEC` and word-edit
 does not. A second argument for converting it first.
 
-### D34: Session tracker & missing-annotation panel
-
-**✅ all five stages, v3.14.306–319.** The build account was 105 lines here and
-is now where it belongs: `dev/design/D34_session_tracker.md` (stamped
-v3.14.318), plus the edit-log entries for each stage. *Compressed v3.14.387 —
-this section had become a second writer of that record, which is PRACTICES §4 in
-the documentation rather than in the code.*
-
-**What is still load-bearing, and would be re-derived wrongly without it:**
-
-- **"Missing" is three reasons, not one.** *Derived when applicable*
-  (`vacuousWhen` — a monomorphemic word has no parse), *inapplicable to the
-  project* (`appliesWhen`, asked once — Latin-script Turkish wants no
-  transliteration), and *genuinely missing*. A counter built from the `core`
-  tier would have opened by reporting 301 missing parses and 130 missing
-  transliterations, every one of them wrong. Both rules are declared in the field
-  table by name and resolved in the app.
-- **Punctuation is not a fourth reason** — it is `_navIsToken`, so the counter
-  counts what D30 traversal lands on.
-- **The tracked set is the annotator's, not the table's** (stage E). The queue is
-  what is tracked and the fold is what is not: an `×` on a row, a **Track** button
-  in the fold, no settings screen.
-- **A counted field carries a second name.** The first render read *"3 sections
-  need a source(s)"* — an editor label is not a field's name in a sentence, and a
-  new counted field cannot arrive without both.
-- **The panel counts the LOADED state, not the file.** They disagree by three on
-  `morpheme.type`, because of the load-time fill pass, and the loaded state is
-  what the annotator is looking at.
-
-**One row is still a question for the annotator, not a finding.**
-`paragraph.translations` is reported as missing in both corpora, and no join for
-it exists in the app — the rule is documented only in the pre-G31 CLI's README.
-Every sentence in both corpora is translated, so a paragraph translation would be
-redundant with work already done. **Deciding it is the last thing between five
-rows and four**, and it is the one part of D34 nobody has answered.
-
 ### D28: Dictionary senses
 
 Findings only, nothing implemented: `dev/audits/DICT_SENSE_AUDIT.md` (2026-08-06,
@@ -833,6 +617,21 @@ yet scoped.**
 
 ## 3. DEFERRED (decided, awaiting a trigger)
 
+
+**From D34, and it is a question for the annotator rather than a finding.**
+`paragraph.translations` is reported missing in both corpora and no join for it
+exists in the app — the rule is documented only in the pre-G31 CLI's README.
+Every sentence in both corpora is translated, so a paragraph translation would be
+redundant with work already done. **Deciding it is the last thing between five
+counted rows and four**, and it is the one part of D34 nobody has answered.
+
+**From D58, and it is annotation rather than code.** Eight declared fields have
+no instance in either corpus — `comments` at every level, `variants`,
+`allomorphs`, `selection`, `semantic_domain`, `usage_notes`, `pinned_examples`,
+`section.source_ids`. **A field with no instance cannot tell a reader that works
+from a reader that does not**, which is what B-202 and B-203 cost to learn. The
+trigger is a tester annotating (gate 2), not a code change.
+
 | | | Trigger |
 |---|---|---|
 | **C19** `prov_history` size cap | measured out of D50 stage 4, not built. Longest history anywhere is **5**, mean 1.36; since stage 4b an entry is an interned id costing ~3 bytes, so a cap of 100 would never fire and would save ~300 bytes if it did. Shape if needed: optional `max_prov_history` → drop oldest + `history_truncated:true` | a real session past ~50 |
@@ -866,11 +665,14 @@ yet scoped.**
 
 | | Shipped | What, and where the reasoning is |
 |---|---|---|
+| **D58** | v3.14.384–386 | the shipped test data: `samples/` is two typologically contrastive corpora, byte-identical to the live ones, and `dev/tests/fixtures/` holds specimens named for the guard or bug they serve. **The split is by AUDIENCE** — a user should see a corpus worth imitating, and several guards need data no user should imitate. §3's rule, *a specimen with no reader is not a keepsake*, deleted six reader paths, the `legacy` tier and `legacyKey`. `dev/design/D58_fixture_set.md` |
+| **D34** | v3.14.306–319 | session tracker & missing-annotation panel, all five stages. **"Missing" is three reasons, not one** — derived-when-applicable, inapplicable-to-the-project, genuinely missing; a counter built from the `core` tier would have opened by reporting 301 missing parses, every one wrong. The tracked set is the annotator's, not the table's. `dev/design/D34_session_tracker.md` |
+| **D53** | v3.14.298–302 | the fill pipeline, all six stages, closing **B-033**. The line that held throughout: **these stages offer, they do not apply.** `dev/design/D53_fill_pipeline.md` |
 | **D61** | v3.14.362 | the lemma chip: the field proposes when it is empty, from the token's entry, the same form already lemmatised in this corpus (with its count), and the root the parse names written through `source/resources/citation_forms.json`. Source 4, string similarity, deferred by decision — it knows no morphology. Nothing writes; an accepted chip is stamped `derived`. `dev/design/D61_lemma_suggestion.md` |
 | **D60** | v3.14.347–348 | a derived value never occupies the annotator's answer. The dictionary's bulk fill became an offer that shows what it would do; `storedWordGloss` made "typed" and "composed" tellable apart at both ends. Closed L-035, B-176, B-180, B-186. `dev/design/D60_derived_values.md` |
 | **D59** | v3.14.343 | the document editor commits at Save and only there: every control edits a buffer, `saveDocument` is the only writer of `d.sections`. Closed L-036, B-175, B-178. `dev/design/D59_section_editor_commit.md` |
 | **D57** | v3.14.331 | the morpheme route into the dictionary. `dev/design/D57_morpheme_dict_route.md` |
-| **D55** | v3.14.330 | an explicit take overwrites, and `offerWrites` is the one predicate the chip and the fill both ask — which is what made B-108 findable. `dev/design/D55` (in `D53_fill_pipeline.md`) |
+| **D55** | v3.14.330 | an explicit take overwrites, and `offerWrites` is the one predicate the chip and the fill both ask — which is what made B-108 findable. D55, written inside `dev/design/D53_fill_pipeline.md` rather than as its own record |
 | **D32** | v3.14.303 | one transliteration model: the derivation is computed at read time and never stored. `dev/design/D32_transliteration_model.md` |
 | **D35** | v3.14.183–282 | homographs: two objects can share a form, and the model now says which is which. **A** the stored discriminator, the lemma registry, and an ambiguous form writing nothing · **B1–B4** the four silent `[0]`s closed and the chooser built · **B5** the lemma group, computed from tokens as well as entries · **B6** orphans collected, never swept · **C** the deliberate guard edit. Closed B-106; ungated D49. **Residue: B-114**, a discriminator on a lemma record. `dev/design/D35_homographs.md` |
 | **D51** | v3.14.263–271 | one add-to-dictionary surface: `candidateRows` decides, the panel draws, `createEntries` writes, `backPropagate` gives the token back. Closed B-058, B-111, B-112, B-113, B-140, F3, F4's residue, I6; retired `_pushTokenToDict`, the push picker, the completion modal, `renderDictAdd`, `saveNewDictEntry`, the `dict-add` view. `dev/design/D51_add_to_dictionary.md` |
