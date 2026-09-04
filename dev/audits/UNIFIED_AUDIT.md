@@ -1,5 +1,5 @@
 # UNIFIED AUDIT: the audit of record
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 *LIVE. Started against v3.14.221 and bumped with every version since, because a
 stale audit of record is worse than none. Findings keep the build they were found
 against. `dev/audits/AUDIT_INDEX.md` indexes the frozen audits this replaced.*
@@ -16,7 +16,7 @@ its own line.
 | | |
 |---|---|
 | **[§1 The board](#1-the-board)** | every open item in one ranked table — start here |
-| **[§2 Findings](#2-findings-in-full-by-subject)** | the open bodies, by subject. A body is the instruction for the work |
+| **[§2 Findings](#2-findings-in-full-by-subject)** | the open bodies, by subject. A body is the instruction for the work. §2.7 added v3.14.405 |
 | **[§3 Conflicts](#3-conflicts-still-live)** | five places two documents or two code paths disagree |
 | **[§4 Combinable work](#4-combinable-work)** | where one pass closes several items |
 | **[§5 Ledgers](#5-ledgers)** | everything closed, one row each |
@@ -25,9 +25,9 @@ its own line.
 | **[§8 Notes from the passes](#8-notes-kept-from-the-passes)** | what each wave examined · the journal session · the refuted guard proposal |
 | **[§9 How this audit has been wrong](#9-how-this-audit-has-been-wrong)** | its own corrections, kept because the pattern repeats |
 
-**42 findings — 35 closed, 0 half, 7 open. 18 conflicts — 15 settled, 3 live.**
+**46 findings — 37 closed, 0 half, 9 open. 18 conflicts — 15 settled, 3 live.**
 Every count is computed from the table that holds the rows and never carried
-forward: §1's board has the **10** rows still outstanding — 7 open findings and
+forward: §1's board has the **12** rows still outstanding — 9 open findings and
 the 3 live conflicts — and §5's ledgers hold what is done. v3.14.314 changed two
 states and miscounted the header by one in the same edit; **so did the line this
 replaces**, which said 32 closed / 2 half against a ledger holding 31 and 3, and
@@ -49,9 +49,11 @@ the severity if it is also a bug.
 
 | id | subject | S | in one line | bug |
 |---|---|---|---|---|
+| **L-043** | controls | — | 21 array-shaped fields, six controls, three declaring none. Deferred by decision v3.14.408; trigger is D28 or D37 | — |
+| **L-044** | controls | — | `list` edits an array through one comma-separated text box. Absorbed into D62 A v3.14.408; still unfixed, tracked in gate 3 | **B-139** |
 | **L-034** | fill · timing | — | The unit of work is the token, and 44% of the work is re-work | — |
 | **L-006** | guards | — | The suite's mutation score is 56%, and 31% of assertion sites are regexes against source text | — |
-| **L-013** | fill · timing | — | The observed annotation order corrects D46, and F5 with it. n=1, deliberately not acted on | — |
+| **L-013** | fill · timing | — | The observed annotation order corrects D46. Order decided v3.14.408, built v3.14.409; still n=1 | — |
 | **L-039** | references | — | `pinned_examples` is a reference nothing sweeps and nothing counts | — |
 | **L-041** | the view | — | An offer that cannot be taken: `data-offer-translit` has no consumer | — |
 | **L-030** | documents | — | The numbers in the files that exist to stop stale numbers | — |
@@ -183,6 +185,28 @@ the level that does not read the field table.
 > between the two orders the code ships, where this names the order the work
 > actually took.
 
+> **The reorder was decided at v3.14.408, and it does not adopt this order.**
+> The decided sequence is transliteration, POS, **word gloss**, parse, morpheme
+> rows, lemma. Three of the four moves are this finding's: POS rises above the
+> parse, the lemma falls below the morpheme rows, the parse moves up. **The word
+> gloss does not fall to the end.** It goes third, above the parse, which is the
+> one place the decision contradicts the measurement.
+>
+> The reason is recorded in the D46 appendix and is worth repeating here because
+> this finding is the evidence it argues against. The session answered the gloss
+> last because the field was *pre-filled with the app's derivation* by the time
+> it got there — B-187 and B-191 are four attempts at the consequences of that.
+> Asked before the parse the field can only hold the annotator's own whole-word
+> gloss, which is the value it exists to hold. So the measurement recorded when
+> the annotator *could* answer, and the decision changes what the question is.
+> n=1 either way. **Gate 2's D46 pass now runs against the decided order**, and
+> QUICKSTART asks the question directly.
+>
+> **Built v3.14.409.** `field_order_test.js` is D46's pass 1 as a guard: the
+> sequence asserted against the decision, and the two real dependencies
+> asserted against the code. **This finding stays open** — what is unresolved
+> is not the order but the n=1, and only a second annotator settles that.
+
 ---
 
 ### 2.3 References and integrity — what happens to the thing that pointed at it
@@ -224,6 +248,21 @@ v3.14.337–338; what is left here is the fixture, which is data rather than cod
 and the mutation score.*
 
 #### L-006 · E · The guard suite's mutation score is 56%, and one guard is entirely hollow
+
+> **Re-measured in part, v3.14.402.** The **score** has not been re-taken since
+> v3.14.229 and must not be quoted until it is — `GUARD_MUTATION_2026-08-30`
+> rec 8 says the same and is also untaken. What *was* re-measured is the second
+> half of this finding, *"31% of assertion sites are regexes against source
+> text"*: counted across all `dev/tests/*_test.js`, **290 of 2,050 `check()`
+> sites — 14%**, against 31% when this was written.
+>
+> **Not a refutation, and the direction matters.** The proportion fell because
+> the denominator grew: the suite went from ~66 guards to 92, and the ones added
+> since execute. The absolute count of source-text assertions is what would have
+> to fall for the finding to be answered, and nothing here shows that it has.
+> *Method: a `check(` site counts as source-text if its first 220 characters
+> both test a string and name one of the source readers — a proxy, stated so it
+> can be argued with rather than trusted.*
 
 > **The headline figure has not been re-taken since v3.14.254, and a great deal
 > has changed under it.** Between v3.14.370 and v3.14.386 individual guards were
@@ -360,6 +399,172 @@ opened candidate row IS a derived value shown before it is written. The line
 *"F3 alone stands, and its priority should rise"* was right and was acted on;
 what it called the cheapest partial answer to L-009 arrived after L-009 itself
 closed at v3.14.260.
+
+### 2.7 Controls and presentation, by field shape
+
+*Inventory taken v3.14.405 against `field_spec.js`, `renderField`, every form
+element emitted in `LingCoT.html`, `participants.js`, `events.js` and
+`search.js`, and the 1,030 rules in `LingCoT.css`. Counts are computed, not
+recalled.*
+
+**The shape of the app's input layer.**
+
+| | count |
+|---|---|
+| declared fields in `field_spec.js` | 83 |
+| distinct `control` values declared | 15 |
+| fields declaring no control | 21 |
+| control branches in `renderField` | 11 |
+| `<input>` emitted (49 of them `type="text"`) | 62 |
+| `<textarea>` | 13 |
+| `<select>` | 6 |
+
+#### L-043 · A · 21 array-shaped fields, six controls, three with none
+
+Every field below stores a list. The control column is what `field_spec.js`
+declares, and it decides which of four structurally different editors appears.
+
+| control | n | fields | editor produced |
+|---|---|---|---|
+| `comments` | 6 | `comments` at 6 levels | row editor: textarea, source chip picker, date, remove |
+| `translits` | 5 | `transliterations` at 5 levels | row editor: two plain inputs, remove. No source, no date |
+| `translations` | 2 | `paragraph`, `sentence` | row editor: textarea, source chip picker, date, remove |
+| `sources` | 2 | `document`, `section` `source_ids` | chip picker, multi-select, no rows |
+| `list` | 2 | `dict_entry.constituent_forms`, `.variants` | one `<input class="edit-input">`, comma-separated |
+| `tokenize` | 1 | `sentence.words` | one `<input>`, re-split on save |
+| none | 3 | `word.morphemes`, `dict_entry.allomorphs`, `.pinned_examples` | hand-written surfaces, no declaration |
+
+`comments` and `translations` produce the same editor from two code paths.
+`translits` stores the same list shape and produces a different one. The three
+undeclared fields are the same shape again and are drawn by hand.
+
+> **Deferred by decision, v3.14.408** (D62 B). Declaring presentation across all
+> 83 field entries prevents a sixth treatment, and there is no sixth field
+> queued. The declaration lands in the first version that adds an array-shaped
+> field, and converts these 21 with it; the trigger is **D28** or **D37**. The
+> vocabulary that version should use is worked out in D62 §4.
+
+#### L-044 · B · `list` edits an array through one text box
+
+`renderField`'s `list` branch emits a single text input. `LingCoT.html:10299`
+joins on render (`(cur || []).join(', ')`) and `:10533` splits on read
+(`.split(',').map(x => x.trim()).filter(Boolean)`).
+
+Consequences, all measurable:
+
+- A value containing a comma cannot be entered.
+- There is no per-element identity, so no per-element provenance. This is the UI
+  half of **B-139**, which records the same fact from the data side for
+  `source_ids`, `variants` and `constituent_forms`.
+- `variants` and `constituent_forms` are the only list fields with no add or
+  remove control, so I2's descriptor does not reach them.
+
+> **Absorbed into D62 A, v3.14.408.** Not closed by a fix, closed by being the
+> same task as something else: the comma and the missing per-element provenance
+> are both consequences of the control, and one control change answers both.
+> `dev/design/D62_list_field_presentation.md` §2.
+
+#### ~~L-045~~ · B · Four row collections, four CSS treatments, two with none · ✅ v3.14.407
+
+Measured in `LingCoT.css`:
+
+| rule | declaration | axis |
+|---|---|---|
+| `.translit-row` | `display: flex; align-items: center; gap: 8px` | horizontal |
+| `.allomorph-row` | `display: flex; align-items: center; gap: 6px; margin-bottom: 5px` | horizontal |
+| `.sel-row` | `display: flex; align-items: center; gap: 6px` | horizontal |
+| `.comment-row` | `display: flex; flex-direction: column; gap: 4px` plus border, radius, padding, background | vertical, boxed |
+| `.translation-row` | identical to `.comment-row` | vertical, boxed |
+
+Two visual families, not five variations. Three collections lay their fields out
+in a line with no container; two stack a textarea over a meta line inside a
+bordered card. The two that share a declaration are the two that already share an
+editor shape (L-043). No `*-rows` container has a rule of its own.
+
+> **Closed v3.14.407.** `ROW_EDITORS` declares `layout: 'inline' | 'stacked'`.
+> `.row-ed`, `.row-ed--inline` and `.row-ed--stacked` carry the layout;
+> `.row-x` and `.row-add` are one remove and one add control for all five
+> collections. The five per-collection layout rules are gone, and so are the six
+> borrowed button rules. The per-collection classes stay, because the reader
+> queries them.
+
+*Re-measured v3.14.406. The first version of this table was wrong: the selector
+match was not anchored, so `.translit-row` picked up the declaration of
+`.translit-row .translit-label` and reported `width: 150px; flex-shrink: 0`. That
+is the label's width, not the row's. The corrected reading is a stronger finding,
+because two families that differ by layout axis are a clearer divergence than five
+unrelated rules.*
+
+Button classes, same file:
+
+| class | defined |
+|---|---|
+| `.translit-remove`, `.comment-remove`, `.translation-remove` | yes |
+| `.allomorph-remove`, `.sel-remove` | **no rule exists** |
+| `.translit-add-btn`, `.comment-add-btn`, `.translation-add-btn` | yes |
+| `.allomorph-add-btn` | **no rule exists** |
+
+The allomorph and selection remove buttons therefore carry
+`class="translit-remove"`, and the allomorph add button carries
+`class="translit-add-btn"`. Every row collection is styled by a class named after
+one of them. `INPUT_UX_AUDIT` §3.1 noted the markup side; the CSS side is why it
+had to be that way.
+
+#### ~~L-046~~ · B · The read-only side diverges further, and three wrappers are unstyled · ✅ v3.14.407 · v3.14.410
+
+Five `render*View` functions serve the same list shapes.
+
+| class | emitted | CSS rules |
+|---|---|---|
+| `.comments-view` | yes | **0** |
+| `.transliterations-view` | yes | **0** |
+| `.translations-view` | yes | **0** |
+| `.allomorphs-view` | yes | 1 (`display: flex; flex-direction: column; gap: 2px`), 1000 lines away in the dictionary block |
+
+Three wrappers exist in the DOM and carry no styling. `selector_audit_test`
+checks the opposite direction (a selector nothing emits) and cannot see this.
+
+Row typography for the same data shape, re-measured v3.14.407:
+
+| row | row rule | secondary part |
+|---|---|---|
+| `.comment-view-row` | `padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem` (`:last-child` drops the rule) | `.comment-view-meta` `0.77rem`, muted, `margin-top: 3px` |
+| `.translation-view-row` | `padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-style: italic` (`:last-child` drops the rule) | `.translation-view-meta` `0.76rem`, muted, `font-style: normal` |
+| `.translit-view-row` | `display: flex; gap: 8px; font-size: 0.87rem; padding: 3px 0` | `.translit-view-label` `0.75rem`, weight 600, muted, bordered pill |
+| `.allomorph-view-row` | `display: flex; gap: 8px; align-items: baseline; font-size: 0.85rem` | `.allomorph-view-form` mono `0.83rem`; `.allomorph-view-env` muted `0.78rem` |
+
+Four sizes for one data shape: 0.88, 0.9, 0.87, 0.85 rem. Two rows separate their
+elements with a rule and two with whitespace. Two render the secondary part below
+the primary and two beside it. One row is italic, one part is monospace, one label
+is a pill. No declaration in `field_spec.js` records which a list field should
+get, so the choice lives only in whichever `render*View` was written at the time.
+
+*This table was wrong until v3.14.407, in the same way L-045's was: the
+unanchored selector match reported `.comment-view-row:last-child`'s
+`border-bottom: none` as the row's whole rule, and `.translit-view-label`'s
+declaration as `.translit-view-row`'s. The corrected reading is a sharper
+finding — the divergence is four sizes and three separator conventions, not two
+plain rows and two decorated ones.*
+
+> **Half closed, v3.14.407.** All four view containers now share one rule. The
+> `.allomorphs-view` row of the table above was misread on the first pass as a
+> row layout; it was a column, the same stacking the other three needed, so
+> there is nothing to override. `row_editor_test` now counts declarations per
+> selector, not just presence, because the dead duplicate this correction
+> removed was invisible to a presence check. **The typography half is answered
+> by D62 C, v3.14.408** and **built v3.14.410**. `LIST_VIEWS` declares
+> `primary`, `secondary` and `emphasis`, and reads `layout` off `ROW_EDITORS`
+> rather than restating it. One `.lv-row` component, four sizes down to two,
+> transliteration text in `--mono` for the reason the allomorph form already
+> is. The four per-collection row classes are deleted rather than kept: they
+> were queried by nothing, and four names with no rule is this finding one
+> level down. **The typography half is still open** and is a design question rather
+> than a defect, carried as the open remainder of this finding.
+
+**What these four have in common.** The data model says list; the presentation
+layer says six things. I2 (v3.14.404) unified the *behaviour* of five row
+collections behind one descriptor and deliberately left markup and CSS alone. The
+descriptor is where a presentation declaration would go if these are to converge.
 
 ---
 

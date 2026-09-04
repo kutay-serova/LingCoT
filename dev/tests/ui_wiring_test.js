@@ -285,6 +285,11 @@ console.log('\nDERIVED — displayed state refreshes when the underlying state c
       ...[...sources.matchAll(/a === '([a-z][a-z-]*)'/g)].map(m => m[1]),
       ...[...sources.matchAll(/ds\.action === '([a-z][a-z-]*)'/g)].map(m => m[1]),
       ...[...sources.matchAll(/\[data-action="([a-z][a-z-]*)"\]/g)].map(m => m[1]),
+      /* I2, v3.14.404. One handler now serves every row collection: it reads the
+         kind off the action and looks it up in `ROW_EDITORS`, so `comment-remove`
+         and its four siblings are handled by a computed match rather than a
+         literal. The kinds are declared — harvest them and expand the pair. */
+      ...[...sources.matchAll(/^  ([a-z]+): \{$/gm)].flatMap(m => [m[1] + '-add', m[1] + '-remove']),
     ]);
     const orphan = [...emitted].filter(a => !handled.has(a)).sort();
     check(emitted.size > 60, `${emitted.size} literal data-action value(s) emitted`);

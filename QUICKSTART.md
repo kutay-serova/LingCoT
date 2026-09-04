@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
@@ -77,12 +77,18 @@ translation, and the interlinear gloss beneath it.
 **Click a word**, then **Edit**. Nothing here is required and you can always come
 back, so fill in what you know:
 
-- **Gloss** — what it means. Type an **uppercase** sequence such as `NOM`, `PST`
-  or `PL` and a panel of standard Leipzig abbreviations opens; click one to
-  insert it.
+- **Transliteration** — a romanization, or any other script you work in. Give
+  the scheme a name if you use more than one.
+- **Part of speech** — a chip row, so it is one click.
+- **Word Gloss** — what the whole word means. Type an **uppercase** sequence
+  such as `NOM`, `PST` or `PL` and a panel of standard Leipzig abbreviations
+  opens; click one to insert it. Leave it blank and it is composed from the
+  morphemes below instead.
 - **Morphological parse** — the word split into parts, written with hyphens:
-  `bahçe-DA`. Saving this creates the morpheme rows below.
-- **Part of speech**, **transliteration** — as you like.
+  `bahçe-DA`. Saving this creates the morpheme rows below, each with its own
+  gloss.
+- **Lemma** — the dictionary form. It comes last because it is read off the
+  stem, which the parse gives you.
 
 Click **Save**.
 

@@ -1808,9 +1808,6 @@ details.prov-morpheme-inline {
 /* ── Comments editor (reusable multi-entry component) ───────────────────── */
 .comments-editor { display: flex; flex-direction: column; gap: 8px; }
 .comment-row {
-  display: flex; flex-direction: column; gap: 4px;
-  border: 1px solid var(--border); border-radius: var(--r);
-  padding: 10px 12px; background: var(--surface-dim);
   position: relative;
 }
 .comment-text {
@@ -1832,27 +1829,75 @@ details.prov-morpheme-inline {
   background: var(--surface); color: var(--text);
 }
 .comment-date:focus { outline: none; border-color: var(--accent); }
-.comment-remove {
-  margin-left: auto; background: none; border: none; cursor: pointer;
-  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
-  flex-shrink: 0;
-}
-.comment-remove:hover { color: var(--text); background: var(--surface-dim); }
-.comment-add-btn {
-  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px;
-  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
-  background: none; color: var(--text-muted); margin-top: 2px;
-}
-.comment-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 /* Read-only comment display in render views */
-.comment-view-row { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
-.comment-view-row:last-child { border-bottom: none; }
-.comment-view-meta { font-size: 0.77rem; color: var(--text-muted); margin-top: 3px; }
 
 /* ── Transliterations editor (reusable multi-entry component) ──────────────── */
 .transliterations-editor { display: flex; flex-direction: column; gap: 5px; }
-.translit-row { display: flex; align-items: center; gap: 8px; }
+
+/* ── Repeated-row editors, one component with two declared layouts ──────────
+   L-045 / L-046, v3.14.407. Five collections had five layout rules and two had
+   none, so `.allomorph-remove` and `.sel-remove` wore `.translit-remove` and the
+   allomorph add button wore `.translit-add-btn`. Measured: the five were never
+   five variations, they were two families split by axis. `ROW_EDITORS` declares
+   which one a collection gets.
+
+   The per-collection classes stay. They are what the reader queries
+   (`querySelectorAll('.' + d.rowClass)`) and what the field-level rules below
+   target; what they no longer carry is layout. */
+.row-ed              { display: flex; }
+.row-ed--inline      { align-items: center; gap: 8px; }
+.row-ed--inline + .row-ed--inline { margin-top: 5px; }
+.row-ed--stacked     { flex-direction: column; gap: 4px;
+                       border: 1px solid var(--border); border-radius: var(--r);
+                       padding: 10px 12px; background: var(--surface); }
+.row-ed--stacked + .row-ed--stacked { margin-top: 8px; }
+
+/* One remove control and one add control for every collection. */
+.row-x               { background: none; border: none; cursor: pointer;
+                       flex-shrink: 0; color: var(--text-muted); font-size: 1rem;
+                       padding: 2px 4px; border-radius: 4px; line-height: 1; }
+.row-x:hover         { color: var(--text); background: var(--surface-dim); }
+.row-ed--stacked .row-x { margin-left: auto; }
+.row-add             { align-self: flex-start; font-size: 0.82rem;
+                       padding: 4px 12px; margin-top: 2px; border-radius: 12px;
+                       cursor: pointer; border: 1px dashed var(--border);
+                       background: none; color: var(--text-dim); }
+.row-add:hover       { border-color: var(--border-strong); color: var(--text); }
+
+/* ── Read-only list views ───────────────────────────────────────────────────
+   L-046: `.comments-view`, `.transliterations-view` and `.translations-view`
+   were emitted with no rule at all; `.allomorphs-view` had one, 300 lines away
+   in the dictionary block, and it stacked exactly like these three. One
+   container rule for all four; the per-row typography stays where it differs
+   for a reason. */
+.comments-view, .transliterations-view,
+.translations-view, .allomorphs-view { display: flex; flex-direction: column; gap: 3px; }
+
+/* D62 C. One row component for all four, and the four properties LIST_VIEWS
+   declares. Before this there were four font sizes between 0.85 and 0.9 rem for
+   one data shape, three separator conventions and two placements — none chosen
+   against the others. One primary size, one secondary size.
+
+   Stacked rows separate with a rule because they hold a paragraph; inline rows
+   separate with the container's gap because they hold a word. */
+.lv-row                 { display: flex; }
+.lv-row--inline         { align-items: baseline; gap: 8px; padding: 3px 0; }
+.lv-row--stacked        { flex-direction: column; gap: 3px; padding: 6px 0;
+                          border-bottom: 1px solid var(--border); }
+.lv-row--stacked:last-child { border-bottom: none; }
+.lv-primary             { font-size: 0.88rem; }
+.lv-primary--segment    { font-family: var(--mono); }
+.lv-secondary           { font-size: 0.77rem; color: var(--text-muted); }
+/* A scheme name repeats down the column, so it is set off as a chip and does
+   not inherit the row's emphasis. `qualifier` and `attribution` are free text
+   and take the plain treatment. */
+.lv-secondary--scheme   { font-weight: 600; white-space: nowrap;
+                          padding: 2px 7px; border-radius: 10px;
+                          border: 1px solid var(--border); align-self: flex-start; }
+.lv-row--meta           { font-style: italic; }
+.lv-row--meta .lv-secondary { font-style: normal; }
+
 .translit-label {
   width: 150px; flex-shrink: 0;
   border: 1px solid var(--border); border-radius: 4px;
@@ -1866,31 +1911,11 @@ details.prov-morpheme-inline {
   background: var(--surface); color: var(--text);
 }
 .translit-text:focus { outline: none; border-color: var(--accent); }
-.translit-remove {
-  background: none; border: none; cursor: pointer; flex-shrink: 0;
-  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
-}
-.translit-remove:hover { color: var(--text); background: var(--surface-dim); }
-.translit-add-btn {
-  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px; margin-top: 2px;
-  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
-  background: none; color: var(--text-muted);
-}
-.translit-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-/* Read-only transliteration display in render views */
-.translit-view-row { display: flex; gap: 8px; font-size: 0.87rem; padding: 3px 0; }
-.translit-view-label {
-  font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
-  padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border);
-  white-space: nowrap; align-self: flex-start; margin-top: 1px;
-}
 
 /* ── Translations editor (reusable multi-entry component) ────────────────── */
 .translations-editor { display: flex; flex-direction: column; gap: 8px; }
 .translation-row {
-  display: flex; flex-direction: column; gap: 4px;
-  border: 1px solid var(--border); border-radius: var(--r);
-  padding: 10px 12px; background: var(--surface-dim); position: relative;
+  position: relative;
 }
 .translation-text {
   width: 100%; box-sizing: border-box;
@@ -1916,21 +1941,7 @@ details.prov-morpheme-inline {
   background: var(--surface); color: var(--text);
 }
 .translation-date:focus { outline: none; border-color: var(--accent); }
-.translation-remove {
-  margin-left: auto; background: none; border: none; cursor: pointer; flex-shrink: 0;
-  color: var(--text-muted); font-size: 1rem; padding: 2px 4px; border-radius: 4px;
-}
-.translation-remove:hover { color: var(--text); background: var(--surface-dim); }
-.translation-add-btn {
-  align-self: flex-start; font-size: 0.82rem; padding: 4px 12px; margin-top: 2px;
-  border-radius: 12px; cursor: pointer; border: 1px dashed var(--border);
-  background: none; color: var(--text-muted);
-}
-.translation-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 /* Read-only translation display in render views */
-.translation-view-row { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-style: italic; }
-.translation-view-row:last-child { border-bottom: none; }
-.translation-view-meta { font-size: 0.76rem; color: var(--text-muted); font-style: normal; margin-top: 2px; }
 
 /* ── Gloss autocomplete dropdown ─────────────────────────────────────────── */
 #gloss-ac-drop {
@@ -2101,7 +2112,6 @@ details.prov-morpheme-inline {
 
 /* One selection, laid out as a phrase: "obligatory NOUN as subject". */
 .sel-rows { display: flex; flex-direction: column; gap: 5px; }
-.sel-row  { display: flex; align-items: center; gap: 6px; }
 .sel-row .edit-input { height: 28px; font-size: 0.82rem; margin: 0; }
 .sel-status { width: 104px; flex-shrink: 0; }
 .sel-cat    { width: 104px; flex-shrink: 0; }
@@ -2918,29 +2928,8 @@ details.prov-morpheme-inline {
   gap: 6px;
   margin-top: 4px;
 }
-.allomorphs-view { display: flex; flex-direction: column; gap: 2px; }
-.allomorph-view-row {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  font-size: 0.85rem;
-}
-.allomorph-view-form {
-  font-family: var(--mono);
-  font-size: 0.83rem;
-}
-.allomorph-view-env {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
 
 /* Allomorphs editor rows (D23 P2) */
-.allomorph-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 5px;
-}
 .allomorph-row .allomorph-form { flex: 1; min-width: 0; }
 .allomorph-row .allomorph-env  { flex: 2; min-width: 0; }
 

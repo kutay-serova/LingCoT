@@ -60,6 +60,12 @@ for (const m of corpus.matchAll(/class="([^"]*)"/g)) {
   for (const c of m[1].replace(/\$\{[^}]*\}/g, ' ').split(/\s+/)) if (c) emitted.add(c);
 }
 for (const m of corpus.matchAll(/classList\.(?:add|remove|toggle)\(\s*'([^']+)'/g)) emitted.add(m[1]);
+/* I2, v3.14.404: `rowEditorHtml` writes `class="${editorClass}"`, and line 60
+   strips `${...}` — correctly, since it cannot know the value. The values are
+   still literals, one directory over, at the four call sites that name them. A
+   class declared as a property is emitted exactly as much as one written into an
+   attribute; this harvests those three keys so the scanner keeps seeing them. */
+for (const m of corpus.matchAll(/(?:editorClass|rowsClass|addClass):\s*'([\w-]+)'/g)) emitted.add(m[1]);
 for (const m of corpus.matchAll(/className\s*=\s*'([^']+)'/g)) {
   for (const c of m[1].split(/\s+/)) if (c) emitted.add(c);
 }

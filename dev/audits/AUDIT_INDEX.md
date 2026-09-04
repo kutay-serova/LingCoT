@@ -1,5 +1,5 @@
 # AUDIT INDEX: every audit and design document, what it is worth, and what in it is false
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 
 This file is **live**. `new_version.py` stamps it and `doc_integrity_test.js`
 checks it, which is the whole reason it exists: the frozen documents it indexes
@@ -60,7 +60,7 @@ document unless the entry says otherwise.
 | document | written against | verdict | open items | retire? |
 |---|---|---|---|---|
 | `UNIFIED_AUDIT.md` | v3.14.221 | **LIVE** | **Its own Status block is the count — this row deliberately does not copy it.** It did until v3.14.379, and said *"read the Status block at its head — it is the count"* in the same breath as a stale copy of that count: 28 closed / 12 open here against 32 / 8 there. A second writer of a number, in the document whose whole job is saying which numbers have drifted. §6 (v3.14.313) added L-025 to L-030 from the code audit | no, now the live audit of record |
-| `INPUT_UX_AUDIT.md` | v3.14.158 | **LIVE**, §1 wrong throughout | I2, I5, I13, I14 · I12 partly built | no |
+| `INPUT_UX_AUDIT.md` | v3.14.158 | **LIVE**, §1 wrong throughout | ~~I2~~ ✅ **v3.14.404** · I5, I13, I14 · I12 partly built. **I2 is built as §3.1 specified it** — one descriptor, one add, one remove, one reader — and `sel` is in it rather than excluded, because its two differences are declarable. The audit's *five* was right for what it scoped; the app had grown two more row families (morpheme, section) which carry parse and ingest logic and were deliberately left out | no |
 | `GUI_DESIGN_AUDIT.md` | v3.14.34 | **LIVE** | F13 · F3, F8, F10, §4.2 all **partly** closed (item 32) | no |
 | `SEARCH_B_DESIGN.md` | v3.14.38 | **LIVE** | n-grams, stoplist, CSV export, pagination | no |
 | `ANNOTATION_FILL_AUDIT.md` | v3.14.109 | **SPENT**, prose wrong | **none.** `inferPos` deleted ✅ v3.14.302 · F2 ✅ v3.14.299 · F5 ✅ v3.14.300 · B-058 ✅ v3.14.267 · F3 ✅ v3.14.269 · F4's residue ✅ v3.14.266 | no — needs correction |
@@ -97,7 +97,7 @@ anything still owed?* — and DEV_PLAN §2 only lists the ones still open.
 | `D37_paradigms.md` | v3.14.274 | frozen design | all of it; owns `variants` matching since D35 C | no |
 | `D40_reuse_earlier_work.md` | v3.14.274 | frozen design | all of it; **B-144 ✅ v3.14.298 unblocked it** | no |
 | `D41_reader_mode.md` | v3.14.274 | frozen design | both modes; A needs D35's identity rule, B is near-promotion | no |
-| `D46_pipeline_ux.md` | v3.14.274 | frozen design | the audit itself, gate 2, to be run *during* annotation | no |
+| `D46_pipeline_ux.md` | v3.14.274 | frozen design, **appended v3.14.408**: the word-editor field order is decided ahead of the audit (transliteration, POS, word gloss, parse, morpheme rows, lemma) and the two word-level *Gloss* labels are scoped | the audit itself, gate 2, to be run *during* annotation, against the order **built v3.14.409** and guarded by `field_order_test.js` | no |
 | `D48_field_table.md` | v3.14.262 | **IMPLEMENTED** A–C + the v3.14.262 extension | none. The `legacy` tier it declared was deleted at v3.14.386 | no |
 | `D49_lexicon_export.md` | v3.14.274 | frozen design, **UNGATED** v3.14.282 | the writer, and two decisions held until it is built: the format, and whether attribution re-expands `annotator_id` | no |
 | `D50_save_migration.md` | v3.14.252 | **IMPLEMENTED** — stages 0–4 by v3.14.252, stage 5 at v3.14.384 | none | no |
@@ -110,6 +110,7 @@ anything still owed?* — and DEV_PLAN §2 only lists the ones still open.
 | `D59_section_editor_commit.md` | v3.14.343 | **IMPLEMENTED** v3.14.343 | none | no |
 | `D60_derived_values.md` | v3.14.346 | **IMPLEMENTED** §1 v3.14.347, §2 v3.14.348 | none | no |
 | `D61_lemma_suggestion.md` | v3.14.362 | **IMPLEMENTED** sources 1–3, v3.14.362 | source 4, string similarity — **deferred by decision**, not owed | no |
+| `D62_list_field_presentation.md` | v3.14.408 | **C IMPLEMENTED v3.14.410**; A and B decided, not built. Three decisions: A per-element identity for the five string lists, B dispatch-on-shape deferred, C the read-only list presentation | A is gate 3 and first in it; B's trigger is **D28 or D37** | no |
 | `file_layout_options.md` | v3.14.227 | **IMPLEMENTED** v3.14.250 | none | no |
 | `save_architecture_options.md` | v3.14.227 | **IMPLEMENTED** v3.14.250 | none | no |
 | `save_format_decision.md` | v3.14.232 | **IMPLEMENTED** v3.14.250; measurements a fifth high, **admitted in the document itself at v3.14.390** (new §10) | §9's open question: nothing has instrumented `doAutoSave` with a per-save counter | no |

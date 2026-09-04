@@ -132,8 +132,22 @@ console.log('\n3 · one editor, at every level that declares one\n');
   /* B-142: clearing. The editor drops a row with neither label nor text, so an
      emptied field reaches the save as an empty list — where the single box's
      value simply fell through a guard and the old value stayed, silently. */
-  const rd = decomment(fnSrc('modules/participants.js', 'readTransliterationsEditor'));
-  check(/filter\(t => t\.label \|\| t\.text\)/.test(rd),
+  /* v3.14.404: this asserted the literal `filter(t => t.label || t.text)` inside
+     `readTransliterationsEditor`. I2 moved that predicate into `ROW_EDITORS`, and
+     the guard failed while the behaviour was unchanged — **L-006's finding
+     happening to this guard**: an assertion against source text breaks when the
+     code is consolidated, and reports a defect that does not exist. So it runs
+     the predicate now. The descriptor evaluates on its own: `build` refers to the
+     row builders inside closures, so nothing is called at definition time. */
+  const _pj = read('modules/participants.js');
+  const _i  = _pj.indexOf('const ROW_EDITORS = {');
+  let _d = 0, _j = _pj.indexOf('{', _i);
+  for (let k = _j; k < _pj.length; k++) {
+    if (_pj[k] === '{') _d++;
+    else if (_pj[k] === '}') { _d--; if (!_d) { _j = k + 1; break; } }
+  }
+  const RE = vm.runInNewContext(_pj.slice(_i, _j) + '; ROW_EDITORS');
+  check(RE.translit.keep({ label: '', text: '' }) === false,
         'an emptied row is dropped, so the field can be cleared (B-142)',
         '       the old box fell through `else if (!length)` and left the value in place');
 }

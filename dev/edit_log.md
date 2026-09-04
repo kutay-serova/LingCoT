@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -16,46 +16,442 @@ said 50 for thirty entries.
 
 ---
 
+## L-046 closed: one read-only list presentation, declared (2026-09-04)
+**Version:** v3.14.410 · **Type:** feature · **Archives:** `dev/archive/changes/d62c_read_only_list_presentation/` (v3.14.409)
+**Touched:** source/modules/participants.js · source/LingCoT.css · dev/tests/row_editor_test.js · dev/DEV_PLAN.md · dev/audits/UNIFIED_AUDIT.md · dev/audits/AUDIT_INDEX.md
+
+**What changed.** `LIST_VIEWS` declares three properties per collection —
+`primary` (prose or segment), `secondary` (attribution, qualifier or scheme),
+`emphasis` (none or meta-language) — and **does not declare `layout`**, which it
+reads off `ROW_EDITORS`. One builder, `listViewHtml`, replaces the four
+`render*View` bodies; each is now a one-liner, as the editor pairs became at
+v3.14.404. The stylesheet loses eleven rules and gains one component: `.lv-row`
+with two layout variants, `.lv-primary`, `.lv-secondary`, and one modifier each
+for the two values that need one. Four font sizes become two. Transliteration
+text is monospace.
+
+**Why.** L-046 measured four presentations of one data shape: sizes 0.85, 0.87,
+0.88 and 0.9 rem, three separator conventions, two placements for the secondary
+part. None of those differences was chosen against the other three. The
+divergence that survives is the one with a reason behind it — a scheme name
+leads its value because it repeats down the column and reads as a header; a
+translation is italic and quoted because it is not in the object language; a
+segment string is monospace because a length mark, a schwa, or a combining
+diacritic against a precomposed one is the information, and a proportional face
+is free to make those pairs look alike. That last argument was already accepted
+for the allomorph form and is now applied to transliterations, which is the one
+visible change.
+
+**The per-collection row classes are gone, not kept.** `.comment-view-row` and
+its three siblings were queried by nothing outside the function that emitted
+them. Keeping them once the layout is declared would leave four names with no
+rule, which is L-046's own complaint one level down. `.comments-view .lv-row`
+targets one if it ever needs its own.
+
+**Guard.** `row_editor_test.js` grows from 45 to 89 checks; §6 executes
+`listViewHtml` against sample rows rather than reading the descriptor. Three
+things are asserted separately because they fail for different reasons: that
+each view **declares** all three properties with known values; that the
+assignment **is the one D62 §4.2 decided**, which is the check that stops the
+section being self-consistent and empty; and that each declared value **reaches
+the stylesheet** or is one of the three documented bases. Plus: no view restates
+`layout`; a scheme leads and a qualifier follows, asserted by position; two font
+sizes across the whole component, which is the finding stated as a property.
+Mutation-tested seven ways: 1, 1, 1, 1, 1, 2, 4.
+
+**Verification.** `./dev/tests/run_all.sh` — 92 passed, 0 failed, 0 disabled.
+`gui_crud_test.js` in a real browser — 46 passed, 0 failed.
+
+---
+
+## The word editor asks in the decided order (2026-09-04)
+**Version:** v3.14.409 · **Type:** feature · **Archives:** `dev/archive/changes/d46_word_editor_order/` (v3.14.408)
+**Touched:** source/LingCoT.html · dev/tests/field_order_test.js (new) · QUICKSTART.md · dev/design/D46_pipeline_ux.md · dev/PRACTICES.md · dev/DEV_PLAN.md · dev/audits/UNIFIED_AUDIT.md · dev/audits/AUDIT_INDEX.md
+
+**What changed.** `renderWordEdit` asks transliteration, POS, word gloss, parse,
+morpheme rows, lemma, comments, save-to-dictionary. Two moves: POS rises above
+the gloss, the lemma drops below the morpheme rows. The IGT legend swatch and
+the dependency table's column header move onto `label.editor.word_gloss`;
+`label.editor.gloss` stays the morpheme-level and entry-level label at the other
+eight sites. QUICKSTART §4 lists the fields in the order a tester now meets
+them, and names the lemma, which it had not.
+
+**Why.** D46 measured the editor asking three fields before the field that
+determines them, and this takes the part of that which holds. The lemma really
+cannot be answered early: it is read off the stem and the stem comes out of the
+parse. The word gloss is the deliberate exception and goes third, above the
+parse — asked after it, the field arrives pre-filled with `wordGloss`'s join and
+the annotator edits the app's answer instead of giving one, which is B-187 and
+B-191 and the two before them. POS goes first of the three because it is a
+closed vocabulary answered in a click and it seeds `morphPosDefault` for the
+rows the parse is about to build. The reasoning is in the D46 appendix and at
+the point of use.
+
+**Guard.** `field_order_test.js`, new, 11 checks. It is D46's pass 1 — "the DOM
+order is scriptable, so pass 1 can be executed rather than eyeballed" — written
+as a guard. Two kinds of assertion, kept apart on purpose: the **sequence**,
+which is a decision and can be re-decided, and the **dependencies**, which are
+facts about the code and are asserted by checking the mechanisms exist
+(`ensureMorphemesFromParse`, `_resolveOrCreateLemma`). Conflating them would
+report a re-decision as a broken dependency. It also asserts the morpheme row
+still says Gloss, which is what a blanket rename would break while passing every
+other check. Mutation-tested five ways: 1, 1, 1, 2, 2.
+
+**Verification.** `./dev/tests/run_all.sh` — 92 passed, 0 failed, 0 disabled.
+`gui_crud_test.js` in a real browser — 46 passed, 0 failed; the word editor is
+what most of its scenarios drive, so the reorder is exercised rather than
+inspected. Guard count in PRACTICES §6: 93 → 94.
+
+---
+
+## D62 and the word-editor order: four decisions taken on the open findings (2026-09-03)
+**Version:** v3.14.408 · **Type:** decision · **Archives:** `dev/archive/changes/d62_list_element_identity/` (v3.14.407)
+**Touched:** dev/design/D62_list_field_presentation.md (new) · dev/design/D46_pipeline_ux.md · dev/DEV_PLAN.md · dev/BUGS.md · dev/audits/UNIFIED_AUDIT.md · dev/audits/AUDIT_INDEX.md
+
+**The decision.** Four, on what L-043 to L-046 and D46 left open.
+
+**A · a list element records who added it and when.** `variants`,
+`constituent_forms`, `source_ids`, `allomorphs` and `pinned_examples` become
+object elements carrying an annotator id and a date, and move off the `list`
+control onto a row editor. Measured across both shipped corpora: **2 non-empty
+instances**. First item in gate 3, because a format change is free exactly once
+and testers are the next milestone.
+
+**B · dispatch-on-shape waits.** Declaring presentation across 83 field entries
+prevents a sixth treatment, and no sixth field is queued. The trigger is the
+first version that adds an array-shaped field; D62 §4 is the vocabulary it
+should use.
+
+**C · one read-only list presentation.** Four properties — `layout`, `primary`,
+`secondary`, `emphasis` — and the four views fall out of them. Four sizes become
+two. One substantive change: transliteration text goes monospace, for the reason
+the allomorph form already is.
+
+**D · the word editor asks in a decided order**: transliteration, POS, word
+gloss, parse, morpheme rows, lemma. Appended to D46, which is frozen.
+
+**Alternatives considered, and why not.** Kept in the records rather than here.
+The two worth naming: **B-139 decided the opposite of A at v3.14.372** and its
+reasoning is still correct for the control it was decided against, so A changes
+the control first and the stamp second; a stamp on a CSV box would be the thing
+B-139 refused. And **D contradicts L-013's measurement in one place** — the
+session answered the word gloss last, and the decision asks it third. L-013
+measured when the annotator *could* answer a field that was already pre-filled
+with the app's derivation (B-187, B-191, four attempts). Asked before the parse
+the field can only hold their own gloss, which is what it exists to hold.
+
+**What this binds.** Gate 3 opens with A. L-044 is absorbed into A and stops
+being a separate task. L-043 is deferred with a named trigger rather than left
+open indefinitely. L-046's typography half becomes a build. D46's audit still
+runs, now against the decided order, and QUICKSTART already asks its question.
+
+**Bookkeeping caught in the same pass.** DEV_PLAN §1's cluster F, "real but not
+now", was carrying four items that are not: **B-027** fixed 35 versions ago,
+**B-139** and **L-013** superseded here, **⑪** settled at v3.14.392 and moved to
+the audit's §5.2 at v3.14.397. Its count line said 11 open findings against a
+board of 9 plus 1 half. Both corrected; the section's own note already says to
+take counts from the tables, which is the second time that note has earned
+itself.
+
+**Verification.** Docs only, no behaviour change. `doc_integrity_test.js` — 74
+passed. `./dev/tests/run_all.sh` — 91 passed, 0 failed, 0 disabled. B-139's row
+was recompressed to 509 characters in the same edit; the append pushed it past
+the 600 the Fixed table guards.
+
+---
+
+## L-045 closed: one row component, two layout variants, declared (2026-09-03)
+**Version:** v3.14.407 · **Type:** feature · **Archives:** `dev/archive/changes/l045_l046_row_presentation_declared/` (v3.14.406)
+**Touched:** source/modules/participants.js · source/LingCoT.css · dev/tests/row_editor_test.js · dev/tests/gui_crud_test.js · dev/audits/UNIFIED_AUDIT.md · dev/DEV_PLAN.md
+
+**What changed.** Every `ROW_EDITORS` descriptor now declares
+`layout: 'inline' | 'stacked'`, and the row builders emit
+`class="<rowClass> row-ed row-ed--<layout>"`. Remove buttons are `row-x`, add
+buttons are `row-add`, in all five collections. In the stylesheet the five
+per-collection layout rules and the six button rules collapse into one
+component: `.row-ed` plus two variants, one remove control, one add control.
+The per-collection classes stay because the readers query them; they now carry
+only what is genuinely per-collection (`position: relative` on the two boxed
+ones), and the three that were left empty are deleted. The four `*-view`
+containers get one shared rule.
+
+**Why.** L-045 measured two visual families across five rules, two of them
+achieved by wearing another collection's class: `.allomorph-remove` and
+`.sel-remove` had no rule and were written as `translit-remove`. That is a name
+that lies, and it made the CSS unreadable in the direction a reader actually
+asks (what does an allomorph row look like). I2 unified the behaviour and left
+markup and CSS alone on purpose; this is the other half. The layout axis is the
+real distinction, so it is what the descriptor declares.
+
+**Guard.** `row_editor_test.js` grows from 24 to 45 checks: every descriptor
+declares a known layout, every builder emits the variant class its descriptor
+names, no builder emits a borrowed class, and each `.row-ed*`, `.row-x`,
+`.row-add` and `*-view` selector is declared exactly **once**. Counting rather
+than testing presence is the check that earned itself: `.allomorphs-view` was
+declared twice, 1000 lines apart, and the later one won, so the override written
+here was dead the moment it was typed. `hasRule` matches an anchored selector
+after stripping comments, because an unanchored match is what made L-045's and
+L-046's first tables wrong; both are re-measured in this version. Mutation-tested
+six ways: 1, 1, 1, 1, 1, 1. `gui_crud_test.js` B3 clicked `.translit-remove` on an allomorph
+row and had to be retargeted to `[data-action="translit-remove"]`, which is the
+same rename showing up in a test that hung on the borrowed name.
+
+**Verification.** `./dev/tests/run_all.sh` — 91 passed, 0 failed, 0 disabled.
+`gui_crud_test.js` in a real browser — 46 passed, 0 failed.
+
+---
+
+## L-045 re-measured, the first table was wrong (2026-09-03)
+**Version:** v3.14.406 · **Type:** chore · **Archives:** `dev/archive/changes/l045_row_css_remeasured/` (v3.14.405)
+**Touched:** dev/audits/UNIFIED_AUDIT.md
+
+**What changed.** L-045's CSS table in §2.7, one version after it was written.
+
+**Why.** The selector match used to build it was not anchored:
+`re.escape(sel) + r'\s*[,{][^{]*\{'` matches a descendant selector as well as an
+exact one, so `.translit-row` picked up the declaration belonging to
+`.translit-row .translit-label` and the table reported
+`width: 150px; flex-shrink: 0` as the row's rule. That is the label's width.
+
+**What is actually there**, anchored so the selector must be the whole selector or
+one member of a comma list:
+
+| rule | declaration |
+|---|---|
+| `.translit-row`, `.allomorph-row`, `.sel-row` | `display: flex; align-items: center; gap: 6-8px` |
+| `.comment-row`, `.translation-row` | `display: flex; flex-direction: column` plus border, radius, padding, background |
+
+Two families rather than five variations: three collections lay their fields out
+in a line with no container, two stack a textarea over a meta line inside a
+bordered card. No `*-rows` container has a rule of its own.
+
+**The corrected reading is the stronger finding**, which is why it is worth the
+version: two families differing by layout axis is a clearer statement of the
+divergence than five unrelated rules, and it is the shape any convergence has to
+reconcile.
+
+**The rest of §2.7 stands.** The button families with no rule, the three view
+wrappers with zero rules, the four view typographies and the L-043 control table
+were all read from counts rather than from that regex, and re-checking them
+against the anchored matcher changed nothing.
+
+**Verification.** `doc_integrity` 74/0, `./dev/tests/run_all.sh` 91/0/0.
+
+---
+
+## GUI control inventory, UNIFIED §2.7 (2026-09-03)
+**Version:** v3.14.405 · **Type:** chore · **Archives:** `dev/archive/changes/gui_control_inventory/` (v3.14.404)
+**Touched:** dev/audits/UNIFIED_AUDIT.md · dev/DEV_PLAN.md
+**Examined:** field_spec.js's 83 field declarations; renderField's 11 control branches; every input, textarea and select emitted across LingCoT.html, participants.js, events.js and search.js; LingCoT.css's 1,030 rules for the row, button and view class families
+
+**What changed.** UNIFIED gains §2.7, four findings (**L-043** to **L-046**), and
+DEV_PLAN gains cluster **H**. Counts recomputed from the tables: 46 findings, 35
+closed, 11 open.
+
+**What was measured.** 83 declared fields, 15 control values, 21 fields declaring
+none, 11 branches in `renderField`, 62 inputs (49 `type="text"`), 13 textareas, 6
+selects.
+
+**L-043.** 21 fields store a list. They use six controls plus three declaring
+none. `comments` (6 fields) and `translations` (2) produce the same editor from
+two code paths; `translits` (5) stores the same shape and produces a different
+one, with no source and no date. `sources` (2) is a chip picker with no rows.
+
+**L-044.** `renderField`'s `list` branch emits one text input, joined with
+`', '` at `LingCoT.html:10299` and split on `,` at `:10533`. A value containing a
+comma cannot be entered, and there is no per-element identity, so no per-element
+provenance. Same fact as **B-139** from the UI side. `variants` and
+`constituent_forms` are the only list fields with no add or remove control, so
+I2's descriptor does not reach them.
+
+**L-045.** `.translit-row` is `width: 150px; flex-shrink: 0`; `.comment-row` and
+`.translation-row` are `width: 100%; box-sizing: border-box`; `.allomorph-row` is
+`flex: 1`; `.sel-row` sets a height. `.allomorph-remove`, `.sel-remove` and
+`.allomorph-add-btn` have no rule in the stylesheet, which is why those buttons
+carry `.translit-remove` and `.translit-add-btn`. INPUT_UX §3.1 recorded the
+markup side; the CSS side is the reason.
+
+**L-046.** `.comments-view`, `.transliterations-view` and `.translations-view`
+are emitted and have zero CSS rules. Row typography for one data shape has four
+treatments: two plain, one small-bold-muted, one monospace.
+`selector_audit_test` checks selectors nothing emits, not classes nothing styles,
+so it cannot see either.
+
+**Guard.** None added. This is an inventory; the findings are open work.
+
+**Verification.** Every figure computed by script against the current tree.
+`doc_integrity` 74/0, `./dev/tests/run_all.sh` 91/0/0.
+
+---
+
+## I2 — one row-editor descriptor (2026-09-03)
+**Version:** v3.14.404 · **Type:** feature · **Archives:** `dev/archive/changes/i2_one_row_editor_descriptor/` (v3.14.403)
+**Touched:** source/modules/participants.js · source/modules/events.js · dev/tests/row_editor_test.js (new) · dev/tests/translit_model_test.js · dev/tests/selector_audit_test.js · dev/tests/ui_wiring_test.js · dev/PRACTICES.md · dev/DEV_PLAN.md · dev/audits/AUDIT_INDEX.md
+
+**What changed.** `ROW_EDITORS` in `participants.js` holds what differs between
+the five repeated-row collections. **Ten handler blocks in `events.js` became
+one**; four `render*Editor`/`read*Editor` pairs became one line each.
+
+**`sel` is in the descriptor, not excluded.** Its two differences are real, and
+declarable: rows found through the enclosing frame (`rows`) and never left empty
+(`minOne`). Excluding it was the easy move and the wrong one — a descriptor that
+cannot say those two things is not describing the app.
+
+**The `data-action` names are unchanged, deliberately.** They are what
+`gui_crud_test` clicks and what the stylesheet hangs on; renaming would have made
+a consolidation into a migration. The handler reads the kind off the action.
+
+**Three guards failed, and none of them was a regression.** All three asserted
+against *source text*, and I2 moved the text:
+`translit_model_test` looked for the literal `filter(t => t.label || t.text)`;
+`selector_audit_test` could not see `class="${editorClass}"`; `ui_wiring_test`
+could not see a handler that matches by computation. **This is L-006 happening to
+the guards** — a source-text assertion breaks on consolidation and reports a
+defect that does not exist. `translit_model_test` now **executes** the predicate
+(B-142: an emptied row is dropped). The other two were taught the descriptor's
+shape and remain text scanners, which L-006 still counts.
+
+**Not included, and the audit is why:** `sel-frame` (frames carry collapse state,
+a derived summary and templates), and the morpheme and section editors in
+`LingCoT.html`, which carry parse and ingest logic. §3.1 scoped I2 to five.
+
+**Guard.** `row_editor_test.js` **executes** the descriptor rather than checking
+it exists — a constant nothing reads would satisfy the latter. 27 checks: every
+collection declares the three things the handlers differed in, `keep` is run for
+each collection's real emptiness rule, `sel`'s two exceptions are asserted by
+behaviour, and no per-collection block survives in `events.js`. **92 → 93.**
+
+**Verification.** `run_all.sh` 91/0/0. **`gui_crud_test.js` 46/0 in a real
+browser**, which is what proves rows still add, remove and read. Mutation-tested
+4/4: `sel` dropped from the descriptor (2 named failures), `minOne` dropped,
+`keep` loosened so B-142 regresses, and a bespoke handler returned to
+`events.js`. Both files restored byte-identical.
+
+---
+
+## Gate 3's rows, checked against the code (2026-09-03)
+**Version:** v3.14.403 · **Type:** chore · **Archives:** `dev/archive/changes/gate3_rows_checked_against_code/` (v3.14.402)
+**Touched:** dev/DEV_PLAN.md · dev/audits/AUDIT_INDEX.md
+**Examined:** B-027's mechanism in `LingCoT.html` and `en.json`; every `data-action="*-add|remove"` pair in the source; `dev/design/D48_field_table.md` end to end
+
+**What changed.** Three of Gate 3's five open rows. Asked for by name — *check
+B-027 and I2* — and the third fell out of reading D48 to settle the second.
+
+**B-027 was closed 29 versions ago and this row described the state before it.**
+✅ v3.14.373. The decision the row said was outstanding — *refuse, warn or
+accept* — **was taken**: an unknown tag is stored, reported at the save from
+`stampFieldProv` via `unknownTag()`, and adoptable from the tag drawer, which
+writes the project vocabulary file. Verified by reading the mechanism and its
+locale strings, not the row. **Refusing was ruled out by evidence**: `CLF` was
+the right tag and the shipped list lacked it, so refusal would have blocked
+correct annotation.
+
+**I2 is open and has grown.** No `rowEditor` descriptor exists anywhere. The
+audit counted **five** repeated-row editors at v3.14.158; there are now **six**
+add/remove families — `translit`, `translation`, `allomorph`, `comment`, `sel`,
+`sel-frame` — **plus morpheme and section rows** on their own verbs. *Not acting
+on a unification item makes it bigger*, which is the argument D39 inherits, since
+D39 needs I2 first.
+
+**"D48 stages C and D" was wrong twice.** Stage C **shipped** v3.14.196–210, and
+**there is no stage D** — D48 names only A to C. What actually remains is the one
+thing its last section states: **the word editor was never converted to a
+generated form**, which D48 says "stays available" and whose argument is now the
+marking and the field order — D46's target order, not drift. The row now says
+that.
+
+**Guard.** None. The audit's own figure is left as written and the drift recorded
+in `AUDIT_INDEX.md`, per the frozen-document rule.
+
+**Verification.** `doc_integrity` 74/0, `./dev/tests/run_all.sh` — 90 passed, 0
+failed, 0 disabled.
+
+---
+
+## Cluster E re-measured — one item was already closed (2026-09-03)
+**Version:** v3.14.402 · **Type:** chore · **Archives:** `dev/archive/changes/cluster_e_re_measured/` (v3.14.401)
+**Touched:** dev/DEV_PLAN.md · dev/audits/UNIFIED_AUDIT.md
+**Examined:** cluster E's three items, executed: the suite against `samples/` and against the live corpora staged per PRACTICES §10; and every `check()` site in `dev/tests/*_test.js` counted for source-text assertions
+
+**What changed.** Cluster E's row for E2 struck through with the measurement that
+closes it, and L-006's body in UNIFIED gains what was re-measured. No code.
+
+**What was examined.** DEV_PLAN §1's cluster **E · Guard quality**, item by item,
+plus B-157, L-027 and B-161 re-checked from the tables that hold them — all three
+closed (v3.14.365, v3.14.365, v3.14.370), neither bug in Open, L-027 not on the
+board.
+
+**What was found.**
+
+**E2 was closed and still listed as work.** L-042 — *the tally depends on which
+corpus resolves* — was ✅ at v3.14.384, and its row in a section headed *what to
+do next* still said "worth re-measuring after". So it was re-measured:
+**90 passed, 0 failed, 0 disabled both ways**, against `samples/` and against the
+live pair. Struck through with the numbers.
+
+**And the re-measurement found a trap worth recording.** Pointed at
+`~/mnt/corpora` *unstaged*, the suite returns **84/6** — which is **B-168
+refusing a directory with `archive/` beside the candidates**, not a tally
+difference. Read carelessly it looks like L-042 reopening. That is exactly why
+PRACTICES §10 step 2 says *"only them"*, and it is the first time the rule has
+been demonstrated rather than asserted.
+
+**E1's second half moved, and not the way it reads.** *"31% of assertion sites
+are regexes against source text"* is now **290 of 2,050 — 14%**. But the
+proportion fell because the denominator grew: 66 guards to 92, and the additions
+execute. The absolute count is what must fall, and nothing shows it has. **The
+mutation score itself is untaken since v3.14.229** and should not be quoted;
+`GUARD_MUTATION` rec 8 has said so for 148 versions.
+
+**E3 (B-170) is unchanged** — `schema_conformance_test` still has no vacuity
+floor.
+
+**Guard.** None added — this is a measurement pass. `run_all.sh` was the
+instrument, run three ways.
+
+**Verification.** `./dev/tests/run_all.sh` — 90 passed, 0 failed, 0 disabled.
+Nothing filed. E is down to two items, and E1's headline number is still
+unmeasured.
+
+---
+
 ## B-209 — the privacy hook has never run on a clone (2026-09-03)
 **Version:** v3.14.401 · **Type:** fix · **Archives:** `dev/archive/changes/b209_hooks_are_not_executable_in_git/` (v3.14.400)
-**Touched:** hooks/pre-commit · hooks/prepare-commit-msg (new) · dev/tests/hooks_executable_test.js (new) · dev/tests/gitignore_test.js · dev/BUGS.md · dev/PRACTICES.md
+**Touched:** hooks/pre-commit · hooks/prepare-commit-msg (new) · dev/tests/hooks_executable_test.js (new) · dev/BUGS.md · dev/PRACTICES.md
 
 **What was being built.** `hooks/prepare-commit-msg`, which puts the version from
-`source/version.py` into the subject line so `doc_integrity` §8b can find a
-version's commit. It edits and never refuses; merges and already-stamped messages
-are left alone. Executed against five message shapes, including an editor
-template and a multi-line body.
+`source/version.py` into the subject so `doc_integrity` §8b can find a version's
+commit. It edits and never refuses; merges and already-stamped messages are left
+alone. Executed against five message shapes.
 
-**What building it found, and it is much worse.** `hooks/pre-commit` is mode
-**100644 in every commit, including the first.** Git runs a hook only if it is
-executable and **says nothing when it is not** — so the second of the two layers
-refusing fieldwork has never existed for anyone who cloned this repository, which
-has been public since v3.14.392.
+**What building it found, and it is worse.** `hooks/pre-commit` was mode **100644
+in every commit, including the first.** Git runs a hook only if it is executable
+and **says nothing when it is not** — so the second of the two layers refusing
+fieldwork has never existed for anyone who cloned this repository, public since
+v3.14.392.
 
 **Why nothing caught it: it fired.** B-206 was this hook refusing the first
-commit, for real. That worked because the author's WORKING COPY carried the bit
-from a `chmod +x` while the index recorded 100644 — and the working copy is the
-one git runs. A clone gets the index's version. Verified by cloning: the hook
-arrives `-rw-r--r--` and `[ -x ]` is false.
-
-**`chmod` is the trap.** It changes the checkout and leaves the index at 100644,
-which is exactly the state that produced this. The fix is
-`git update-index --chmod=+x`, and it is now the second half of the install line
-in PRACTICES §8 rather than a thing to know.
+commit, for real — because the working copy carried the bit from a `chmod +x`
+while the index recorded 100644, and the working copy is the one git runs. A
+clone gets the index's version, verified by cloning. **`chmod` is the trap**: it
+changes the checkout and leaves the index wrong. The fix is
+`git update-index --chmod=+x`, now half of PRACTICES §8's install line.
 
 **Guard.** `hooks_executable_test.js` asks **git** for the recorded mode
 (`ls-files -s`), not the filesystem — `statSync` answers about the checkout,
-which was the half that was already right and is not what ships. It also names
-the two hooks that must be tracked, so losing one is a failure rather than a
-smaller sweep. **Guard count 91 → 92.**
+which was the half already right and is not what ships. It names the two hooks
+that must be tracked, so losing one fails rather than shrinking the sweep.
+**91 → 92.**
 
-**This guard is RED until the repository is repaired**, deliberately: the defect
-is in the index, not in a file I can edit, and index writes from this session
-have wedged the repository before. The command is in the guard's own failure
-output.
+***And §8b caught this entry, on its first real run.*** The commit carrying this
+version was the first stamped by `prepare-commit-msg`, so the check could finally
+see it — and it failed: the **Touched:** line named
+`dev/tests/gitignore_test.js`, archived because the version was *started* with
+that file listed, and then never edited. Corrected above. **That is the property
+working on the first commit it could see**, and the false claim was mine.
 
-**Verification.** `run_all.sh` — 88 passed, 2 failed: `hooks_executable_test.js`
-reporting B-209, and `doc_integrity` on this entry before it was written.
+**Verification.** `doc_integrity` 74/0, `run_all.sh` 90/0/0 once the index was
+repaired — 2 versions now verifiable against their commits, up from 1.
 
 ---
 

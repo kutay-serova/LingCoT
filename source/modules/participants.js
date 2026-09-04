@@ -959,6 +959,228 @@ function _srcPickApply(srcId) {
    renderCommentsView(comments)                → read-only HTML for render views
 ══════════════════════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   ROW EDITORS — one descriptor per repeated-row collection (I2, v3.14.404)
+   ─────────────────────────────────────────────────────────────────────────────
+   INPUT_UX_AUDIT §3.1 measured five near-copies: each collection had its own row
+   builder, its own `render*Editor`, its own `read*Editor`, its own add and
+   remove `data-action`, and its own handler in `events.js` — and the handlers
+   differed in exactly three things: the builder called, the class removed, and
+   the child focused. The copy-paste was visible in the markup, where the
+   allomorph and selection remove buttons both wear `class="translit-remove"`
+   and `.translit-remove` is the only rule styling any of them.
+
+   WHAT IT COST, which is the reason this is worth doing and not tidying: every
+   change to row behaviour had five sites and nothing kept them aligned. None
+   committed on Enter, none supported reordering, and adding either was five
+   edits or a divergence. **D39 is blocked on this** and D31 is written as "a
+   consumer of I2" — the smallest reordering feature had nowhere to land.
+
+   WHAT A DESCRIPTOR HAS TO EXPRESS. Four of the five are the same shape. The
+   fifth, `sel`, differs in two ways that are real rather than accidental: its
+   rows are found through the enclosing frame instead of by container id, and a
+   frame may never be left with zero rows. Excluding it would have been the easy
+   move and the wrong one — those two facts are what `rows` and `minOne` are for,
+   and a descriptor that cannot say them is not describing the app.
+
+   NOT INCLUDED, deliberately: `sel-frame` (frames carry collapse state, a
+   derived summary and templates — a different thing that contains rows), and the
+   morpheme and section row editors in `LingCoT.html`, which carry their own
+   parse and ingest logic. The audit scoped I2 to these five; widening it here
+   would be scope the audit never measured.
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* @const ROW_EDITORS, the whole of what differs between the row collections.
+   `build` and `fields` are the two halves nothing else can supply: one writes a
+   row, the other reads one back. Everything else is a string or a predicate. */
+const ROW_EDITORS = {
+  comment: {
+    rowClass: 'comment-row', focus: '.comment-text', layout: 'stacked',
+    build: v => _commentRowHtml(v),
+    fields: row => ({
+      text:      row.querySelector('.comment-text')?.value.trim() || '',
+      source_id: row.querySelector('.trans-src-chip')?.dataset.srcId || null,
+      date:      row.querySelector('.comment-date')?.value.trim() || null,
+    }),
+    normalise: v => ({ ...v, source_id: v.source_id || null, date: v.date || null }),
+    keep: v => !!v.text,
+  },
+  translit: {
+    rowClass: 'translit-row', focus: '.translit-label', layout: 'inline',
+    build: v => _translitRowHtml(v),
+    fields: row => ({
+      label: row.querySelector('.translit-label')?.value.trim() || '',
+      text:  row.querySelector('.translit-text')?.value.trim()  || '',
+    }),
+    keep: v => !!(v.label || v.text),
+  },
+  allomorph: {
+    rowClass: 'allomorph-row', focus: '.allomorph-form', layout: 'inline',
+    build: v => _allomorphRowHtml(v),
+    fields: row => ({
+      form:        row.querySelector('.allomorph-form')?.value.trim() || '',
+      environment: row.querySelector('.allomorph-env')?.value.trim()  || '',
+    }),
+    keep: v => !!v.form,
+  },
+  translation: {
+    rowClass: 'translation-row', focus: '.translation-text', layout: 'stacked',
+    build: v => _translationRowHtml(v),
+    fields: row => ({
+      text:      row.querySelector('.translation-text')?.value.trim() || '',
+      source_id: row.querySelector('.trans-src-chip')?.dataset.srcId || null,
+      date:      row.querySelector('.translation-date')?.value.trim() || null,
+    }),
+    normalise: v => ({ ...v, source_id: v.source_id || null, date: v.date || null }),
+    keep: v => !!v.text,
+  },
+  /* D27 P1. The two exceptions, declared rather than special-cased in a handler. */
+  sel: {
+    rowClass: 'sel-row', focus: '.sel-cat', layout: 'inline',
+    build: v => _selRowHtml(v),
+    /* Rows live inside the frame the button belongs to, not under an id. */
+    rows: btn => btn.closest('.sel-frame')?.querySelector('.sel-rows'),
+    /* A frame with no selects is unreadable and would be dropped on save. */
+    minOne: true,
+    /* Reading frames is `readSelectionEditor`'s job: it walks two levels and
+       omits empty keys rather than storing "". Left where it is. */
+  },
+};
+
+/* @fn rowsElFor, the rows container a row button acts on.
+   Default is `<container>-rows` by id, which four of the five use. */
+function rowsElFor(kind, btn) {
+  const d = ROW_EDITORS[kind];
+  if (!d) return null;
+  if (d.rows) return d.rows(btn);
+  return document.getElementById(btn.dataset.container + '-rows');
+}
+
+/* @fn addRowTo, the ONE add. Was five copies of three lines. */
+function addRowTo(kind, btn) {
+  const d = ROW_EDITORS[kind];
+  const rowsEl = rowsElFor(kind, btn);
+  if (!d || !rowsEl) return false;
+  rowsEl.insertAdjacentHTML('beforeend', d.build(null));
+  rowsEl.lastElementChild?.querySelector(d.focus)?.focus();
+  return true;
+}
+
+/* @fn removeRowFrom, the ONE remove, including `minOne`. */
+function removeRowFrom(kind, btn) {
+  const d = ROW_EDITORS[kind];
+  if (!d) return false;
+  const row = btn.closest('.' + d.rowClass);
+  const rowsEl = row?.parentElement;
+  row?.remove();
+  if (d.minOne && rowsEl && !rowsEl.querySelector('.' + d.rowClass))
+    rowsEl.insertAdjacentHTML('beforeend', d.build(null));
+  return true;
+}
+
+/* @fn readRowEditor, the ONE reader: query the rows, map each, drop the ones
+   the collection says not to keep. Was the same shape four times. */
+function readRowEditor(kind, containerId) {
+  const d = ROW_EDITORS[kind];
+  const rowsEl = document.getElementById(containerId + '-rows');
+  if (!d || !d.fields || !rowsEl) return [];
+  return [...rowsEl.querySelectorAll('.' + d.rowClass)]
+    .map(row => { const v = d.fields(row); return d.normalise ? d.normalise(v) : v; })
+    .filter(d.keep);
+}
+
+/* @fn rowEditorHtml, the ONE render. `addClass` is passed rather than declared
+   the add button. v3.14.407: one `row-add` class for every collection, so the
+   caller no longer passes one. */
+function rowEditorHtml(kind, containerId, list, opts) {
+  const d = ROW_EDITORS[kind];
+  if (!d) return '';
+  const { editorClass, rowsClass, addIcon, addLabel } = opts;
+  const items = Array.isArray(list) ? list : [];
+  return `<div class="${editorClass}" id="${esc(containerId)}">
+    <div class="${rowsClass}" id="${esc(containerId)}-rows">${items.map(d.build).join('')}</div>
+    <button class="row-add" type="button"
+            data-action="${kind}-add"
+            data-container="${esc(containerId)}">${icon(addIcon)} ${t(addLabel)}</button>
+  </div>`;
+}
+
+/* @const LIST_VIEWS, the read-only half of what ROW_EDITORS declares (D62 C).
+   Four render*View functions drew the same list shape four ways: four font
+   sizes between 0.85 and 0.9 rem, three separator conventions, two placements
+   for the secondary part. None of them was chosen against the other three.
+
+   `layout` is NOT restated here — it is read off ROW_EDITORS, because the
+   editor and the view are two presentations of one collection and a second
+   copy is a second thing to keep in step.
+
+   primary    prose | segment. A segment string is read character by character
+              (a length mark, a schwa, a combining diacritic against a
+              precomposed one) so it takes --mono. Prose takes the body face.
+   secondary  attribution | qualifier | scheme. Attribution goes below the
+              primary; the other two go beside it, and `scheme` LEADS because a
+              scheme name is a closed set repeating down the column, so it reads
+              as a column header rather than a suffix.
+   emphasis   meta-language means the text is not in the object language:
+              italic, and quoted. A convention, not decoration.
+
+   The per-collection row classes (.comment-view-row and its three siblings) are
+   gone rather than kept: nothing queried them, and once the layout is declared
+   they would be four names with no rule, which is the half of L-046 this
+   closes. Target `.comments-view .lv-row` if one of them ever needs its own. */
+const LIST_VIEWS = {
+  comment: {
+    container: 'comments-view',
+    primary: 'prose', secondary: 'attribution', emphasis: 'none',
+    keep: c => !!c.text,
+    read: c => ({ primary: c.text, secondary: _srcDateMeta(c) }),
+  },
+  translation: {
+    container: 'translations-view',
+    primary: 'prose', secondary: 'attribution', emphasis: 'meta-language',
+    keep: t => !!t.text,
+    read: t => ({ primary: t.text, secondary: _srcDateMeta(t) }),
+  },
+  translit: {
+    container: 'transliterations-view',
+    primary: 'segment', secondary: 'scheme', emphasis: 'none',
+    keep: t => !!t.text,
+    read: t => ({ primary: t.text, secondary: t.label || '' }),
+  },
+  allomorph: {
+    container: 'allomorphs-view',
+    primary: 'segment', secondary: 'qualifier', emphasis: 'none',
+    keep: a => !!a.form,
+    read: a => ({ primary: a.form, secondary: a.environment || '' }),
+  },
+};
+
+/* `source · date`, the attribution line both stacked views carry. */
+// @fn _srcDateMeta
+function _srcDateMeta(v) {
+  const src = v.source_id ? sourceById(v.source_id) : null;
+  return [src ? src.name : null, v.date || null].filter(Boolean).join(' \u00b7 ');
+}
+
+// @fn listViewHtml, read-only HTML for one list collection
+function listViewHtml(kind, list) {
+  const d = LIST_VIEWS[kind];
+  if (!d || !Array.isArray(list) || !list.length) return '';
+  const layout = (ROW_EDITORS[kind] || {}).layout || 'inline';
+  const meta   = d.emphasis === 'meta-language';
+  const rows = list.filter(d.keep).map(v => {
+    const { primary, secondary } = d.read(v);
+    const prim = `<span class="lv-primary lv-primary--${d.primary}">${
+      meta ? "'" + esc(primary) + "'" : esc(primary)}</span>`;
+    const sec  = secondary
+      ? `<span class="lv-secondary lv-secondary--${d.secondary}">${esc(secondary)}</span>`
+      : '';
+    return `<div class="lv-row lv-row--${layout}${meta ? ' lv-row--meta' : ''}">${
+      d.secondary === 'scheme' ? sec + prim : prim + sec}</div>`;
+  }).join('');
+  return rows ? `<div class="${d.container}">${rows}</div>` : '';
+}
+
 /* Build HTML for a single comment row.
    comment may be { text, source_id, date } or null for a blank new row.
    Source selection uses the same single-select chip picker as translation rows
@@ -972,7 +1194,7 @@ function _commentRowHtml(comment) {
   const src       = srcId ? sourceById(srcId) : null;
   const srcLabel  = src ? esc(src.name) : (srcId ? esc(srcId) : '');
   const hasSource = !!srcId;
-  return `<div class="comment-row">
+  return `<div class="comment-row row-ed row-ed--stacked">
     <textarea ${LING_ATTRS} class="comment-text" placeholder="${t('placeholder.row.comment')}" dir="auto">${esc(text)}</textarea>
     <div class="comment-meta">
       <div class="trans-src-wrap" id="${esc(uid)}">
@@ -985,7 +1207,7 @@ function _commentRowHtml(comment) {
                 title="${t('title.row.src.select')}">${icon('stack')} ${hasSource ? t('btn.row.trans.change_source') : t('btn.row.trans.add_source')}</button>
       </div>
       <input ${LING_ATTRS} class="comment-date" type="text" value="${esc(date)}" placeholder="${t('placeholder.row.date')}">
-      <button class="comment-remove" type="button"
+      <button class="row-x" type="button"
               data-action="comment-remove" title="${t('title.row.comment.remove')}">${icon('x')}</button>
     </div>
   </div>`;
@@ -995,46 +1217,20 @@ function _commentRowHtml(comment) {
    containerId, unique base ID; comments, array or null/undefined. */
 // @fn renderCommentsEditor
 function renderCommentsEditor(containerId, comments) {
-  const list  = Array.isArray(comments) ? comments : [];
-  const rows  = list.map(c => _commentRowHtml(c)).join('');
-  return `<div class="comments-editor" id="${esc(containerId)}">
-    <div class="comment-rows" id="${esc(containerId)}-rows">${rows}</div>
-    <button class="comment-add-btn" type="button"
-            data-action="comment-add"
-            data-container="${esc(containerId)}">${icon('chat-text')} ${t('btn.row.comment.add')}</button>
-  </div>`;
+  return rowEditorHtml('comment', containerId, comments, {
+    editorClass: 'comments-editor', rowsClass: 'comment-rows',
+    addIcon: 'chat-text', addLabel: 'btn.row.comment.add' });
 }
 
 /* Read back the current comments from the editor DOM.
    Returns an array of { text, source_id, date }, empty-text rows are skipped. */
 // @fn readCommentsEditor
-function readCommentsEditor(containerId) {
-  const rowsEl = document.getElementById(containerId + '-rows');
-  if (!rowsEl) return [];
-  return [...rowsEl.querySelectorAll('.comment-row')].map(row => {
-    const text    = row.querySelector('.comment-text')?.value.trim()       || '';
-    const srcId   = row.querySelector('.trans-src-chip')?.dataset.srcId    || null;
-    const date    = row.querySelector('.comment-date')?.value.trim()       || null;
-    return { text, source_id: srcId || null, date: date || null };
-  }).filter(c => c.text);   // drop rows with no text
-}
+function readCommentsEditor(containerId) { return readRowEditor('comment', containerId); }
 
 /* Render comments as a compact read-only block for render views.
    Returns '' if there are no comments. */
 // @fn renderCommentsView
-function renderCommentsView(comments) {
-  if (!Array.isArray(comments) || !comments.length) return '';
-  const rows = comments.filter(c => c.text).map(c => {
-    const src  = c.source_id ? sourceById(c.source_id) : null;
-    const meta = [src ? esc(src.name) : null, c.date ? esc(c.date) : null]
-      .filter(Boolean).join(' · ');
-    return `<div class="comment-view-row">
-      <div>${esc(c.text)}</div>
-      ${meta ? `<div class="comment-view-meta">${meta}</div>` : ''}
-    </div>`;
-  }).join('');
-  return rows ? `<div class="comments-view">${rows}</div>` : '';
-}
+function renderCommentsView(comments) { return listViewHtml('comment', comments); }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    TRANSLITERATIONS EDITOR, shared reusable component (Step 5)
@@ -1053,51 +1249,30 @@ function renderCommentsView(comments) {
 function _translitRowHtml(row) {
   const label = row?.label || '';
   const text  = row?.text  || '';
-  return `<div class="translit-row">
+  return `<div class="translit-row row-ed row-ed--inline">
     <input class="translit-label ac-input" data-ac-pool="translit_label" type="text" ${LING_ATTRS} dir="ltr" value="${esc(label)}" placeholder="${t('placeholder.row.translit_system')}">
     <input class="translit-text" type="text" ${LING_ATTRS} dir="auto" value="${esc(text)}" placeholder="${t('placeholder.row.translit_text')}">
-    <button class="translit-remove" type="button"
+    <button class="row-x" type="button"
             data-action="translit-remove" title="${t('title.row.translit.remove')}">${icon('x')}</button>
   </div>`;
 }
 
 /* @fn renderTransliterationsEditor */
 function renderTransliterationsEditor(containerId, transliterations) {
-  const list = Array.isArray(transliterations) ? transliterations : [];
-  const rows = list.map(row => _translitRowHtml(row)).join('');
-  return `<div class="transliterations-editor" id="${esc(containerId)}">
-    <div class="translit-rows" id="${esc(containerId)}-rows">${rows}</div>
-    <button class="translit-add-btn" type="button"
-            data-action="translit-add"
-            data-container="${esc(containerId)}">${icon('text-aa')} ${t('btn.row.translit.add')}</button>
-  </div>`;
+  return rowEditorHtml('translit', containerId, transliterations, {
+    editorClass: 'transliterations-editor', rowsClass: 'translit-rows',
+    addIcon: 'text-aa', addLabel: 'btn.row.translit.add' });
 }
 
 /* Read back transliterations from the editor DOM.
    Rows where both label and text are empty are dropped. */
 // @fn readTransliterationsEditor
-function readTransliterationsEditor(containerId) {
-  const rowsEl = document.getElementById(containerId + '-rows');
-  if (!rowsEl) return [];
-  return [...rowsEl.querySelectorAll('.translit-row')].map(row => ({
-    label: row.querySelector('.translit-label')?.value.trim() || '',
-    text:  row.querySelector('.translit-text')?.value.trim()  || '',
-  })).filter(t => t.label || t.text);
-}
+function readTransliterationsEditor(containerId) { return readRowEditor('translit', containerId); }
 
 /* Render transliterations as labeled rows for render views.
    Returns '' if the list is empty. */
 // @fn renderTransliterationsView
-function renderTransliterationsView(transliterations) {
-  if (!Array.isArray(transliterations) || !transliterations.length) return '';
-  const rows = transliterations.filter(t => t.text).map(t => {
-    const label = t.label
-      ? `<span class="translit-view-label">${esc(t.label)}</span>`
-      : '';
-    return `<div class="translit-view-row">${label}<span>${esc(t.text)}</span></div>`;
-  }).join('');
-  return rows ? `<div class="transliterations-view">${rows}</div>` : '';
-}
+function renderTransliterationsView(transliterations) { return listViewHtml('translit', transliterations); }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    ALLOMORPHS EDITOR, {form, environment} rows for morpheme/affix entries (D23 P1)
@@ -1114,50 +1289,28 @@ function renderTransliterationsView(transliterations) {
 function _allomorphRowHtml(row) {
   const form = row?.form        || '';
   const env  = row?.environment || '';
-  return `<div class="allomorph-row">
+  return `<div class="allomorph-row row-ed row-ed--inline">
     <input class="allomorph-form edit-input" type="text" ${LING_ATTRS} dir="auto" value="${esc(form)}" placeholder="${t('placeholder.row.allomorph_form')}">
     <input class="allomorph-env edit-input" type="text" ${LING_ATTRS} dir="ltr" value="${esc(env)}" placeholder="${t('placeholder.row.allomorph_env')}">
-    <button class="translit-remove" type="button"
+    <button class="row-x" type="button"
             data-action="allomorph-remove" title="${t('title.row.allomorph.remove')}">${icon('x')}</button>
   </div>`;
 }
 
 // @fn renderAllomorphsEditor
 function renderAllomorphsEditor(containerId, allomorphs) {
-  const list = Array.isArray(allomorphs) ? allomorphs : [];
-  const rows = list.map(row => _allomorphRowHtml(row)).join('');
-  return `<div class="allomorphs-editor" id="${esc(containerId)}">
-    <div class="allomorph-rows" id="${esc(containerId)}-rows">${rows}</div>
-    <button class="translit-add-btn" type="button"
-            data-action="allomorph-add"
-            data-container="${esc(containerId)}">${icon('plus-circle')} ${t('btn.row.allomorph.add')}</button>
-  </div>`;
+  return rowEditorHtml('allomorph', containerId, allomorphs, {
+    editorClass: 'allomorphs-editor', rowsClass: 'allomorph-rows',
+    addIcon: 'plus-circle', addLabel: 'btn.row.allomorph.add' });
 }
 
 // Read allomorphs back from editor DOM. Rows with no form are dropped.
 // @fn readAllomorphsEditor
-function readAllomorphsEditor(containerId) {
-  const rowsEl = document.getElementById(containerId + '-rows');
-  if (!rowsEl) return [];
-  return [...rowsEl.querySelectorAll('.allomorph-row')].map(row => ({
-    form:        row.querySelector('.allomorph-form')?.value.trim() || '',
-    environment: row.querySelector('.allomorph-env')?.value.trim()  || '',
-  })).filter(a => a.form);
-}
+function readAllomorphsEditor(containerId) { return readRowEditor('allomorph', containerId); }
 
 // Render allomorphs as a labeled table for read-only dict views.
 // @fn renderAllomorphsView
-function renderAllomorphsView(allomorphs) {
-  if (!Array.isArray(allomorphs) || !allomorphs.length) return '';
-  const rows = allomorphs.filter(a => a.form).map(a => {
-    const env = a.environment
-      ? `<span class="allomorph-view-env">${esc(a.environment)}</span>`
-      : '';
-    return `<div class="allomorph-view-row">
-      <span class="allomorph-view-form">${esc(a.form)}</span>${env}</div>`;
-  }).join('');
-  return rows ? `<div class="allomorphs-view">${rows}</div>` : '';
-}
+function renderAllomorphsView(allomorphs) { return listViewHtml('allomorph', allomorphs); }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    SELECTION EDITOR (D27 P1)
@@ -1239,7 +1392,7 @@ function _selRowHtml(sel) {
     `<option value="${escAttr(v)}"${v === status ? ' selected' : ''}>${
       v ? esc(t('label.sel.status.' + v)) : esc(t('label.sel.status.unset'))
     }</option>`).join('');
-  return `<div class="sel-row">
+  return `<div class="sel-row row-ed row-ed--inline">
     <select class="edit-input sel-status" aria-label="${escAttr(t('label.sel.status'))}">${statusOpts}</select>
     <input class="edit-input ac-input sel-cat" type="text" data-ac-pool="category"
            ${LING_ATTRS_UPPER} autocomplete="off"
@@ -1250,7 +1403,7 @@ function _selRowHtml(sel) {
            ${LING_ATTRS} autocomplete="off"
            value="${escAttr(rel)}" placeholder="${escAttr(t('placeholder.sel.relation'))}"
            aria-label="${escAttr(t('label.sel.relation'))}">
-    <button class="translit-remove" type="button" data-action="sel-remove"
+    <button class="row-x" type="button" data-action="sel-remove"
             title="${escAttr(t('title.sel.remove_selection'))}">${icon('x')}</button>
   </div>`;
 }
@@ -1274,12 +1427,12 @@ function _selFrameHtml(frame, collapsed) {
       <span class="sel-derived">${esc(derived)}</span>
       <span class="sel-summary">${esc(label || derived || t('label.sel.empty_frame'))}</span>
       <span class="sel-count">${esc(t('label.sel.count', { n: count }))}</span>
-      <button class="translit-remove" type="button" data-action="sel-frame-remove"
+      <button class="row-x" type="button" data-action="sel-frame-remove"
               title="${escAttr(t('title.sel.remove_frame'))}">${icon('x')}</button>
     </div>
     <div class="sel-frame-body">
       <div class="sel-rows">${rows}</div>
-      <button class="translit-add-btn" type="button" data-action="sel-add">${icon('plus-circle')} ${t('btn.sel.add_selection')}</button>
+      <button class="row-add" type="button" data-action="sel-add">${icon('plus-circle')} ${t('btn.sel.add_selection')}</button>
       <textarea ${LING_ATTRS} class="edit-textarea sel-notes" rows="2" placeholder="${escAttr(t('placeholder.sel.notes'))}" aria-label="${escAttr(t('label.sel.notes'))}">${esc(notes)}</textarea>
     </div>
   </div>`;
@@ -1474,7 +1627,7 @@ function _translationRowHtml(row) {
   const src   = srcId ? sourceById(srcId) : null;
   const srcLabel = src ? esc(src.name) : (srcId ? esc(srcId) : '');
   const hasSource = !!srcId;
-  return `<div class="translation-row">
+  return `<div class="translation-row row-ed row-ed--stacked">
     <textarea ${LING_ATTRS} class="translation-text" dir="auto" placeholder="${t('placeholder.row.translation')}">${esc(text)}</textarea>
     <div class="translation-meta">
       <div class="trans-src-wrap" id="${uid}">
@@ -1487,7 +1640,7 @@ function _translationRowHtml(row) {
                 title="${t('title.row.src.select')}">${icon('stack')} ${hasSource ? t('btn.row.trans.change_source') : t('btn.row.trans.add_source')}</button>
       </div>
       <input ${LING_ATTRS} class="translation-date" type="text" value="${esc(date)}" placeholder="${t('placeholder.row.date')}">
-      <button class="translation-remove" type="button"
+      <button class="row-x" type="button"
               data-action="translation-remove" title="${t('title.row.translation.remove')}">${icon('x')}</button>
     </div>
   </div>`;
@@ -1495,47 +1648,20 @@ function _translationRowHtml(row) {
 
 /* @fn renderTranslationsEditor */
 function renderTranslationsEditor(containerId, translations) {
-  const list = Array.isArray(translations) ? translations : [];
-  const rows = list.map(row => _translationRowHtml(row)).join('');
-  return `<div class="translations-editor" id="${esc(containerId)}">
-    <div class="translation-rows" id="${esc(containerId)}-rows">${rows}</div>
-    <button class="translation-add-btn" type="button"
-            data-action="translation-add"
-            data-container="${esc(containerId)}">${icon('translate')} ${t('btn.row.trans.add')}</button>
-  </div>`;
+  return rowEditorHtml('translation', containerId, translations, {
+    editorClass: 'translations-editor', rowsClass: 'translation-rows',
+    addIcon: 'translate', addLabel: 'btn.row.trans.add' });
 }
 
 /* Read back translations from the editor DOM.
    Rows with no text are dropped. */
 // @fn readTranslationsEditor
-function readTranslationsEditor(containerId) {
-  const rowsEl = document.getElementById(containerId + '-rows');
-  if (!rowsEl) return [];
-  return [...rowsEl.querySelectorAll('.translation-row')].map(row => {
-    const text  = row.querySelector('.translation-text')?.value.trim()           || '';
-    // Source ID is stored as data-src-id on the .trans-src-chip element
-    const srcId = row.querySelector('.trans-src-chip')?.dataset.srcId             || null;
-    const date  = row.querySelector('.translation-date')?.value.trim()           || null;
-    return { text, source_id: srcId || null, date: date || null };
-  }).filter(t => t.text);
-}
+function readTranslationsEditor(containerId) { return readRowEditor('translation', containerId); }
 
 /* Render translations as italicised rows for render views.
    Returns '' if the list is empty. */
 // @fn renderTranslationsView
-function renderTranslationsView(translations) {
-  if (!Array.isArray(translations) || !translations.length) return '';
-  const rows = translations.filter(t => t.text).map(t => {
-    const src  = t.source_id ? sourceById(t.source_id) : null;
-    const meta = [src ? esc(src.name) : null, t.date ? esc(t.date) : null]
-      .filter(Boolean).join(' · ');
-    return `<div class="translation-view-row">
-      '${esc(t.text)}'
-      ${meta ? `<div class="translation-view-meta">${meta}</div>` : ''}
-    </div>`;
-  }).join('');
-  return rows ? `<div class="translations-view">${rows}</div>` : '';
-}
+function renderTranslationsView(translations) { return listViewHtml('translation', translations); }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    ANNOTATORS ROLLUP. Step 7

@@ -1,6 +1,6 @@
 # Renamed and removed files
 
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 
 *A frozen document is stamped with the version it was written against and is
 never rewritten (PRACTICES; `dev/audits/AUDIT_INDEX.md` records the drift). So

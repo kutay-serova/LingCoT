@@ -296,9 +296,14 @@ async function scenarioB() {
     await addRows('f-sentence-transliterations', 'translit-add',
       [{ label: 'SysA', text: 'TL-ONE' }, { label: 'SysB', text: 'TL-TWO' }]);
     await addRows('f-sentence-comments', 'comment-add', [{ text: 'NOTE-KEEP' }]);
-    /* the remove button on the FIRST row — deletion as a user performs it */
+    /* The remove button on the FIRST row, deletion as a user performs it.
+       Targeted by data-action, not by class: v3.14.407 renamed the shared remove
+       class to `row-x` and this line kept clicking `.translit-remove`, so the
+       click hit nothing and the check failed while the app was correct. The
+       data-action names are the stable contract, which is why I2 left them
+       alone; a guard should hold the same surface. */
     await page.evaluate(() =>
-      document.querySelector('#f-sentence-transliterations-rows .translit-remove')?.click());
+      document.querySelector('#f-sentence-transliterations-rows [data-action="translit-remove"]')?.click());
     await page.waitForTimeout(80);
   });
 

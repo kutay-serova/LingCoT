@@ -133,3 +133,98 @@ annotation is happening rather than after — the order the work takes is only
 observable when someone is doing it.
 
 ---
+
+## Appended v3.14.408 — the word-editor field order is decided, ahead of the audit
+
+**FROZEN document, appended not rewritten.** Everything above is as written at
+v3.14.274. This section records a decision taken before the audit it proposes
+was run, and says why that is not a mistake.
+
+### The decision
+
+The word editor asks in this order:
+
+| | field | today |
+|---|---|---|
+| 1 | transliteration | 1 |
+| 2 | **part of speech** | 3 |
+| 3 | **word gloss** | 2 |
+| 4 | **morphological parse** | 5 |
+| 5 | morpheme glosses | 6 |
+| 6 | **lemma** | 4 |
+| 7 | comments, save to dictionary | 7 |
+
+Two moves: the gloss and the POS swap, and the lemma drops below the morpheme
+rows. Everything else keeps its place.
+
+### What this does and does not resolve
+
+The table at the top of this file makes one complaint: fields 2 to 4 are asked
+before the parse that determines them. **This decision does not adopt that
+ordering.** POS and the word gloss stay above the parse. Only the lemma moves
+below it.
+
+That is a deliberate divergence, and the reason is that D46's table measures
+*derivation* order while the editor asks in *elicitation* order, and those are
+not the same sequence.
+
+- **The lemma genuinely cannot be answered early.** It is identified from the
+  stem, and the stem comes out of the parse. Moving it below the morpheme rows
+  is D46's argument applied where it holds.
+- **The word gloss can be answered first, and asking it first is what makes the
+  field mean the right thing.** B-187 and B-191 between them established that
+  `#ew-gloss` holds a *derived* join whenever the annotator has not answered it,
+  and that storing that derivation as their answer is a bug that took four
+  attempts to kill. Asked before the parse, the field can only hold the
+  annotator's own whole-word gloss — which is the value it is supposed to hold.
+  Asked after, it is pre-filled with the app's derivation and the annotator is
+  editing the app's answer instead of giving one.
+- **POS above the gloss** puts the closed-vocabulary question before the open
+  one. The chip strip answers it in a click, and it feeds `morphPosDefault`,
+  which seeds the morpheme rows the parse is about to create.
+
+So the order is: what the word looks like, what kind of word it is, what it
+means, how it is built, what its parts mean, what it belongs to. A word that is
+monomorphemic is finished after step 3.
+
+### The label
+
+`label.editor.word_gloss` already reads **Word Gloss** in the editor, since D48.
+`label.editor.gloss` still reads plain **Gloss** at ten sites, and two of them
+are word-level and should follow the editor:
+
+| site | level | verdict |
+|---|---|---|
+| `LingCoT.html:9411` IGT legend swatch | word | rename |
+| `:11298` dependency table column header | word | rename |
+| `:10064` dictionary browse column | entry | keep |
+| `:10452` quick-look lemma panel | entry | keep |
+| `:11425` morpheme row label | morpheme | keep |
+| `:14447`, `:14466` dictionary export field and sort pickers | entry | keep |
+| `btn.sb.field.gloss` search field selector | word **or** morpheme, chosen by the Level control | keep |
+| `gap.field.gloss` progress queue | any, the row names the level itself | keep |
+
+A second key is needed rather than a rename in place: `label.editor.gloss` is
+the morpheme-level and entry-level label and stays as it is. The two word-level
+sites move to `label.editor.word_gloss`, which exists.
+
+### Built v3.14.409
+
+The reorder and the two labels shipped one version after the decision.
+`field_order_test.js` asserts the sequence, and separately asserts the two
+dependencies it must not violate (morpheme rows after the parse, lemma after the
+morpheme rows) by checking the mechanisms exist in the source. Those are facts
+about the code; the sequence is a decision. A guard that conflated them would
+report a re-decision as a broken dependency.
+
+### What is still owed
+
+This decides the word editor. **D46's audit is still worth running**, and the
+part of it this cannot answer is passes 2 and 3: whether the order holds for
+sentence and paragraph views, and whether an annotator working at speed agrees.
+Pass 1 remains scriptable and remains unwritten. The reordering above is a
+change to the thing the audit would measure, so the audit now runs against this
+order, and the QUICKSTART already asks testers the question directly: *"What
+order did you want to fill things in?"* — its §4 was rewritten to the new order
+at v3.14.409, so a tester answering that question is answering about what they
+saw.

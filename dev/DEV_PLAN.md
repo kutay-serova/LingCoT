@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-03 · **Version:** v3.14.401
+**Updated:** 2026-09-04 · **Version:** v3.14.410
 
 | § | What is in it |
 |---|---|
@@ -34,7 +34,7 @@ are in `PRACTICES.md`.*
 
 ### What to do next
 
-**6 open bugs, 7 open findings, 3 live conflicts**, sorted by what each buys.
+**6 open bugs, 9 open findings, 3 live conflicts**, sorted by what each buys.
 *`BUGS.md` and `UNIFIED_AUDIT.md` are the sources — take the counts from their
 tables rather than from this line, which has been wrong twice.*
 
@@ -55,19 +55,32 @@ tables rather than from this line, which has been wrong twice.*
 
 | | item | why |
 |---|---|---|
-| E1 | **L-006** mutation score 56%; 31% of assertion sites are regexes against source text | still the right target, and the five versions to v3.14.362 are the evidence: **thirteen** guards written in them were caught passing against broken code by mutation before they shipped. Every one was a guard sharing an assumption with the code it checked — a fixture folding the same under both rules, a table keyed the way the guard asked for it |
-| E2 | **L-042** the tally depends on which corpus resolves — 71 on `samples/`, 69 on the live corpora | resolves itself at the swap; worth re-measuring after |
-| E3 | **B-170** `schema_conformance_test` has no vacuity floor, so a trivial corpus conforms | one guard, one floor |
+| E1 | **L-006** the suite's mutation score, last taken at v3.14.229 | **still the right target, and the only guards item open.** The five versions to v3.14.362 are the evidence: **thirteen** guards written in them were caught passing against broken code by mutation *before* they shipped. Every one shared an assumption with the code it checked — a fixture folding the same under both rules, a table keyed the way the guard asked for it. **The score itself has not been re-taken since v3.14.229** and should not be quoted until it is |
+| ~~E2~~ | ~~**L-042** the tally depends on which corpus resolves~~ | **✅ CLOSED v3.14.384, re-measured v3.14.402.** The swap made `samples/` byte-identical to the live corpora, and the suite now returns **90 passed, 0 failed, 0 disabled** both ways — against `samples/` and against the live pair staged per PRACTICES §10. Pointing it at `~/mnt/corpora` *unstaged* gives 84/6, which is **B-168 refusing a directory with `archive/` beside the candidates** — the guard working, not a tally difference, and the distinction is why step 2 says "only them" |
+| E3 | **B-170** `schema_conformance_test` has no vacuity floor, so a trivial corpus conforms | one guard, one floor. Unchanged |
+
+#### H · Controls and presentation, new v3.14.405
+
+| | item | why |
+|---|---|---|
+| ~~H1~~ | ~~**L-044** `list` edits an array through one comma-separated text box~~ | **absorbed into D62 A, v3.14.408.** The comma and the missing per-element provenance are one control change, not two tasks. Gate 3 |
+| ~~H2~~ | ~~**L-045** four row collections, four CSS treatments~~ | ✅ v3.14.407. `ROW_EDITORS` declares `layout`; one `.row-ed` component with two variants, one `.row-x`, one `.row-add`. Borrowed classes gone |
+| ~~H3~~ | ~~**L-046** four typographies for one data shape~~ | ✅ containers v3.14.407, typography v3.14.410. `LIST_VIEWS` declares `primary`, `secondary`, `emphasis` and reads `layout` off `ROW_EDITORS`; one `.lv-row` component, two sizes |
+| H4 | **L-043** the inventory itself: 21 array fields, six controls, three declaring none | the frame for H1 to H3 rather than a task. **Deferred by decision, v3.14.408** (D62 B): the declaration lands in the first version that adds an array-shaped field, and converts the existing 21 with it. Trigger is **D28 or D37**, whichever is scheduled first |
 
 #### F · Real but not now
 
 **L-039** `pinned_examples` is swept by nothing · **L-041** an offer that cannot be
 taken (`data-offer-translit`) · **⑦** the wanted mark reaches neither the word
-editor nor the morpheme rows · **B-027** POS not validated against `pos_tags.json`
-(a decision: refuse, warn or accept) · **B-136** `word_index` written by two
-writers and read by nobody · **B-139** string lists carry no per-element
-provenance · **L-013** the observed annotation order corrects D46, n=1 ·
-**L-030 · L-022 · ⑥ ⑪ ⑫** documentation debt.
+editor nor the morpheme rows · **B-136** `word_index` written by two writers and
+read by nobody · **L-030 · L-022 · ⑥ ⑫** documentation debt.
+
+*Three items left this cluster at v3.14.408 and one at v3.14.403, all by being
+decided rather than done: **B-027** was fixed at v3.14.373 and this line
+described the pre-fix state for 29 versions; **B-139** and **L-013** are
+superseded by D62 A and the D46 appendix; **⑪** was settled at v3.14.392–393 and
+moved to the audit's §5.2 at v3.14.397. A cluster called "real but not now" is
+where a decided item goes to look open.*
 
 #### G · Cosmetic tail
 
@@ -158,10 +171,12 @@ keep opening.
 | ~~**B-033** auto-linking has no definition~~ | ✅ v3.14.302. **D53 was the definition**, six stages, all closed |
 | ~~**D32** one transliteration model~~ | ✅ v3.14.303. **B-045**, **B-093**, **B-142** and **B-145** closed with it |
 | ~~**B-053 · D33** full-dictionary scans~~ | ✅ v3.14.309 · D33 retired v3.14.273. **Corrected twice, and this row carried the second error until v3.14.310**: L-014 named `pos` and `type` as the expensive pools; measured, they are 0.034 ms and 0.020 ms, and the expensive one is `AC_POOLS.gloss` at **0.248 ms** — a pool that did not exist when L-014 was written, and the only one whose length grows with the corpus rather than with a fixed inventory. Cached on `_dataGen` and the locale; the cheap two are deliberately left uncached |
-| **B-027** POS not validated against `pos_tags.json` | ◑ guard half ✅ v3.14.214. What is left is the decision — refuse, warn or accept an unknown tag — and what to do about entries already carrying one. Both change annotation |
-| **I2** unify the five row editors | I1 ✅ v3.14.210 · I6 ✅ v3.14.270 |
-| **D48 stages C and D** | the remainder of the field table (`dev/design/D48_field_table.md`) |
-| **D39** keyboard shortcuts | a tool used for hours at a stretch. Needs I2 first, and carries D43's debt: `[data-prov-tip]` has no focus state |
+| ~~**B-027** POS not validated against `pos_tags.json`~~ | ✅ **v3.14.373**, and this row described the pre-fix state for 29 versions. **The decision it was waiting on was taken**: an unknown tag is *stored*, reported at the save from `stampFieldProv` (`unknownTag()`), and adoptable from the tag drawer, which writes it to the project vocabulary file. **Refusing was ruled out by evidence** — `CLF` was the RIGHT tag and the shipped list lacked it, so a refusal would have blocked correct annotation. Verified v3.14.403 by reading the mechanism, not the row |
+| ~~**I2** unify the row editors~~ | ✅ **v3.14.404.** One `ROW_EDITORS` descriptor in `participants.js`; **ten handler blocks in `events.js` became one**, and four `render*`/`read*` pairs became one line each. `sel` is in it rather than excluded: its two differences — rows found through the enclosing frame, and never being left empty — are declared as `rows` and `minOne`. **D39 and D31 are unblocked**; keyboard and reordering work now has one place to land. `row_editor_test.js` executes the descriptor |
+| **D62 A · per-element identity for the five string lists** | **Decided v3.14.408, first item in this gate.** `variants`, `constituent_forms`, `source_ids`, `allomorphs` and `pinned_examples` become object elements carrying an annotator id and a date, and move from the `list` control to a row editor. Measured across both shipped corpora: **2 non-empty instances**, so the migration is free now and is a migration path after the first tester types a variant. **Supersedes B-139**, whose reasoning holds only while the control is a CSV box, and **absorbs L-044** — the comma bug is fixed by the same control change. `dev/design/D62_list_field_presentation.md` |
+| ~~**D62 C · one read-only list presentation**~~ | ✅ **v3.14.410.** Four properties, four sizes down to two, transliteration text monospace. The per-collection row classes went with them. §4 of the same record |
+| **D48 · the word editor** | *Was "stages C and D", which was wrong twice: **stage C shipped** v3.14.196–210 and **there is no stage D** — D48 names only stages A to C. Corrected v3.14.403.* What actually remains is one thing D48's last section names: **the word editor was never converted to a generated form.** D48 says it "stays available", and that the argument for it is now **the marking and the field order** — which is D46's target order, not drift. **The order was decided v3.14.408 and BUILT v3.14.409**: transliteration, POS, word gloss, parse, morpheme rows, lemma, with the IGT legend and the dependency table header moved onto `label.editor.word_gloss`. What remains of this row is the conversion itself — word-edit is still the level that does not read the field table, and the field order was the argument for leaving it that way |
+| **D39** keyboard shortcuts | a tool used for hours at a stretch. **I2 ✅ v3.14.404 unblocked it** — one add handler, one remove handler, one reader, so Enter-to-commit and reordering are one edit rather than five. Carries D43's debt: `[data-prov-tip]` has no focus state |
 
 #### Gate 4 — can wait for the next stable
 

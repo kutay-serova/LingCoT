@@ -9408,7 +9408,10 @@ function renderSentence() {
     let legendRows = `<div class="igt-legend-row"><div class="igt-legend-swatch legend-form"></div><div class="igt-legend-label">${t('label.view.sent.legend_form')}</div></div>`;
     if (showTranslit) legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-translit"></div><div class="igt-legend-label">Transliteration${wExtras.some((d, i) => !words[i].transliteration && d.translit) ? ' (derived)' : ''}</div></div>`;
     if (showParse)    legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-parse"></div><div class="igt-legend-label">${t('label.view.sent.legend_parse')}</div></div>`;
-    if (showGloss)    legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-gloss"></div><div class="igt-legend-label">${t('label.editor.gloss')}</div></div>`;
+    /* D46 appendix, v3.14.409: word level, so `word_gloss`. The row below it is
+       the morpheme line and names itself. `label.editor.gloss` stays the
+       morpheme-level and entry-level label. */
+    if (showGloss)    legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-gloss"></div><div class="igt-legend-label">${t('label.editor.word_gloss')}</div></div>`;
     if (showMGloss)   legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-mgloss"></div><div class="igt-legend-label">${t('label.view.sent.legend_morph_gloss')}</div></div>`;
 
     const cols = words.map((w, wi) => {
@@ -11295,7 +11298,7 @@ function renderDepParseEditor(sent) {
               <tr>
                 <th class="dep-idx">#</th>
                 <th>${t('label.editor.form')}</th>
-                <th>${t('label.editor.gloss')}</th>
+                <th>${t('label.editor.word_gloss')}</th>
                 <th>${t('label.dep.head')}</th>
                 <th>${t('label.dep.relation')}</th>
               </tr>
@@ -12420,6 +12423,19 @@ function renderWordEdit() {
             ? word.transliterations
             : (word.transliteration ? [{ label: '', text: word.transliteration }] : []))}
     </div>
+    <!-- D46 appendix, v3.14.409: the order is transliteration, POS, word gloss,
+         parse, morpheme rows, lemma. POS is a closed vocabulary answered in a
+         click and it seeds morphPosDefault; the word gloss goes above the parse
+         so the field holds the annotator's own gloss rather than the derivation
+         it would be pre-filled with below (B-187, B-191); the lemma comes from
+         the stem, so it waits for the morpheme rows. field_order_test asserts
+         this sequence. -->
+    <div class="edit-group" ${provTipAttr(word, 'part_of_speech')}>
+      <label class="edit-label" for="ew-pos">${t('label.abbr.pos')}</label>
+      <input class="edit-input ac-input" data-ac-pool="pos" type="text" ${LING_ATTRS_UPPER} id="ew-pos" value="${esc(word.part_of_speech || '')}" data-original="${esc(word.part_of_speech || '')}" data-word-form="${escAttr(word.form || '')}" autocomplete="off" placeholder="${t('label.abbr.pos')}">
+      <div id="ew-pos-strip">${wordPosStripHtml(word.form, word.part_of_speech || '')}</div>
+      ${chipRowHtml('ew-pos', word.part_of_speech || '', POS_CHOICES, 'pos-select', 'upper', 'word')}
+    </div>
     <div class="edit-group" ${provTipAttr(word, 'gloss')}>
       <label class="edit-label" for="ew-gloss">${t('label.editor.word_gloss')}</label>
       <div style="display:flex;gap:6px;align-items:center">
@@ -12430,21 +12446,6 @@ function renderWordEdit() {
                 title="${t('title.editor.leipzig')}"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-list-bullets"/></svg></button>
       </div>
       <div id="ew-gloss-derive">${derivePreviewHtml(word, 'gloss', _ewGlossNow)}</div>
-    </div>
-    <div class="edit-group" ${provTipAttr(word, 'part_of_speech')}>
-      <label class="edit-label" for="ew-pos">${t('label.abbr.pos')}</label>
-      <input class="edit-input ac-input" data-ac-pool="pos" type="text" ${LING_ATTRS_UPPER} id="ew-pos" value="${esc(word.part_of_speech || '')}" data-original="${esc(word.part_of_speech || '')}" data-word-form="${escAttr(word.form || '')}" autocomplete="off" placeholder="${t('label.abbr.pos')}">
-      <div id="ew-pos-strip">${wordPosStripHtml(word.form, word.part_of_speech || '')}</div>
-      ${chipRowHtml('ew-pos', word.part_of_speech || '', POS_CHOICES, 'pos-select', 'upper', 'word')}
-    </div>
-    <div class="edit-group" ${provTipAttr(word, 'lemma_id')}>
-      <label class="edit-label" for="ew-lemma">${t('label.editor.lemma')}</label>
-      <input class="edit-input ac-input" type="text" ${LING_ATTRS} id="ew-lemma" dir="ltr"
-             data-ac-pool="lemma" autocomplete="off" autocorrect="off" spellcheck="false"
-             value="${escAttr(curLemmaForm)}" data-original="${escAttr(curLemmaForm)}"
-             placeholder="${t('placeholder.editor.lemma_form_long')}">
-      <div id="ew-lemma-strip">${lemmaStripHtml(curLemmaForm, 'ew-lemma', '', word)}</div>
-      <div class="edit-hint">${t('hint.es.lemma_autocomplete')}</div>
     </div>
     <div class="edit-group" ${provTipAttr(word, 'morphological_parse')}>
       <label class="edit-label" for="ew-parse">${t('label.editor.morph_parse')}</label>
@@ -12457,6 +12458,15 @@ function renderWordEdit() {
     <div class="edit-group">
       <label class="edit-label">${t('label.editor.morpheme_glosses')}</label>
       <div class="morph-edit-section" id="ew-morph-rows">${morphEditRowsHtml(initialMorphData, word.part_of_speech || '')}</div>
+    </div>
+    <div class="edit-group" ${provTipAttr(word, 'lemma_id')}>
+      <label class="edit-label" for="ew-lemma">${t('label.editor.lemma')}</label>
+      <input class="edit-input ac-input" type="text" ${LING_ATTRS} id="ew-lemma" dir="ltr"
+             data-ac-pool="lemma" autocomplete="off" autocorrect="off" spellcheck="false"
+             value="${escAttr(curLemmaForm)}" data-original="${escAttr(curLemmaForm)}"
+             placeholder="${t('placeholder.editor.lemma_form_long')}">
+      <div id="ew-lemma-strip">${lemmaStripHtml(curLemmaForm, 'ew-lemma', '', word)}</div>
+      <div class="edit-hint">${t('hint.es.lemma_autocomplete')}</div>
     </div>
     <div class="edit-group" ${provTipAttr(word, 'comments')}>
       <label class="edit-label">${t('label.editor.comments')}</label>

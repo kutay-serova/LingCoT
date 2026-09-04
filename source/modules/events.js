@@ -1667,53 +1667,26 @@ function initDelegatedListeners() {
       }
       return;
     }
-    // Comments editor, add a new blank row
-    const commentAddBtn = e.target.closest('[data-action="comment-add"]');
-    if (commentAddBtn) {
-      const rowsEl = document.getElementById(commentAddBtn.dataset.container + '-rows');
-      if (rowsEl) {
-        rowsEl.insertAdjacentHTML('beforeend', _commentRowHtml(null));
-        rowsEl.lastElementChild?.querySelector('.comment-text')?.focus();
+    /* ── I2, v3.14.404: ONE add and ONE remove for every row collection ────
+       Was ten blocks — five add, five remove — differing in the builder called,
+       the class removed and the child focused. `ROW_EDITORS` in participants.js
+       holds those three, plus the two things `sel` alone needs: rows found
+       through the enclosing frame, and never being left empty.
+
+       The `data-action` names are UNCHANGED on purpose. They are what
+       `gui_crud_test.js` and `word_edit_pos_test.js` click and what the
+       stylesheet hangs on, so renaming them would have made a consolidation into
+       a migration. The kind is read off the action instead. */
+    const rowBtn = e.target.closest('[data-action$="-add"], [data-action$="-remove"]');
+    if (rowBtn) {
+      const m = /^([a-z-]+)-(add|remove)$/.exec(rowBtn.dataset.action || '');
+      if (m && typeof ROW_EDITORS === 'object' && ROW_EDITORS[m[1]]) {
+        if (m[2] === 'add') addRowTo(m[1], rowBtn);
+        else                removeRowFrom(m[1], rowBtn);
+        return;
       }
-      return;
-    }
-    // Comments editor, remove a row
-    const commentRemoveBtn = e.target.closest('[data-action="comment-remove"]');
-    if (commentRemoveBtn) {
-      commentRemoveBtn.closest('.comment-row')?.remove();
-      return;
-    }
-    // Transliterations editor, add a new blank row
-    const translitAddBtn = e.target.closest('[data-action="translit-add"]');
-    if (translitAddBtn) {
-      const rowsEl = document.getElementById(translitAddBtn.dataset.container + '-rows');
-      if (rowsEl) {
-        rowsEl.insertAdjacentHTML('beforeend', _translitRowHtml(null));
-        rowsEl.lastElementChild?.querySelector('.translit-label')?.focus();
-      }
-      return;
-    }
-    // Transliterations editor, remove a row
-    const translitRemoveBtn = e.target.closest('[data-action="translit-remove"]');
-    if (translitRemoveBtn) {
-      translitRemoveBtn.closest('.translit-row')?.remove();
-      return;
-    }
-    // Allomorphs editor, add a new blank row (D23 P1)
-    const allomorphAddBtn = e.target.closest('[data-action="allomorph-add"]');
-    if (allomorphAddBtn) {
-      const rowsEl = document.getElementById(allomorphAddBtn.dataset.container + '-rows');
-      if (rowsEl) {
-        rowsEl.insertAdjacentHTML('beforeend', _allomorphRowHtml(null));
-        rowsEl.lastElementChild?.querySelector('.allomorph-form')?.focus();
-      }
-      return;
-    }
-    // Allomorphs editor, remove a row (D23 P1)
-    const allomorphRemoveBtn = e.target.closest('[data-action="allomorph-remove"]');
-    if (allomorphRemoveBtn) {
-      allomorphRemoveBtn.closest('.allomorph-row')?.remove();
-      return;
+      /* Not a row collection — `save-section-add`, `src-pick-add`, `tag-add`
+         and the rest fall through to their own handlers below. */
     }
     /* ── Selection editor (D27 P1) ─────────────────────────────────────────
        All of these mutate the DOM in place rather than re-rendering the view,
@@ -1767,43 +1740,6 @@ function initDelegatedListeners() {
         frame.classList.toggle('collapsed');
         if (frame.classList.contains('collapsed')) _selRefreshSummary(frame);
       }
-      return;
-    }
-    const selAddBtn = e.target.closest('[data-action="sel-add"]');
-    if (selAddBtn) {
-      const rowsEl = selAddBtn.closest('.sel-frame')?.querySelector('.sel-rows');
-      if (rowsEl) {
-        rowsEl.insertAdjacentHTML('beforeend', _selRowHtml(null));
-        rowsEl.lastElementChild?.querySelector('.sel-cat')?.focus();
-      }
-      return;
-    }
-    const selRemoveBtn = e.target.closest('[data-action="sel-remove"]');
-    if (selRemoveBtn) {
-      const rowsEl = selRemoveBtn.closest('.sel-rows');
-      selRemoveBtn.closest('.sel-row')?.remove();
-      // Never leave a frame with zero rows, an empty frame is unreadable and
-      // would be silently dropped on save.
-      if (rowsEl && !rowsEl.querySelector('.sel-row')) {
-        rowsEl.insertAdjacentHTML('beforeend', _selRowHtml(null));
-      }
-      return;
-    }
-
-    // Translations editor, add a new blank row
-    const translationAddBtn = e.target.closest('[data-action="translation-add"]');
-    if (translationAddBtn) {
-      const rowsEl = document.getElementById(translationAddBtn.dataset.container + '-rows');
-      if (rowsEl) {
-        rowsEl.insertAdjacentHTML('beforeend', _translationRowHtml(null));
-        rowsEl.lastElementChild?.querySelector('.translation-text')?.focus();
-      }
-      return;
-    }
-    // Translations editor, remove a row
-    const translationRemoveBtn = e.target.closest('[data-action="translation-remove"]');
-    if (translationRemoveBtn) {
-      translationRemoveBtn.closest('.translation-row')?.remove();
       return;
     }
   });
