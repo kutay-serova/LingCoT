@@ -96,7 +96,8 @@ console.log('\nwiring\n');
   const htmlSrc = read('LingCoT.html'), ev = read('modules/events.js');
   check(/'reader':\s+renderReader/.test(htmlSrc), "'reader' is a registered view");
   check(/<script src="modules\/reader\.js"><\/script>/.test(htmlSrc), 'reader.js is loaded');
-  check(/const cacheKey = [^\n]*_readerMode/.test(htmlSrc), 'the reader mode is in the render cache key');
+  check(/const cacheKey = [^\n]*readerCacheKey\(\)/.test(htmlSrc) && /_readerMode/.test(read('modules/reader.js').match(/function readerCacheKey[\s\S]*?\n\}/)[0]),
+        'the reader mode is in the render cache key');
   check(/span\.closest\('\.reader'\)\) \{ openReaderPop\(span\); return; \}/.test(ev),
         'a sentence click inside the reader opens the popup instead of navigating');
   const goSrc = htmlSrc.slice(htmlSrc.indexOf('function go(view'), htmlSrc.indexOf('function goCorpusReturn'));

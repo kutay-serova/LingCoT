@@ -152,6 +152,12 @@ const sweep = (page, exemptSel) => page.evaluate(exemptSel => {
     await page.waitForTimeout(150);
     await take(v);
   }
+  // Reader Mode A has its own toolbar and rows; draw it too.
+  await page.evaluate(() => { S.view = 'reader'; _readerMode = 'igt'; _renderCacheKey = null; render(); });
+  await page.waitForTimeout(150);
+  await take('reader (interlinear)');
+  await page.evaluate(() => { const w = document.querySelector('.reader-igt .rd-w:not(.punct)'); if (w) openReaderWordPop(w); });
+  await take('reader word popup');
   check(views.length >= 20, `${views.length} views drawn`);
   check(!errs.length, 'no view threw', errs.map(e => `         ${e}`).join('\n'));
   check(!found.size, 'every visible string is from the locale, data, or exempt',

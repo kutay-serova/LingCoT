@@ -1533,12 +1533,38 @@ function initDelegatedListeners() {
     go('sentence', { sentId: span.dataset.sid });
   });
 
-  /* D41: Reader Mode entry, and its popup (outside #content). */
+  /* D41: Reader Mode entry, its toolbar, and its popup (outside #content). */
   contentEl.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="reader-open"]');
     if (!btn) return;
     e.stopPropagation();
     openReader(btn.dataset.si !== undefined ? parseInt(btn.dataset.si, 10) : null);
+  });
+  contentEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-action="reader-mode"],[data-action="reader-tier"],[data-action="reader-hl"]');
+    if (!b) return;
+    e.stopPropagation();
+    const a = b.dataset.action, v = b.dataset.v;
+    if (a === 'reader-mode') _readerMode = v;
+    else if (a === 'reader-hl') _readerHl = v;
+    else _readerTiers[v] = !_readerTiers[v];
+    closeReaderPop();
+    _renderCacheKey = null;   // also in readerCacheKey(); explicit for the guard
+    render();
+  });
+  contentEl.addEventListener('click', e => {
+    const w = e.target.closest('.reader-igt .rd-w');
+    if (!w || w.classList.contains('punct')) return;
+    e.stopPropagation();
+    openReaderWordPop(w);
+  });
+  contentEl.addEventListener('mouseover', e => {
+    const w = e.target.closest('.reader-igt .rd-w');
+    if (w && !w.contains(e.relatedTarget)) readerHighlight(w, true);
+  });
+  contentEl.addEventListener('mouseout', e => {
+    const w = e.target.closest('.reader-igt .rd-w');
+    if (w && !w.contains(e.relatedTarget)) readerHighlight(w, false);
   });
   contentEl.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -1552,12 +1578,15 @@ function initDelegatedListeners() {
     const pop = document.getElementById('reader-pop');
     if (!pop || !pop.classList.contains('rp-visible')) return;
     if (!pop.contains(e.target)) {
-      if (!e.target.closest('.reader .s-span')) closeReaderPop();
+      if (!e.target.closest('.reader .s-span, .reader-igt .rd-w')) closeReaderPop();
       return;
     }
     if (e.target.closest('[data-action="reader-pop-close"]')) { closeReaderPop(); return; }
-    const link = e.target.closest('[data-go="sentence"]');
-    if (link) { closeReaderPop(); go('sentence', { sentId: link.dataset.sid }); }
+    const link = e.target.closest('[data-go="sentence"],[data-go="word"]');
+    if (link) {
+      closeReaderPop();
+      go(link.dataset.go, { sentId: link.dataset.sid, wordId: link.dataset.wid });
+    }
   });
 
   /* Choice-chip clicks and expand-button clicks. D44: pos-select and type-select

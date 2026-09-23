@@ -106,9 +106,9 @@ table that did not before.
 
 ## 6. Guards
 
-**104 in `dev/tests/`. `run_all.sh` runs 101 by default — 101 pass, 0 disabled;
+**105 in `dev/tests/`. `run_all.sh` runs 102 by default — 102 pass, 0 disabled;
 `--slow` adds `nllb_diag_test.py`, `gui_crud_test.js` and `pseudo_locale_test.js`
-for 104.** Run `--slow`
+for 105.** Run `--slow`
 before a release.
 
 **Two guards came out of gate 2 rather than out of the code.**

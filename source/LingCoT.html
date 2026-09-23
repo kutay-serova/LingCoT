@@ -9543,7 +9543,7 @@ function render() {
      lemma groups visited in a row are the same view with the same _dataGen,
      which is precisely the B-011 shape — the second would not repaint. */
   // The locale is in the key so a language switch repaints the current view.
-  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}|${uiLocaleCode()}${searchKey}${v === 'reader' ? `|${_readerMode}` : ''}`;
+  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}|${uiLocaleCode()}${searchKey}${v === 'reader' ? readerCacheKey() : ''}`;
   if (cacheKey === _renderCacheKey) {
     // B-011's diagnostic gap: a click that changed view-only state and hit this
     // early return produced NO log output at all, so "the handler never matched"

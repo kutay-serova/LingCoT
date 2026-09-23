@@ -26,7 +26,7 @@
 #  non-monotonic across an abandoned v4.0 renumbering.
 # =============================================================================
 
-__version__ = "3.14.419+tb-reader-cols"
+__version__ = "3.14.419+tb-reader-igt"
 
 # Not semantic versioning, and it should not pretend to be: the patch field is a
 # build counter. Twenty bumps landed on 2026-08-24, several for documentation.

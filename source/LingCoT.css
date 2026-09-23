@@ -1819,6 +1819,28 @@ details.prov-morpheme-inline {
 .rp-lbl { color: var(--text-muted); font-size: 0.78rem; }
 .rp-tag { font-size: 0.72rem; color: var(--text-muted); }
 .rp-foot { padding: 6px 12px 10px; display: flex; justify-content: flex-end; }
+.rp-rule { font-size: 0.76rem; color: var(--text-muted); font-style: italic; }
+.rp-mono { font-family: var(--mono); }
+.reader-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: -4px 0 16px; }
+.reader-tools-lbl { font-size: 0.74rem; color: var(--text-muted); margin-left: 10px; }
+.reader-tools .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.reader-tools .seg-btn { background: none; border: none; padding: 4px 10px; font: inherit; font-size: 0.8rem;
+  color: var(--text-muted); cursor: pointer; }
+.reader-tools .seg-btn.active { background: var(--surface-dim); color: var(--text); font-weight: 600; }
+/* Mode A */
+.rd-para { margin-bottom: 18px; }
+.rd-sent { margin-bottom: 12px; }
+.rd-words { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.rd-w { display: inline-flex; flex-direction: column; cursor: pointer; padding: 2px 3px; border-radius: 4px; }
+.rd-w.punct { cursor: default; opacity: .6; }
+.rd-w.hl { background: var(--hi-bg); box-shadow: 0 0 0 2px var(--hi-bg); outline: 1px solid var(--hi-ring); }
+.rd-f  { font-size: 1rem; font-weight: 500; white-space: nowrap; }
+.rd-tl { font-size: 0.8rem; font-family: var(--mono); color: #4a9e7f; white-space: nowrap; }
+:root[data-theme="dark"] .rd-tl { color: #6fbf9f; }
+.rd-p  { font-size: 0.76rem; font-family: var(--mono); color: var(--text-muted); white-space: nowrap; }
+.rd-g  { font-size: 0.78rem; font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+.rd-tr { margin-top: 4px; color: var(--text-muted); font-size: 0.95rem; }
+.rd-tr.no-data { font-style: italic; }
 #app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 12px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0;
