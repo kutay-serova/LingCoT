@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /* =============================================================================
-   sentence_prefill_test.js, translation and transliteration pre-fill (D40 B)
+   sentence_prefill_test.js, translation and transliteration offers (D40 B)
    Run:  node dev/tests/sentence_prefill_test.js
    =============================================================================
    A sentence whose folded text matches another is offered that sentence's
-   translation, when it has none, and its transliterations, per label it does
-   not have. The offer is a pre-filled row; nothing is stored before Save.
+   translation, when the form has none, and its transliterations, per label the
+   form does not have. Offers are chips (offerStripHtml); nothing is in a field
+   until one is clicked, and nothing is stored before Save. A first build wrote
+   the value straight into the field, which was easy to miss; section 2 holds
+   the form to drawing the sentence as stored.
 
    What Save writes is the part that matters, so sections 3 and 4 run the real
    save path from readForm's output onward: takeCopyMarks, applyForm with the
-   field table, assignList, stampCopies. An unchanged pre-filled value is a
+   field table, assignList, stampCopies. A taken value saved unchanged is a
    copy and says where it came from; an edited one is the annotator's; the
    marks themselves never reach the record.
    ============================================================================= */
@@ -40,7 +43,7 @@ vm.runInContext(`var _sentTextIdx = { gen: -1, fold: -1, map: new Map() };
                  var _PROV_LIST_CONTROLS = ['translations', 'translits', 'comments'];
                  var _ARRAY_CONTROLS = ['sources', 'list'];`, ctx);
 for (const fn of ['sentKey', '_sentKeyOf', 'sentTextIndex', 'sameTextSentences',
-                  '_rankValues', 'sentencePrefill', 'withPrefill', 'takeCopyMarks', 'stampCopies',
+                  '_rankValues', 'sentenceOffers', 'takeCopyMarks', 'stampCopies',
                   '_derivedFieldProv', '_copyFieldProv', 'isDerived', '_provKeyOf', 'thinProv',
                   'internProv', 'stampElement', '_listKeyOf', 'assignList', 'applyForm']) {
   const src = fnSrc('LingCoT.html', fn);
@@ -65,43 +68,38 @@ for (const s of [s1, s2, s3, s4, s5]) ctx.S.sentById.set(s.id, { sent: s });
 
 console.log('\n1 · what is offered\n');
 {
-  const pf = ctx.sentencePrefill(s2);
-  check(pf.translation && pf.translation.text === 'Its waters are cold.',
-        'the commonest translation is pre-filled (2 sentences against 1)');
-  check(pf.translation.source_id === 'src_1', 'with its source attribution');
-  check(pf.translation._copyFrom === 'p1.s1', 'from the first sentence carrying it, in corpus order');
-  check(pf.translation._copyAlts.length === 1 && pf.translation._copyAlts[0].text === 'The water is cold.',
-        'the other translation is an alternative');
-  const labels = pf.transliterations.map(x => x.label).sort().join(',');
-  check(labels === 'IPA,Yale', `a transliteration per label (${labels})`);
-  check(pf.transliterations.find(x => x.label === 'IPA').text === 'so\'ɰuktur',
-        'a tie between labels\' values goes to the first in corpus order');
+  const off = ctx.sentenceOffers(s2);
+  check(off.translations.length === 2 && off.translations[0].key === 'Its waters are cold.' &&
+        off.translations[0].n === 2 && off.translations[1].key === 'The water is cold.',
+        'every translation in use, commonest first (2 sentences against 1)');
+  check(off.translations[0].source_id === 'src_1', 'with its source attribution');
+  check(off.translations[0].from === 'p1.s1', 'from the first sentence carrying it, in corpus order');
+  const tl = off.transliterations.map(x => `${x.label}:${x.text}`).join(',');
+  check(tl === "IPA:so'ɰuktur,IPA:other,Yale:y", `every transliteration, by label and value (${tl})`);
 
-  s2.translations = [{ text: 'mine', source_id: null, date: null }];
-  s2.transliterations = [{ label: 'IPA', text: 'mine' }];
-  ctx._dataGen++;
-  const pf2 = ctx.sentencePrefill(s2);
-  check(pf2.translation === null, 'nothing is offered for a translation already there');
-  check(pf2.transliterations.length === 1 && pf2.transliterations[0].label === 'Yale',
-        'only the labels this sentence does not have');
-  s2.translations = []; s2.transliterations = [];
-  ctx._dataGen++;
+  const off2 = ctx.sentenceOffers(s2, '', true, new Set(['IPA']));
+  check(off2.translations.length === 0, 'nothing is offered when the form already has a translation');
+  check(off2.transliterations.length === 1 && off2.transliterations[0].label === 'Yale',
+        'only labels the form does not have');
 
-  check(ctx.sentencePrefill(s5).translation === null, 'no identical sentence, no offer');
-  const bare = ctx.sentencePrefill(null, 'SOĞUKTUR SULARI DA HASAN BİR TAS İÇİLMEZ');
-  check(bare.translation && bare.translation.text === 'Its waters are cold.',
-        'the add form, with only the typed text, is offered the same');
+  const r = ctx._rankValues([{ key: 'a' }, { key: 'b' }, { key: 'b' }, { key: 'c' }]);
+  check(r.map(x => x.key).join('') === 'bac', 'ranking puts the commonest first and keeps corpus order on a tie');
+  check(ctx.sentenceOffers(s5).translations.length === 0, 'no identical sentence, no offer');
+  const bare = ctx.sentenceOffers(null, 'SOĞUKTUR SULARI DA HASAN BİR TAS İÇİLMEZ');
+  check(bare.translations.length === 2, 'the add form, with only the typed text, is offered the same');
 }
 
-console.log('\n2 · the form is drawn from a copy\n');
+console.log('\n2 · nothing is written into the form\n');
 {
-  const view = ctx.withPrefill(s2, ctx.sentencePrefill(s2));
-  check(view !== s2 && view.translations.length === 1 && s2.translations.length === 0,
-        'the pre-filled rows are on the copy, never on the sentence');
-  check(ctx.withPrefill(s5, ctx.sentencePrefill(s5)) === s5, 'with nothing to offer the sentence itself is drawn');
+  const edit = fnSrc('LingCoT.html', 'renderSentenceEdit') || '';
+  check(/formBodyHtml\('sentence', sent,/.test(edit), 'the edit form draws the sentence as stored');
+  const take = fnSrc('LingCoT.html', 'takeOffer') || '';
+  check(/act === 'copy-row'/.test(take), 'a value reaches a row only through takeOffer');
+  const strip = fnSrc('LingCoT.html', 'refreshSentenceOffers') || '';
+  check(/offerStripHtml\(/.test(strip), 'offers use the shared strip');
 }
 
-/* What readForm returns for the edit form of s2, pre-filled rows included. */
+/* What readForm returns for the edit form of s2 after three chips were taken. */
 const formValues = ({ editTranslation = false, clearYale = false } = {}) => ({
   text: s2.text,
   translations: [{ text: editTranslation ? 'Its waters are cold, Hasan.' : 'Its waters are cold.',
@@ -119,7 +117,7 @@ const save = (target, v) => {
 };
 const momentOf = el => ctx.S.provEvents[el.prov];
 
-console.log('\n3 · saved unchanged: a copy that says where it came from\n');
+console.log('\n3 · taken and saved unchanged: a copy that says where it came from\n');
 {
   const target = mk('t1', s2.text);
   save(target, formValues());
@@ -127,13 +125,13 @@ console.log('\n3 · saved unchanged: a copy that says where it came from\n');
   check(tr.text === 'Its waters are cold.', 'the translation is stored');
   check(!Object.keys(tr).some(k => k.startsWith('_copy')) &&
         !target.transliterations.some(x => Object.keys(x).some(k => k.startsWith('_copy'))),
-        'no pre-fill mark reaches the record');
+        'no copy mark reaches the record');
   const m = momentOf(tr);
   check(m && m.derived === true && m.annotator_id === null && m.from === 'p1.s1',
         `its stamp is a copy from p1.s1 (${JSON.stringify(m)})`);
   const yale = target.transliterations.find(x => x.label === 'Yale');
   check(momentOf(yale)?.from === 'p3.s1', 'each transliteration names its own source');
-  check(logged.some(a => a[1] === 'sentence prefill kept' && a[2] === 3), 'the log line is a count, 3');
+  check(logged.some(a => a[1] === 'sentence offer kept' && a[2] === 3), 'the log line is a count, 3');
 }
 
 console.log('\n4 · edited or cleared: the annotator\'s, or nothing\n');

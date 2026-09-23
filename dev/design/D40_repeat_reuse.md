@@ -30,7 +30,7 @@ B-144 ✅ v3.14.298.
 | 3 | sentence identity | **folded text**: case, punctuation and spacing differences do not block the offer |
 | 4 | post-save propagation toast | **rejected**: the annotator must see the text before deciding |
 | 5 | bulk fill panel for words | **rejected**, same reason |
-| 6 | translation pre-fill at input | **accepted** |
+| 6 | translation pre-fill at input | **accepted**, as chips (2026-09-23): a first build wrote into the field and was easy to miss |
 | 7 | transliteration sources | **corpus only**: a word transliteration is offered only from an identical word form, a sentence transliteration only from an identical sentence. No rule-based transliteration |
 | 8 | offers on filled fields | **word editor only**: a filled field whose value differs from other occurrences shows a `differs` note (§3 D). Stage C stays fill-only; a conflict there is shown and not writable |
 
@@ -39,19 +39,19 @@ B-144 ✅ v3.14.298.
 | stage | what | size | depends on | state |
 |---|---|---|---|---|
 | A | runtime sentence-text index | S | — | planned |
-| B | translation and transliteration pre-fill in sentence edit/add forms | XS–S | A | planned |
+| B | translation and transliteration offers in sentence edit/add forms | XS–S | A | built |
 | C | sentence copy offer with review panel | M | A | planned |
 | D | word chips and `differs` notes in the word editor | S–M | — | planned |
 
-Build order A → B → C → D. B ships first after A because it is the smallest and
-removes the duplicate translation typing on its own.
+Build order A → B → D → C (changed 2026-09-23: repeated words cost more than
+repeated sentences in the 2026-09-22 session). A, B and D are released together.
 
 What each field gets, once all four stages ship:
 
 | field | empty, new or annotated token | filled, value differs from other occurrences |
 |---|---|---|
-| sentence `translations` | B pre-fill · C copy | C shows the conflict, not writable |
-| sentence `transliterations` | B pre-fill · C copy | C shows the conflict, not writable |
+| sentence `translations` | B offer · C copy | C shows the conflict, not writable |
+| sentence `transliterations` | B offer · C copy | C shows the conflict, not writable |
 | word `gloss`, `morphological_parse`, `part_of_speech`, lemma, `transliterations` | C copy · D chip | C shows the conflict · D `differs` note |
 | `head`, `dep_rel` | C copy (head remapped) | C shows the conflict, not writable |
 
@@ -78,23 +78,23 @@ dictionary parse and POS chips, the D61 lemma chips, machine translation.
   `normForm` and drops everything else, rather than reusing the IGT
   punctuation test on tokens: it has to work on a bare text before tokenizing.
 
-### B · translation and transliteration pre-fill
+### B · translation and transliteration offers
 
-- Sentence edit and add forms: if `translations` is empty and another sentence
-  with the same key has one, the translation row is pre-filled and labelled
-  `from P1 S2`. The value is visible and editable before Save.
-- `transliterations` the same way, per label: a label empty here and present on
-  a matching sentence is pre-filled with that sentence's text for that label.
-- Several distinct values among the matches: the commonest is pre-filled, the
-  others shown as chips under the row. Each matching sentence contributes its
-  first translation (built: copying every translation would pre-fill rows to
-  prune). A tie goes to the first in corpus order.
-- Add form: the pre-fill is redone 250 ms after typing stops, and only replaces
-  rows that are empty or still exactly as pre-filled.
-- Stamping on Save, through `assignList`'s content reconciliation:
-  unchanged text → copy moment (§4); edited text → the save's own moment
-  (human); cleared → nothing written.
-- Comments are not pre-filled; they are about one occurrence.
+- Sentence edit and add forms: an offer strip (`offerStripHtml`) under the
+  translation and transliteration editors. One chip per value in use on
+  sentences with the same key, commonest first, a tie to the first in corpus
+  order; meta *same text, P1 S2*, with a count when more than one sentence
+  carries it. Long translations are cut at 60 characters on the chip.
+- Translation chips while the form holds no translation; transliteration chips
+  for labels the form does not hold. The strip reads the form, so it updates
+  when a row is taken or removed, and on the add form as the text is typed
+  (250 ms).
+- A click fills an empty row or adds one, marked with its source (*From P1 S2*
+  under the row). Nothing is stored before Save.
+- Stamping on Save: unchanged text → copy moment (§4); edited text → the save's
+  own moment (human); removed → nothing written.
+- Each matching sentence contributes its first translation.
+- Comments are not offered; they are about one occurrence.
 
 ### C · sentence copy offer
 

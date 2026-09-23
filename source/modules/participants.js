@@ -990,9 +990,9 @@ function _srcPickApply(srcId) {
    would be scope the audit never measured.
 ══════════════════════════════════════════════════════════════════════════════ */
 
-/* @fn _copyMarks, a pre-filled row's origin (D40 stage B), read back with its
-   values. Only present on a pre-filled row; takeCopyMarks removes them before
-   anything is stored. */
+/* @fn _copyMarks, a copied row's origin (D40 stage B), read back with its
+   values. Only present on a row filled from an offer; takeCopyMarks removes
+   them before anything is stored. */
 function _copyMarks(row) {
   if (!row.dataset.copyFrom) return {};
   const m = { _copyFrom: row.dataset.copyFrom, _copyText: row.dataset.copyText || '' };
@@ -1000,18 +1000,12 @@ function _copyMarks(row) {
   return m;
 }
 
-/* @fn _copyAttrs, the same marks written onto a row, plus the "from P1 S2" note */
+/* @fn _copyAttrs, the same marks written onto a row, plus a "from P1 S2" note */
 function _copyAttrs(row) {
   if (!row?._copyFrom) return { attrs: '', note: '' };
   let attrs = ` data-copy-from="${esc(row._copyFrom)}" data-copy-text="${esc(row._copyText || '')}"`;
   if (row._copyLabel !== undefined) attrs += ` data-copy-label="${esc(row._copyLabel)}"`;
-  const alts = (row._copyAlts || []).map(a =>
-    `<button class="chip chip-token" type="button" data-action="copy-alt"
-             data-text="${esc(a.text)}" data-from="${esc(a.from)}"
-             title="${t('title.copy.alt', { loc: sentPosLabel(a.from) })}">${esc(a.text)} · ${a.n}×</button>`).join(' ');
-  const note = `<div class="row-copy-note text-sm text-muted">${t('hint.copy.from', { loc: sentPosLabel(row._copyFrom) })}</div>`
-             + (alts ? `<div class="row-copy-alts">${alts}</div>` : '');
-  return { attrs, note };
+  return { attrs, note: `<div class="row-copy-note text-sm text-muted">${t('hint.copy.from', { loc: sentPosLabel(row._copyFrom) })}</div>` };
 }
 
 /* @const ROW_EDITORS, the whole of what differs between the row collections.

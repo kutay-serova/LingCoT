@@ -1828,11 +1828,12 @@ function provFromLabel(id) {
   return t('prov.gone', { id });
 }
 
-/* ── D40 stage B · pre-fill from a sentence with the same text ─────────────────
-   Only fields that are empty here: the translation when the sentence has none,
-   and a transliteration per label this sentence does not have yet. Values are
-   shown in the form and stored only on Save; an unchanged pre-filled value is
-   stamped as a copy (_copyFieldProv), an edited one as the annotator's. */
+/* ── D40 stage B · offers from a sentence with the same text ──────────────────
+   The sentence form's translation and transliteration editors get the usual
+   offer strip (offerStripHtml): one chip per value in use on sentences with the
+   same folded text. Nothing is in the field until a chip is clicked. A taken
+   value saved unchanged is stamped as a copy (_copyFieldProv); edited, it is
+   the annotator's. */
 
 /* @fn _rankValues, distinct values by how many sentences carry them. Sort is
    stable, so a tie goes to the first in corpus order. */
@@ -1845,58 +1846,95 @@ function _rankValues(items) {
   return [...byKey.values()].sort((a, b) => b.n - a.n);
 }
 
-/* @fn sentencePrefill, what a sentence with the same text would pre-fill.
+/* @fn sentenceOffers, values in use on the other sentences with this text.
    `target` is the sentence being edited, or null on the add form, where only
-   the typed text is known. Each source sentence contributes its first
-   translation; a sentence with several translations is rare, and copying all
-   of them would pre-fill rows the annotator has to prune. */
-function sentencePrefill(target, text) {
-  const out = { translation: null, translationAlts: [], transliterations: [] };
+   the typed text is known. Each sentence contributes its first translation.
+   `haveTranslation` / `haveLabels` describe what the form already holds. */
+function sentenceOffers(target, text, haveTranslation = false, haveLabels = new Set()) {
+  const out = { translations: [], transliterations: [] };
   const ids = target ? sameTextSentences(target) : sameTextSentences(text || '');
   const srcs = ids.map(id => S.sentById.get(id)?.sent).filter(Boolean);
   if (!srcs.length) return out;
 
-  if (!(target?.translations || []).some(x => x && x.text)) {
-    const ranked = _rankValues(srcs.flatMap(sn => {
+  if (!haveTranslation)
+    out.translations = _rankValues(srcs.flatMap(sn => {
       const tr = (sn.translations || []).find(x => x && x.text);
-      return tr ? [{ key: tr.text, from: sn.id,
-                     el: { text: tr.text, source_id: tr.source_id || null, date: tr.date || null } }] : [];
+      return tr ? [{ key: tr.text, from: sn.id, source_id: tr.source_id || null, date: tr.date || null }] : [];
     }));
-    if (ranked.length) {
-      out.translation = { ...ranked[0].el, _copyFrom: ranked[0].from, _copyText: ranked[0].el.text,
-                          _copyAlts: ranked.slice(1).map(r => ({ text: r.el.text, from: r.from, n: r.n })) };
-    }
-  }
 
-  const have = new Set((target?.transliterations || []).filter(x => x && x.text).map(x => x.label || ''));
-  const byLabel = new Map();
+  const items = [];
   for (const sn of srcs)
     for (const tl of (sn.transliterations || [])) {
       const label = tl?.label || '';
-      if (!tl?.text || have.has(label)) continue;
-      if (!byLabel.has(label)) byLabel.set(label, []);
-      byLabel.get(label).push({ key: tl.text, from: sn.id });
+      if (tl?.text && !haveLabels.has(label))
+        items.push({ key: label + '\u0001' + tl.text, label, text: tl.text, from: sn.id });
     }
-  for (const [label, items] of byLabel) {
-    const top = _rankValues(items)[0];
-    out.transliterations.push({ label, text: top.key,
-                                _copyFrom: top.from, _copyText: top.key, _copyLabel: label });
-  }
+  out.transliterations = _rankValues(items);
   return out;
 }
 
-/* @fn withPrefill, the sentence as the edit form should draw it: its own values
-   plus the pre-filled rows. A copy for rendering; nothing is written to `sent`. */
-function withPrefill(sent, pf) {
-  if (!pf.translation && !pf.transliterations.length) return sent;
-  return { ...sent,
-    translations: pf.translation ? [pf.translation] : (sent.translations || []),
-    transliterations: [...(sent.transliterations || []), ...pf.transliterations] };
+const OFFER_CHIP_MAX = 60;   // characters of a long translation shown on its chip
+
+/* @fn _sentOfferMeta, "same text, P1 S2", with a count when more than one sentence carries it */
+function _sentOfferMeta(o) {
+  return t('offer.same_text', { loc: sentPosLabel(o.from) }) + (o.n > 1 ? ` · ${o.n}×` : '');
 }
 
-/* @fn takeCopyMarks, strip the pre-fill marks from values read off the form,
-   and return the elements to stamp as copies: those saved exactly as they were
-   pre-filled. The marks must not reach the file. */
+/* @fn refreshSentenceOffers, draw or redraw the two strips on the sentence form.
+   Reads the form rather than the record, so a row added, taken or removed
+   updates what is offered. Called after render, after a take, after a row is
+   removed, and as the add form's text is typed. */
+function refreshSentenceOffers() {
+  if (S.view !== 'sentence-edit' && S.view !== 'sentence-add') return;
+  const trId = fieldId('sentence', 'translations');
+  const tlId = fieldId('sentence', 'transliterations');
+  const trEl = document.getElementById(trId), tlEl = document.getElementById(tlId);
+  if (!trEl && !tlEl) return;
+  const haveTranslation = readTranslationsEditor(trId).some(x => x.text);
+  const haveLabels = new Set(readTransliterationsEditor(tlId).filter(x => x.text).map(x => x.label || ''));
+  const target = S.view === 'sentence-edit' ? findSent(S.sentId)?.sent : null;
+  const text = target ? '' : (document.getElementById(fieldId('sentence', 'text'))?.value || '');
+  const off = sentenceOffers(target, text, haveTranslation, haveLabels);
+
+  const host = (el, id) => {
+    let h = document.getElementById(id);
+    if (!h && el) { el.insertAdjacentHTML('afterend', `<div id="${id}"></div>`); h = document.getElementById(id); }
+    return h;
+  };
+  const trHost = host(trEl, trId + '-offers');
+  if (trHost) trHost.innerHTML = offerStripHtml({ offers: off.translations.map(o => ({
+    act: 'copy-row', kind: 'translation', target: trId, src: 'corpus', from: o.from, value: o.key,
+    label: o.key.length > OFFER_CHIP_MAX ? o.key.slice(0, OFFER_CHIP_MAX - 1) + '…' : o.key,
+    meta: _sentOfferMeta(o), sourceId: o.source_id, date: o.date })) });
+  const tlHost = host(tlEl, tlId + '-offers');
+  if (tlHost) tlHost.innerHTML = offerStripHtml({ offers: off.transliterations.map(o => ({
+    act: 'copy-row', kind: 'translit', target: tlId, src: 'corpus', from: o.from, value: o.text,
+    rowLabel: o.label, label: `${o.label ? o.label + ' · ' : ''}${o.text}`, meta: _sentOfferMeta(o) })) });
+}
+
+/* @fn takeCopyRow, a sentence offer taken: the value goes into an empty row, or
+   a new one, marked with where it came from. Nothing is stored before Save. */
+function takeCopyRow(btn) {
+  const kind = btn.dataset.offerKind;
+  const d = ROW_EDITORS[kind];
+  const rowsEl = document.getElementById((btn.dataset.offerTarget || '') + '-rows');
+  if (!d || !rowsEl) return;
+  const text = btn.dataset.offerValue || '';
+  const row = { text, _copyFrom: btn.dataset.offerFrom, _copyText: text };
+  if (kind === 'translit') { row.label = btn.dataset.offerLabel || ''; row._copyLabel = row.label; }
+  if (kind === 'translation') { row.source_id = btn.dataset.offerSourceId || null; row.date = btn.dataset.offerDate || null; }
+  const empty = [...rowsEl.querySelectorAll('.' + d.rowClass)].find(r => {
+    const v = d.fields(r);
+    return !v.text && !v.label;
+  });
+  if (empty) empty.outerHTML = d.build(row);
+  else rowsEl.insertAdjacentHTML('beforeend', d.build(row));
+  refreshSentenceOffers();
+}
+
+/* @fn takeCopyMarks, strip the copy marks from values read off the form, and
+   return the elements to stamp as copies: those saved exactly as taken. The
+   marks must not reach the file. */
 function takeCopyMarks(v) {
   const copies = [];
   for (const key of ['translations', 'transliterations'])
@@ -1910,32 +1948,11 @@ function takeCopyMarks(v) {
   return copies;
 }
 
-/* @fn stampCopies, after applyForm: the pre-filled elements say where they came
+/* @fn stampCopies, after applyForm: the copied elements say where they came
    from instead of carrying the save's own moment. */
 function stampCopies(copies) {
   for (const { el, from } of copies) stampElement(el, _copyFieldProv(from));
-  if (copies.length) logEvent('info', 'sentence prefill kept', copies.length);
-}
-
-/* @fn refreshAddPrefill, the add form's pre-fill, redone as the text is typed.
-   A row the annotator has typed into or cleared is theirs and is left alone;
-   only rows that are empty, or still exactly as pre-filled, are replaced. */
-function refreshAddPrefill(text) {
-  const pf = sentencePrefill(null, text);
-  const swap = (containerId, kind, rows) => {
-    const rowsEl = document.getElementById(containerId + '-rows');
-    if (!rowsEl) return;
-    const cls = ROW_EDITORS[kind].rowClass;
-    const all = [...rowsEl.querySelectorAll('.' + cls)];
-    const untouched = row => {
-      const v = ROW_EDITORS[kind].fields(row);
-      return row.dataset.copyFrom ? v.text === row.dataset.copyText : !v.text;
-    };
-    if (!all.every(untouched)) return;
-    rowsEl.innerHTML = rows.map(ROW_EDITORS[kind].build).join('');
-  };
-  swap(fieldId('sentence', 'translations'), 'translation', pf.translation ? [pf.translation] : []);
-  swap(fieldId('sentence', 'transliterations'), 'translit', pf.transliterations);
+  if (copies.length) logEvent('info', 'sentence offer kept', copies.length);
 }
 
 /* ── E26: morpheme materialization (corpus ↔ lexicon de-synch fix) ─────────────
@@ -1986,19 +2003,6 @@ function _derivedFieldProv(name = 'auto (lexicon)') {
    a sentence id, or a word id for the word editor's chips. */
 function _copyFieldProv(fromId) {
   return { ..._derivedFieldProv('copy (corpus)'), from: fromId };
-}
-
-/* @fn takeCopyAlt, an alternative translation chip replaces the pre-filled
-   text and becomes the new copy source. */
-function takeCopyAlt(btn) {
-  const row = btn.closest('.translation-row');
-  const ta  = row?.querySelector('.translation-text');
-  if (!ta) return;
-  ta.value = btn.dataset.text || '';
-  row.dataset.copyText = ta.value;
-  row.dataset.copyFrom = btn.dataset.from || '';
-  const note = row.querySelector('.row-copy-note');
-  if (note) note.textContent = t('hint.copy.from', { loc: sentPosLabel(row.dataset.copyFrom) });
 }
 
 // @fn isDerived
@@ -4142,6 +4146,11 @@ function offerStripHtml(opts) {
       ${o.entryId ? `data-offer-entry-id="${escAttr(o.entryId)}"` : ''}
       ${o.pos ? `data-offer-pos="${escAttr(o.pos)}"` : ''}
       ${o.type ? `data-offer-type="${escAttr(o.type)}"` : ''}
+      ${o.kind ? `data-offer-kind="${escAttr(o.kind)}"` : ''}
+      ${o.from ? `data-offer-from="${escAttr(o.from)}"` : ''}
+      ${o.rowLabel != null ? `data-offer-label="${escAttr(o.rowLabel)}"` : ''}
+      ${o.sourceId ? `data-offer-source-id="${escAttr(o.sourceId)}"` : ''}
+      ${o.date ? `data-offer-date="${escAttr(o.date)}"` : ''}
       title="${escAttr(o.taken ? t('title.offer.agreed') : (o.meta || o.label))}"
       >${esc(o.label)}${o.meta ? `<span class="chip-meta">${esc(o.meta)}</span>` : ''}</button>`).join('');
 
@@ -4509,6 +4518,8 @@ function refreshLemmaStrip(inputId) {
 function takeOffer(btn) {
   const act = btn.dataset.offerAct || 'set';
   const src = btn.dataset.offerSrc || '';
+
+  if (act === 'copy-row') { takeCopyRow(btn); return; }    // D40 stage B
 
   if (act === 'set') {
     const inp = document.getElementById(btn.dataset.offerTarget);
@@ -5804,7 +5815,7 @@ let _dictShowDomain = false;   // domain column hidden by default; toggled via t
 /* FIX: module-level so stale closures in old bindEvents() calls can't fire
    after navigation replaces the view that owned the search input. */
 let _dbTimer;
-let _addPrefillTimer;   // D40 stage B, the add form's pre-fill debounce
+let _addOfferTimer;     // D40 stage B, the add form's offer debounce
 /* Sort cache, holds S.dictionary sorted by the current (_dictSort, _dictSortDir)
    pair.  Set to null to invalidate; rebuilt lazily by _getDictSorted() on the
    next filter call.  Must be invalidated whenever S.dictionary changes (load,
@@ -11551,7 +11562,7 @@ function renderSentenceEdit() {
       <span>${t('bc.sentence')}</span>
       <span class="edit-badge">${t('badge.editing')}</span>
     </div>
-    ${formBodyHtml('sentence', withPrefill(sent, sentencePrefill(sent)), { rollup, deps: renderDepParseEditor(sent) })}
+    ${formBodyHtml('sentence', sent, { rollup, deps: renderDepParseEditor(sent) })}
     <div class="edit-actions">
       <button class="btn btn-ghost" data-go="sentence" data-sid="${escAttr(sent.id)}">${t('btn.editor.cancel')}</button>
       <button class="btn btn-primary" id="save-sentence" data-action="save-sentence" data-sid="${escAttr(sent.id)}">${icon('floppy-disk')} ${t('btn.editor.save')}</button>

@@ -243,6 +243,8 @@ function bindEvents() {
          COMMITTED value while the dropdown is closed, so "nsubj" reads as
          "nominal subject" without the user having to open anything. */
   // D48 stage B: the id comes from the field table, not from this file.
+  refreshSentenceOffers();                // D40 stage B, no-op outside the sentence forms
+
   const esWords = document.getElementById(fieldId('sentence', 'words'));
   const esStale = document.getElementById('es-dep-stale');
   if (esWords && esStale) {
@@ -349,9 +351,9 @@ function bindEvents() {
   const saWords = S.view === 'sentence-add' ? document.getElementById(fieldId('sentence', 'words')) : null;
   if (saText && saWords) {
     saText.addEventListener('input', () => {
-      // D40 stage B: pre-fill from a sentence with the same text, debounced
-      clearTimeout(_addPrefillTimer);
-      _addPrefillTimer = setTimeout(() => refreshAddPrefill(saText.value), 250);
+      // D40 stage B: offers from a sentence with the same text, debounced
+      clearTimeout(_addOfferTimer);
+      _addOfferTimer = setTimeout(refreshSentenceOffers, 250);
       if (!saWords.dataset.manualEdit) {
         const trimmed = saText.value.trim();
         // Leave the tokenization field empty for scripts without word-spaces
@@ -1680,16 +1682,13 @@ function initDelegatedListeners() {
        `gui_crud_test.js` and `word_edit_pos_test.js` click and what the
        stylesheet hangs on, so renaming them would have made a consolidation into
        a migration. The kind is read off the action instead. */
-    // D40 stage B: another translation from a sentence with the same text
-    const copyAlt = e.target.closest('[data-action="copy-alt"]');
-    if (copyAlt) { takeCopyAlt(copyAlt); return; }
-
     const rowBtn = e.target.closest('[data-action$="-add"], [data-action$="-remove"]');
     if (rowBtn) {
       const m = /^([a-z-]+)-(add|remove)$/.exec(rowBtn.dataset.action || '');
       if (m && typeof ROW_EDITORS === 'object' && ROW_EDITORS[m[1]]) {
         if (m[2] === 'add') addRowTo(m[1], rowBtn);
         else                removeRowFrom(m[1], rowBtn);
+        refreshSentenceOffers();          // D40 stage B: a removed row may be offered again
         return;
       }
       /* Not a row collection — `save-section-add`, `src-pick-add`, `tag-add`

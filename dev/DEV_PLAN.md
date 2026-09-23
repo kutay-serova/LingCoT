@@ -377,7 +377,7 @@ v3.14.282, B-144 ✅ v3.14.298).
 | stage | what | size |
 |---|---|---|
 | A | runtime sentence-text index, keyed on folded text | S |
-| B | translation and transliteration pre-fill in the sentence forms | XS–S |
+| B | translation and transliteration offers (chips) in the sentence forms | XS–S |
 | C | sentence copy offer, with review panel and bulk-from-source; fill-only | M |
 | D | word chips, one per distinct analysis incl. transliterations; `differs` note on filled fields | S–M |
 
@@ -387,9 +387,9 @@ before anything is written) · transliterations offered only from an identical
 form or sentence, never by rule · filled fields get a `differs` note in the word
 editor only.
 
-**Branch:** `d40-annotation-offers`, merged to main fast-forward at each stage
-boundary (A+B, C, D). Procedure: `PRACTICES.md` §1 Branches. No file-format change beyond an optional `from` key
-on derived prov moments; plan §5 has the compatibility table.
+**Branch:** `d40-annotation-offers`. Released in two batches: A+B+D, then C.
+Procedure: `PRACTICES.md` §1 Branches. No file-format change beyond an optional
+`from` key on derived prov moments; plan §5 has the compatibility table.
 
 ### D41: Reader Mode
 
