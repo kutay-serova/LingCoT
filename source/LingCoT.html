@@ -48,7 +48,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LingCoT: Linguistic Corpus Toolkit — v3.12.1</title>
+<title data-i18n="app.title">LingCoT: Linguistic Corpus Toolkit</title>
 <link rel="stylesheet" href="LingCoT.css">
 </head>
 <body autocapitalize="none">
@@ -98,7 +98,7 @@
 <div id="header">
   <div id="app-name">
     <span id="app-title">LingCoT</span>
-    <span id="app-subtitle">Linguistic Corpus Toolkit</span>
+    <span id="app-subtitle" data-i18n="app.subtitle">Linguistic Corpus Toolkit</span>
   </div>
   <!-- Breadcrumb fills all remaining horizontal space, pushing buttons right -->
   <div id="breadcrumb"></div>
@@ -108,7 +108,7 @@
   <span id="save-status-flash"></span>
   <div id="header-right">
     <!-- Corpus actions, hidden until a corpus is loaded -->
-    <button class="hdr-btn" id="searchtn" title="Search — concordance"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-magnifying-glass"/></svg><span data-i18n="btn.nav.search">Search</span></button>
+    <button class="hdr-btn" id="searchtn" title="Search — concordance" data-i18n-title="title.nav.search"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-magnifying-glass"/></svg><span data-i18n="btn.nav.search">Search</span></button>
     <!-- D34: what is left to do, and what this session changed. Hidden until a
          corpus is loaded, on the same two lines that reveal Search. -->
     <button class="hdr-btn" id="gaps-btn" title="What is left to do" data-i18n-title="title.nav.gaps"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-list-bullets"/></svg><span data-i18n="btn.nav.gaps">Progress</span></button>
@@ -133,7 +133,7 @@
         <button class="file-menu-item" id="file-new-item"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-plus-circle"/></svg><span data-i18n="btn.nav.new_corpus">New Corpus</span></button>
         <div class="file-menu-sep"></div>
         <!-- Theme toggle, moved here from fixed bottom-right (S3) -->
-        <button class="file-menu-item theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark mode"></button>
+        <button class="file-menu-item theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark mode" data-i18n-aria="aria.theme.toggle"></button>
         <!-- tb-i18n: interface language; options filled by initLocalePicker() -->
         <label class="file-menu-item locale-pick" id="ui-locale-item"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-translate"/></svg><span data-i18n="label.nav.ui_language">Language</span><select id="ui-locale-select" aria-label="Interface language" data-i18n-aria="aria.nav.ui_language"></select></label>
       </div>
@@ -674,7 +674,7 @@ function _applyAnnotatorAutofill() {
 function _provEntries(history) {
   return history.map(p => {
     const dt   = p.time ? `${esc(p.date || '')} ${esc(p.time)}` : esc(p.date || '');
-    const name = esc(p.annotator || 'unknown');
+    const name = esc(p.annotator || t('label.provenance.unknown_annotator'));
     const annEl = p.annotator_id
       ? (S.annotatorsById.get(p.annotator_id) || null)
       : null;
@@ -712,7 +712,7 @@ function provFooter(obj, label = null, morphemes = null) {
       </details>`;
     }).filter(Boolean).join('');
     if (blocks) {
-      morphBlocks = `<div class="prov-morpheme-header">Morpheme edit history</div>${blocks}`;
+      morphBlocks = `<div class="prov-morpheme-header">${t('label.provenance.morpheme_history')}</div>${blocks}`;
     }
   }
 
@@ -1457,7 +1457,7 @@ function sanitizeFilename(title) {
 /* Cache for morphemeExampleHtml() results, keyed by word_id.
    Regenerated lazily; invalidated whenever _dataGen advances (any corpus save/delete). */
 let _exampleHtmlCache = new Map();
-let _exampleCacheGen  = -1;   // tracks which _dataGen the cache was built for
+let _exampleCacheGen  = -1;   // the _dataGen and locale the cache was built for
 
 /* Cache for the last rendered breadcrumb HTML string.
    renderBreadcrumb() skips the bc.innerHTML DOM write when the built string
@@ -8847,8 +8847,8 @@ async function loadProjectFromPath(absPath, _viaCompanion) {
 
   if (type === 'dictionary') {
     if (S.dictionary.length > 0 &&
-        !confirm(t('confirm.dict.replace', { count: S.dictionary.length,
-                                             entries: S.dictionary.length === 1 ? 'entry' : 'entries' })))
+        !confirm(S.dictionary.length === 1 ? t('confirm.dict.replace_1')
+                                           : t('confirm.dict.replace', { count: S.dictionary.length })))
       return;
     logEvent('info', 'dictionary opened', absPath);
     applyDict(data, basename);
@@ -9531,9 +9531,9 @@ function render() {
      and renders nothing, so there is no key to get wrong. */
 
   // clicks and completed searches always produce a fresh render.
+  // B-215: the Search-A branch that stood first here was left behind by the
+  // v3.14.388 rename and threw a ReferenceError on every render of 'search'.
   const searchKey = (v === 'search')
-    ? `|${_srchField}|${_srchLevel}|${_srchQuery}|${_srchCrossSent}|${_srchRegex}|${_srchCaseSensitive}|${_srchAdvOpen}|${_srchSlots.length}|${_srchResults ? _srchResults.length : 'null'}|${_srchHasNonPrefix}|${_srchTranslitErr}|${_srchTranslitWarnW}|${_srchTranslitLabel}`
-    : (v === 'search')
     ? `|${_srchField}|${_srchLevel}|${_srchScope}|${_srchRegex}|${_srchCaseSensitive}|${_srchTranslitLabel}|${_srchQuery}|${_srchContext}|${_srchFullPara}|${_srchResultTab}|${_srchSortAnchor}|${_srchSortDir}|${_srchCollWindow}|${_srchLines ? _srchLines.length : 'null'}|${_srchError}`
     : '';
   /* D35 B5: `lemmaId` is navigation state, so it belongs in the key. Two
@@ -9949,7 +9949,7 @@ function renderSection() {
            ${renderAnnotatorsRollup(secRenderAnnIds)}
          </div>`
       : ''}
-    <p class="text-sm text-muted mb-5">${paras.length} paragraph${paras.length !== 1 ? 's' : ''}</p>
+    <p class="text-sm text-muted mb-5">${paras.length === 1 ? t('label.view.paragraph_count_1') : t('label.view.paragraph_count', { n: paras.length })}</p>
     ${pairsHtml || `<p class="text-muted text-italic">${t('status.empty.paragraphs')}</p>`}
     ${needSentinel ? `<div id="section-para-sentinel" data-si="${S.sectIdx}" data-para-next="${SECTION_PARA_BATCH}"></div>` : ''}
     <div class="add-row">
@@ -10029,7 +10029,7 @@ function renderParagraph() {
            ${renderAnnotatorsRollup(paraAnnIds)}
          </div>`
       : ''}
-    <p class="text-sm text-muted mb-5">${sents.length} sentence${sents.length !== 1 ? 's' : ''}</p>
+    <p class="text-sm text-muted mb-5">${sents.length === 1 ? t('label.view.sentence_count_1') : t('label.view.sentence_count', { n: sents.length })}</p>
     ${cards}
     ${translitHtml}
     ${translationsHtml}
@@ -10494,28 +10494,28 @@ function _wordLexCardHtml(dictEntries, wordId, sentId, res = null) {
   const snippet   = meaning.length > 72 ? meaning.slice(0, 72) + '…' : meaning;
   // Build label/value pairs, skip empties
   const pairs = [
-    ['Type',    e.type            || ''],
-    ['PoS',     e.part_of_speech  || ''],
-    ['Gloss',   e.gloss           || ''],
-    ['Meaning', snippet],
-    ['Lemma',   lemmaForm],
+    ['type',    e.type            || ''],
+    ['pos',     e.part_of_speech  || ''],
+    ['gloss',   e.gloss           || ''],
+    ['meaning', snippet],
+    ['lemma',   lemmaForm],
   ].filter(([, v]) => v);
 
   /* D35 B5: the lemma is the one value here that names another object, so it is
      the one that navigates. A2 left it as plain text pointing at an entry that
      no longer exists; it points at the group now. */
   const rows = pairs.map(([l, v]) =>
-    `<span class="lex-card-lbl">${esc(l)}</span>` + (l === 'Lemma'
+    `<span class="lex-card-lbl">${esc(t('label.dict.lex.' + l))}</span>` + (l === 'lemma'
       ? `<button type="button" class="lex-card-val lg-link" data-go="lemma"
            data-lemma-id="${escAttr(e.lemma_id)}">${esc(v)}</button>`
       : `<span class="lex-card-val">${esc(v)}</span>`)
   ).join('');
 
   const moreNote = dictEntries.length > 1
-    ? `<div class="lex-card-more">${dictEntries.length} entries for this form — <span
+    ? `<div class="lex-card-more">${t('label.dict.lex_more', { n: dictEntries.length })} <span
          style="cursor:pointer;text-decoration:underline"
          data-go="dict" data-dform="${escAttr(e.form)}"
-         data-wid="${escAttr(wordId)}" data-sid="${escAttr(sentId)}">view all</span></div>`
+         data-wid="${escAttr(wordId)}" data-sid="${escAttr(sentId)}">${t('btn.dict.lex_view_all')}</span></div>`
     : '';
 
   /* D35 B3 (v3.14.277). The card IS the derived value, so it takes D43's
@@ -10540,7 +10540,7 @@ function _wordLexCardHtml(dictEntries, wordId, sentId, res = null) {
       <span class="lex-card-title">${t('label.dict.lexicon')}${autoMark}</span>
       <span class="lex-card-acts">${rejectBtn}<span class="lex-card-edit"
             data-go="dict" data-dform="${escAttr(e.form)}"
-            data-wid="${escAttr(wordId)}" data-sid="${escAttr(sentId)}">Edit entry →</span></span>
+            data-wid="${escAttr(wordId)}" data-sid="${escAttr(sentId)}">${t('btn.dict.lex_edit')}</span></span>
     </div>
     <div class="lex-card-body">${rows}</div>
     ${moreNote}
@@ -15047,9 +15047,9 @@ function saveDictEntry(entryId, dictForm, wordId, sentId, dictBackView) {
 // @fn morphemeExampleHtml
 function morphemeExampleHtml(ref) {
   // Invalidate the cache whenever the corpus has been mutated since last build.
-  if (_exampleCacheGen !== _dataGen) {
+  if (_exampleCacheGen !== `${_dataGen}|${uiLocaleCode()}`) {
     _exampleHtmlCache.clear();
-    _exampleCacheGen = _dataGen;
+    _exampleCacheGen = `${_dataGen}|${uiLocaleCode()}`;
   }
   // Return cached result if available, avoids repeated findIndex() scans for
   // the same word_id when multiple dictionary entries share corpus examples.
@@ -15077,7 +15077,7 @@ function morphemeExampleHtml(ref) {
 
   const html = `<div class="dict-example" data-go="sentence" data-sid="${escAttr(sent.id)}">
     <span class="dict-example-text">${parts.join(' ')}</span>
-    <span class="dict-example-arr">→ sentence</span>
+    <span class="dict-example-arr">${t('label.dict.example_goto')}</span>
   </div>`;
   _exampleHtmlCache.set(ref.word_id, html);
   return html;
@@ -16027,6 +16027,7 @@ async function applyLocale(lang) {
     el.innerHTML = t(el.dataset.i18nHtml);
   });
   document.documentElement.lang = uiLocaleCode();
+  _fillVersionFooter();  // set once app info arrives; may predate the strings
   updateThemeToggle();   // B1: the theme button label comes from the locale
   render();              // template literals call t() at render time
 }
@@ -17073,12 +17074,12 @@ function showXlateSettingsModal() {
           <div class="xlate-cmd-row">
             <span class="xlate-cmd-label">${t('label.xlate.cmd.download')}</span>
             <code class="xlate-cmd-code">.venv/bin/python3 setup.py --nllb</code>
-            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 setup.py --nllb" title="Copy" aria-label="Copy download command">${icon('copy')}</button>
+            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 setup.py --nllb" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_download'))}">${icon('copy')}</button>
           </div>
           <div class="xlate-cmd-row">
             <span class="xlate-cmd-label">${t('label.xlate.cmd.serve')}</span>
             <code class="xlate-cmd-code">.venv/bin/python3 scripts/corpus_annotate.py --serve</code>
-            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 scripts/corpus_annotate.py --serve" title="Copy" aria-label="Copy serve command">${icon('copy')}</button>
+            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 scripts/corpus_annotate.py --serve" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_serve'))}">${icon('copy')}</button>
           </div>
           <div class="xlate-url-row">
             <label class="xlate-cmd-label" for="xlate-nllb-url">${t('label.nllb.server_url')}</label>
@@ -17243,8 +17244,8 @@ initDelegatedListeners();
 <footer id="app-footer">
   <span>© 2026 Kutay Serova — <a href="https://opensource.org/license/mit" target="_blank" rel="noopener" class="text-muted">MIT License</a></span>
   <span class="text-dim">|</span>
-  <span>Uses:
-    <a href="https://github.com/facebookresearch/fairseq/tree/nllb" target="_blank" rel="noopener" class="text-muted">NLLB-200</a> (model weights: <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener" class="text-muted">CC BY-NC 4.0</a> — non-commercial use only) ·
+  <span><span data-i18n="footer.uses">Uses:</span>
+    <a href="https://github.com/facebookresearch/fairseq/tree/nllb" target="_blank" rel="noopener" class="text-muted">NLLB-200</a> (<span data-i18n="footer.model_weights">model weights:</span> <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener" class="text-muted">CC BY-NC 4.0</a> — <span data-i18n="footer.noncommercial">non-commercial use only</span>) ·
     <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="text-muted">Google Translate</a>
   </span>
 </footer>
@@ -17356,7 +17357,7 @@ initDelegatedListeners();
   </div>
   <div class="ncs-body">
     <p id="ncs-message"></p>
-    <p class="ncs-hint" data-i18n="modal.autosave.hint">You can change this later from the <strong>Save</strong> button.</p>
+    <p class="ncs-hint" data-i18n-html="modal.autosave.hint">You can change this later from the <strong>Save</strong> button.</p>
     <div class="sp-actions">
       <button class="btn btn-primary" id="ncs-save-btn" data-i18n="btn.savepanel.autosave_yes">Yes, autosave</button>
       <button class="btn btn-ghost" id="ncs-skip-btn" data-i18n="btn.savepanel.autosave_no">Not now</button>
@@ -17536,7 +17537,7 @@ initDelegatedListeners();
         <input autocapitalize="none" autocorrect="off" spellcheck="false" class="ann-modal-input" id="sm-birth" type="text" placeholder="e.g. 1950s" data-i18n-placeholder="placeholder.modal.src.birth">
       </div>
       <div class="ann-modal-field">
-        <label class="ann-modal-label" for="sm-gender">Gender <span class="text-muted" data-i18n="label.optional">(optional)</span></label>
+        <label class="ann-modal-label" for="sm-gender"><span data-i18n="label.participants.gender">Gender</span> <span class="text-muted" data-i18n="label.optional">(optional)</span></label>
         <input autocapitalize="none" autocorrect="off" spellcheck="false" class="ann-modal-input" id="sm-gender" type="text" placeholder="Free-form — leave blank if not applicable" data-i18n-placeholder="placeholder.modal.src.gender">
       </div>
       <div class="ann-modal-field">

@@ -122,6 +122,18 @@ for (const v of views) {
   }
 }
 
+/* ── B-215: through render() as well ─────────────────────────────────────────
+   The loop above calls each renderer directly and so skips render()'s own code,
+   the cache key among it. The search view's key named five variables that no
+   longer existed, and every visit to Search threw while this guard stayed green. */
+for (const v of views) {
+  ctx.__view = v;
+  let err = null;
+  try { run('S.view = __view; _renderCacheKey = null; render();'); }
+  catch (e) { err = e; }
+  check(!err, `render() with S.view = ${v}`, err && `${err.constructor.name}: ${err.message}`);
+}
+
 /* A harness in which every renderer silently returns '' would report a clean
    pass while checking nothing, which is this project's recurring failure mode.
    Most views must produce real markup for the run to mean anything. */

@@ -239,12 +239,12 @@ function openAnnPreviewPanel(annId, anchorEl) {
   const fieldsEl = document.getElementById('app-fields');
   if (fieldsEl) {
     const rows = [];
-    if (ann.role)         rows.push(['Role',        ann.role]);
-    if (ann.affiliation)  rows.push(['Affiliation',  ann.affiliation]);
-    if (ann.birth_decade) rows.push(['Birth decade', ann.birth_decade]);
-    if (ann.contact_info) rows.push(['Contact',      ann.contact_info]);
-    if (ann.researcher)   rows.push(['Researcher',   'yes']);
-    if (ann.other)        rows.push(['Notes',        ann.other]);
+    if (ann.role)         rows.push([t('label.participants.role'),         ann.role]);
+    if (ann.affiliation)  rows.push([t('label.participants.affiliation'),  ann.affiliation]);
+    if (ann.birth_decade) rows.push([t('label.participants.birth_decade'), ann.birth_decade]);
+    if (ann.contact_info) rows.push([t('label.participants.contact_info'), ann.contact_info]);
+    if (ann.researcher)   rows.push([t('label.participants.researcher'),   t('label.participants.yes')]);
+    if (ann.other)        rows.push([t('label.participants.notes'),        ann.other]);
 
     fieldsEl.innerHTML = rows.length
       ? rows.map(([k, v]) =>
@@ -252,7 +252,7 @@ function openAnnPreviewPanel(annId, anchorEl) {
              <span class="app-key">${esc(k)}</span>
              <span class="app-val">${esc(String(v))}</span>
            </div>`).join('')
-      : `<span style="font-size:0.81rem;color:var(--text-muted)">No additional details.</span>`;
+      : `<span style="font-size:0.81rem;color:var(--text-muted)">${t('label.participants.no_details')}</span>`;
   }
 
   // Position panel anchored near the chip
@@ -282,7 +282,7 @@ function renderAnnChips(filterStr) {
   const items = q ? list.filter(a => displayName(a).toLowerCase().includes(q)) : list;
 
   if (!items.length) {
-    container.innerHTML = '<span style="color:var(--text-muted);font-size:.82rem;padding:4px 2px">No annotators — click + Add</span>';
+    container.innerHTML = `<span style="color:var(--text-muted);font-size:.82rem;padding:4px 2px">${t('status.panel.ann.none_match')}</span>`;
     return;
   }
 
@@ -480,7 +480,7 @@ function renderAnnotatorsView() {
     const isFocus  = a.id === _annFocusId;          // navigated from a prov history link
     const rowCls   = isFocus ? ' class="ann-row-focus"' : '';
     return `<tr${rowCls} data-ann-id="${esc(a.id)}">
-      <td>${name}${isActive ? '<span class="ann-active-badge">active</span>' : ''}</td>
+      <td>${name}${isActive ? `<span class="ann-active-badge">${t('badge.ann.active')}</span>` : ''}</td>
       <td style="text-align:center">${a.researcher ? icon('check-circle') : ''}</td>
       <td>${esc(a.affiliation || '')}</td>
       <td>${esc(a.role || '')}</td>
@@ -488,24 +488,24 @@ function renderAnnotatorsView() {
       <td><button class="edit-btn" data-action="ann-edit" data-ann-id="${esc(a.id)}">${icon('note-pencil')} ${t('btn.panel.ann.row_edit')}</button></td>
     </tr>`;
   }).join('')
-  : `<tr><td colspan="6" style="color:var(--text-muted);padding:20px 12px;font-style:italic">No annotators yet — click + Add Annotator</td></tr>`;
+  : `<tr><td colspan="6" style="color:var(--text-muted);padding:20px 12px;font-style:italic">${t('status.panel.ann.empty')}</td></tr>`;
 
   // Go back to the document view if a corpus is loaded, otherwise the empty state.
   const backTarget = S.docs.length ? 'document' : 'empty';
   return `
     <div class="back-btn" data-go="${backTarget}">${icon('arrow-left')} ${t('nav.back.generic')}</div>
     <div class="ann-view-topbar">
-      <div class="edit-page-title"><span>Annotators</span></div>
+      <div class="edit-page-title"><span>${t('btn.nav.annotators_view')}</span></div>
       <button class="btn btn-primary btn-lg" data-action="ann-add-new">${icon('user-plus')} ${t('btn.panel.ann.panel_add')}</button>
     </div>
     <table class="ann-table">
       <thead>
         <tr>
-          ${participantTh(_annViewSort, 'name', 'Name')}
-          ${participantTh(_annViewSort, 'researcher', 'Researcher')}
-          ${participantTh(_annViewSort, 'affiliation', 'Affiliation')}
-          ${participantTh(_annViewSort, 'role', 'Role')}
-          ${participantTh(_annViewSort, 'birth_decade', 'Birth Decade')}
+          ${participantTh(_annViewSort, 'name', t('label.participants.name'))}
+          ${participantTh(_annViewSort, 'researcher', t('label.participants.researcher'))}
+          ${participantTh(_annViewSort, 'affiliation', t('label.participants.affiliation'))}
+          ${participantTh(_annViewSort, 'role', t('label.participants.role'))}
+          ${participantTh(_annViewSort, 'birth_decade', t('label.participants.birth_decade'))}
           <th></th>
         </tr>
       </thead>
@@ -539,21 +539,21 @@ function sourceById(id) {
 /* Human-readable label for a source type value. */
 // @fn srcTypeLabel
 function srcTypeLabel(type) {
-  const map = { human: 'Human Source', text: 'Text', media: 'Media' };
-  return map[type] || type || '';
+  const key = { human: 'option.src_type.human', text: 'option.src_type.text', media: 'option.src_type.media' }[type];
+  return key ? t(key) : (type || '');
 }
 
 /* Human-readable label for a publication restriction value. */
 // @fn srcRestrictLabel
 function srcRestrictLabel(r) {
   const map = {
-    do_not_publish:          'Do not Publish',
-    do_not_share:            'Do not Share',
-    share_with_authorization:   'Share only with Authorization',
-    publish_with_authorization: 'Publish only with Authorization',
-    no_restriction:          'No Restriction',
+    do_not_publish:             'option.pub_restrict.do_not_publish',
+    do_not_share:               'option.pub_restrict.do_not_share',
+    share_with_authorization:   'option.pub_restrict.share_with_auth',
+    publish_with_authorization: 'option.pub_restrict.publish_with_auth',
+    no_restriction:             'option.pub_restrict.no_restriction',
   };
-  return map[r] || r || '';
+  return map[r] ? t(map[r]) : (r || '');
 }
 
 /* Render a compact read-only chip for a source (used in render views).
@@ -599,20 +599,20 @@ function renderSourcesView() {
       <td><button class="edit-btn" data-action="src-edit" data-src-id="${esc(s.id)}">${icon('note-pencil')} ${t('btn.panel.src.row_edit')}</button></td>
     </tr>`;
   }).join('')
-  : `<tr><td colspan="4" style="color:var(--text-muted);padding:20px 12px;font-style:italic">No sources yet — click + Add Source</td></tr>`;
+  : `<tr><td colspan="4" style="color:var(--text-muted);padding:20px 12px;font-style:italic">${t('status.panel.src.empty')}</td></tr>`;
 
   return `
     <div class="back-btn" data-go="${backTarget}">${icon('arrow-left')} ${t('nav.back.generic')}</div>
     <div class="src-view-topbar">
-      <div class="edit-page-title"><span>Sources</span></div>
+      <div class="edit-page-title"><span>${t('btn.nav.sources_view')}</span></div>
       <button class="btn btn-primary btn-lg" data-action="src-add-new">${icon('plus-circle')} ${t('btn.panel.src.panel_add')}</button>
     </div>
     <table class="ann-table">
       <thead>
         <tr>
-          ${participantTh(_srcViewSort, 'name', 'Name')}
-          ${participantTh(_srcViewSort, 'type', 'Type')}
-          ${participantTh(_srcViewSort, 'publication_restrictions', 'Restrictions')}
+          ${participantTh(_srcViewSort, 'name', t('label.participants.name'))}
+          ${participantTh(_srcViewSort, 'type', t('label.participants.type'))}
+          ${participantTh(_srcViewSort, 'publication_restrictions', t('label.participants.restrictions'))}
           <th></th>
         </tr>
       </thead>
@@ -861,7 +861,7 @@ function _renderSrcPickChips(filterStr) {
   }
 
   if (!items.length) {
-    container.innerHTML = html + '<span style="color:var(--text-muted);font-size:.82rem;padding:4px 6px">No sources yet — use + New source below</span>';
+    container.innerHTML = html + `<span style="color:var(--text-muted);font-size:.82rem;padding:4px 6px">${t('status.panel.src.empty_picker')}</span>`;
     return;
   }
 

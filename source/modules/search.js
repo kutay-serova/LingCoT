@@ -404,7 +404,7 @@ function renderSearchResults(hits) {
       const DIVIDER = `
         <div class="srch-card-sent-break">
           <div class="srch-card-sent-break-line"></div>
-          <span class="srch-card-sent-break-label">Sentence Break</span>
+          <span class="srch-card-sent-break-label">${t('label.sb.sent_break')}</span>
           <div class="srch-card-sent-break-line"></div>
         </div>`;
       // Determine the translit label to pass to igtBlock (only when field=translit).
@@ -445,7 +445,7 @@ function renderSearchResults(hits) {
                 data-go="sentence"
                 data-sid="${escAttr(hit.sentIds[0])}"
                 data-si="${sectIdx}"
-                data-pi="${paraIdx}">→ go to sentence</span>
+                data-pi="${paraIdx}">${t('btn.sb.goto_sentence')}</span>
         </div>
       </div>`;
     }
@@ -489,7 +489,7 @@ function renderSearchResults(hits) {
         </div>
         <div class="srch-card-sent-break">
           <div class="srch-card-sent-break-line"></div>
-          <span class="srch-card-sent-break-label">Sentence Break</span>
+          <span class="srch-card-sent-break-label">${t('label.sb.sent_break')}</span>
           <div class="srch-card-sent-break-line"></div>
         </div>
         <div class="srch-card-body">
@@ -509,7 +509,7 @@ function renderSearchResults(hits) {
                 data-go="sentence"
                 data-sid="${escAttr(hit.sentId)}"
                 data-si="${sectIdx}"
-                data-pi="${paraIdx}">→ go to sentence</span>
+                data-pi="${paraIdx}">${t('btn.sb.goto_sentence')}</span>
         </div>
       </div>`;
     }
@@ -556,7 +556,7 @@ function renderSearchResults(hits) {
                 data-go="sentence"
                 data-sid="${escAttr(hit.sentId)}"
                 data-si="${sectIdx}"
-                data-pi="${paraIdx}">→ go to sentence</span>
+                data-pi="${paraIdx}">${t('btn.sb.goto_sentence')}</span>
         </div>
       </div>`;
   }).join('');
@@ -663,7 +663,7 @@ function parseBreakQuery(raw) {
   for (let i = 1; i < parts.length - 1; i++) {
     if (parts[i] === '') {
       return { segments: [], sentInitial: false, sentFinal: false, hasBREAK: true,
-               error: 'Consecutive \u003CBREAK\u003E markers — no tokens between two breaks.' };
+               error: t('status.sb.break_consecutive') };
     }
   }
 
@@ -680,7 +680,7 @@ function parseBreakQuery(raw) {
   // Guard: nothing left to match (e.g. a lone <BREAK>)
   if (segments.length === 0) {
     return { segments: [], sentInitial, sentFinal, hasBREAK: true,
-             error: '\u003CBREAK\u003E with no token patterns — nothing to match.' };
+             error: t('status.sb.break_empty') };
   }
 
   return { segments, sentInitial, sentFinal, hasBREAK: true, error: null };
@@ -1199,7 +1199,7 @@ function runSearch(opts) {
     // <BREAK> takes precedence over the cross-sentence toggle.
     const breakParts = query.split('<BREAK>');
     if (breakParts.length > 1) {
-      if (breakParts.length > 2) return { hits: [], error: 'Only one <BREAK> is supported at sentence level.' };
+      if (breakParts.length > 2) return { hits: [], error: t('status.sb.break_one') };
       const q1 = normQuery(breakParts[0].trim());
       const q2 = normQuery(breakParts[1].trim());
       const rx1 = q1 ? compileCrossSentRx(q1) : null;
@@ -1664,15 +1664,11 @@ function renderSearch() {
     <div class="srch-head">
       <span class="srch-badge">${t('label.sb.badge')}</span>
       <span class="srch-sub">${t('label.sb.sub')}</span>
-      <button class="srch-help-btn" data-action="srch-help" aria-label="Search help"
-              title="Search help">?</button>
+      <button class="srch-help-btn" data-action="srch-help" aria-label="${escAttr(t('title.sb.help'))}"
+              title="${escAttr(t('title.sb.help'))}">?</button>
     </div>
     <div class="srch-help-popover" id="srch-help-popover" hidden>
-      <strong>Token pattern</strong> — up to 6 slots, each matched independently in sequence.
-      <br><strong>Levels:</strong> Word (form/gloss/translit/lemma) · Morpheme (same fields) · Sentence (free text or translation).
-      <br><strong>Pattern types:</strong> contains · exact · starts · ends · regex.
-      <br><strong>Options:</strong> case-sensitive · regex mode · full-paragraph context.
-      <br>Frequency and Collocates tabs aggregate results across the corpus.
+      ${t('help.sb.popover')}
     </div>
     ${renderQueryBar()}
     <div class="tabs">${tab('kwic', t('btn.sb.tab.kwic') + count)}${tab('sent', t('btn.sb.tab.sent'))}${tab('freq', t('btn.sb.tab.freq'))}${tab('coll', t('btn.sb.tab.coll'))}</div>

@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **207 fixed**  |  **1 withdrawn** (B-096)
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **208 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -268,6 +268,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-215** | S1 | pending:tb-strings | **The Search view threw on every visit** from v3.14.388 on. The Search-A → Search rename left the old branch first in `render()`'s cache-key ternary, naming five variables deleted with Search-A. `render_smoke_test.js` called the renderers directly, bypassing that code. Found by the tb-strings pseudo-locale sweep. |
 | **B-210** | S3 | pending:tb-i18n | **The gloss legend called every transliteration "derived".** It tested the pre-v3.14.303 scalar `transliteration`, which words no longer carry, so a typed IPA line was labelled *Transliteration (derived)*. Found in a screenshot of `turkish_folk_songs_corpus` p1 s2. |
 | **B-214** | S3 | pending:tb-prep | **The B-213 edit dropped `hooks/prepare-commit-msg`'s executable bit**, and git skips a non-executable hook without a word, so commit `2c3f407` went out unstamped. Found by reading `git log`. |
 | **B-213** | S3 | pending:tb-prep | **The commit hook skipped any subject that named a version anywhere.** `Tester's build planned as v3.15.0` was taken as already stamped, so commit `eb0c8b4` (v3.14.419) carries no version and §8b cannot find it. Only a leading stamp counts now. |

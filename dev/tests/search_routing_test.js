@@ -44,6 +44,9 @@ global.navigator = { onLine: true, language: 'en' };
 global.render = _noop; global.logEvent = _noop; global.go = _noop;
 global.setTimeout = () => 0; global.clearTimeout = _noop;
 global.alert = _noop; global.confirm = () => false;
+// tb-strings: search.js messages come from the locale.
+const _EN = JSON.parse(require('fs').readFileSync(path.join(__dirname, '..', '..', 'source', 'resources', 'locale', 'en.json'), 'utf8'));
+global.t = (k, vars) => (_EN[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] !== undefined ? vars[n] : ''));
 
 global._dataGen = 0;
 global.mutate   = () => { global._dataGen++; };

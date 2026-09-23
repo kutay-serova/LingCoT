@@ -17,8 +17,9 @@
    entry that no longer matches anything, so the pending list only shrinks.
    Source: dev/audits/I18N_AUDIT_2026-09-24.md. --list prints every hit.
 
-   Reach: object maps are caught only when every value is Capitalized words;
-   a string built elsewhere and passed in (R6) is not caught.
+   Reach: object maps are caught only when every value is Capitalized words, and
+   helper arguments only when Capitalized; a string built elsewhere and passed in
+   (R6) is not caught. The pseudo-locale sweep in tb-strings found what this missed.
    ============================================================================= */
 
 const fs = require('fs'), path = require('path');
@@ -190,6 +191,12 @@ for (const s of scripts) {
       return add(s.file, line(node), 'string with markup', v);
     if (parent?.type === 'Property' && parent.value === node && TABLE_KEYS.test(parent.key.name || parent.key.value || ''))
       return add(s.file, line(node), 'label-like value', v);
+    // A label handed to a helper: participantTh(state, 'name', 'Name'), rows.push(['Role', v]).
+    const LABEL = /^\p{Lu}\p{Ll}+( \p{L}+){0,3}$/u;
+    const call = parent?.type === 'CallExpression' ? parent
+               : (parent?.type === 'ArrayExpression' && anc[anc.length - 3]?.type === 'CallExpression') ? anc[anc.length - 3] : null;
+    if (call && LABEL.test(v) && !UI_CALLS.test(calleeName(call.callee)))
+      return add(s.file, line(node), 'label argument', v);
     if (parent?.type === 'BinaryExpression' && parent.operator === '+' && / /.test(v) && /\p{Lu}|\p{L}{3,} \p{L}{3,}/u.test(v))
       return add(s.file, line(node), 'concatenated', v);
   });

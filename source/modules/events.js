@@ -1136,7 +1136,7 @@ function showMissingFileModal(filename) {
   return new Promise(resolve => {
     _mfResolve = resolve;
     document.getElementById('mf-message').textContent =
-      `"${filename}" was not found in this project folder.`;
+      t('alert.file.missing_in_folder', { name: filename });
     document.getElementById('mf-backdrop').classList.add('open');
     document.getElementById('mf-box').removeAttribute('hidden');
   });

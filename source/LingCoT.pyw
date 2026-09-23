@@ -990,7 +990,7 @@ def main():
 
     api = Api()
     webview.create_window(
-        title='LingCoT — Linguistic Corpus Toolkit',
+        title='LingCoT',
         url=os.path.join(BASE, 'LingCoT.html'),
         js_api=api,
         width=1280,
