@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.14.417
+**Updated:** 2026-09-23 · **Version:** v3.14.418
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,31 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## DEV_PLAN §1 checked against BUGS and the audit: four closed items removed (2026-09-24)
+**Version:** v3.14.418 · **Type:** chore · **Archives:** `dev/archive/changes/devplan_stale_items/` (v3.14.417)
+**Touched:** dev/DEV_PLAN.md · dev/tests/doc_integrity_test.js
+
+**What changed.** `DEV_PLAN.md` §1 "What to do next": C1 (**B-157 · L-027**)
+and D2 (**B-161**) removed, both already closed; cluster C removed with C1.
+The cosmetic tail and gate 4's bug row dropped **B-109** and **B-094**, also
+closed, and gained **B-210**, open since v3.14.413 and listed nowhere. A note
+under the counts records the check.
+
+**Why.** Asked to check and fix C1 and D2. Neither needed code: B-157 shipped
+at v3.14.365 (`corpus_annotate.py --translate` stamps each translation with
+`derived_prov`; `cli_prov_test.py`, 36 checks) and B-161 at v3.14.370 (the
+exact-match lemma strip offers *New anyway*; `linking_s1s3_test`, 132 checks,
+and `lemma_proposal_test`, 42). Both guards were run and pass. The rows had
+outlived the fixes by 48 and 43 versions.
+
+**Guard.** `doc_integrity_test.js` §11a: every bug id in §1's clusters and gate
+4's bug row must be open in BUGS.md; struck rows and italic notes are skipped as
+history. Run against the pre-edit DEV_PLAN it names exactly the four.
+
+**Verification.** `./dev/tests/run_all.sh` — **97 passed, 0 failed, 0 disabled.**
 
 ---
 

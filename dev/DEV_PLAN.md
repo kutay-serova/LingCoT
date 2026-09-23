@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-23 · **Version:** v3.14.417
+**Updated:** 2026-09-23 · **Version:** v3.14.418
 
 | § | What is in it |
 |---|---|
@@ -38,18 +38,17 @@ are in `PRACTICES.md`.*
 *`BUGS.md` and `UNIFIED_AUDIT.md` are the sources — take the counts from their
 tables rather than from this line, which has been wrong twice.*
 
-#### C · Provenance honesty — becomes urgent the moment A5 is machine-assisted
-
-| | item | why |
-|---|---|---|
-| C1 | **B-157 · L-027** a CLI machine translation is stored as a person's work | 44 free translations seeded by machine would ship as 44 claims a human wrote them |
+*Checked against both at v3.14.418. Four rows here were already closed: C1
+(**B-157 · L-027**, ✅ v3.14.365, guarded by `cli_prov_test.py`), D2 (**B-161**,
+✅ v3.14.370, guarded by `linking_s1s3_test` and `lemma_proposal_test`), and
+**B-109** and **B-094** below (✅ v3.14.371, v3.14.198). Cluster C is empty and
+went with C1.*
 
 #### D · Structural, and cheap because the design is already decided
 
 | | item | why |
 |---|---|---|
 | D1 | **D56** undo | D60 has an argument that **expires** when this ships: links are offered rather than automated only because a link is reversible in principle and not in fact. Also the only reversal D59 gives the section editor |
-| D2 | **B-161** a second lemma for an existing form can only be created once two already exist | S2, and homographs are exactly what a two-language fixture set produces |
 
 #### E · Guard quality — the suite's own honesty
 
@@ -85,8 +84,9 @@ where a decided item goes to look open.*
 #### G · Cosmetic tail
 
 **B-028** PDF page numbers · **B-029** autocapitalize residue · **B-035** two
-languages, one native name · **B-109** dict-browse type filter · **B-181**
-`new_version.py --add` archives a file already edited.
+languages, one native name · **B-181** `new_version.py --add` archives a file
+already edited · **B-210** the gloss legend calls every transliteration
+"derived".
 
 **One rule for reading this.** A is the only cluster with a deadline attached to
 it, because `git init` is irreversible and everything before it is cheap to
@@ -185,7 +185,7 @@ New capability rather than model correctness, plus the cosmetic tail.
 | | |
 |---|---|
 | **Features** | D37 · D28 · D31 · D34 · D41 · D25 P3 · D20 · D24 · D29 P2 |
-| **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name · B-094 five document fields stored and never shown |
+| **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name · B-210 the gloss legend's "derived" |
 | **Retired** | F5, the parse field as primary surface — on evidence 2026-08-29: D46's session put POS *before* the parse, so the parse is the pivot for what sits below it, not the opening move. **Half of it shipped anyway**: D53 stage E ✅ v3.14.300 built the per-segment lexicon offer under the parse field, which was F5's other claim. Only "primary surface" was retired (UNIFIED conflict ⑮, settled v3.14.310) |
 
 ---

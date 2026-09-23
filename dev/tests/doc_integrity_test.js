@@ -714,6 +714,33 @@ console.log('\nedit_log integrity');
 
    600 is the file's own number for too long. The write-up belongs in the edit
    log, which is where the row already tells you to look. */
+/* 11a. The plan's work list names only open bugs.
+   v3.14.418: DEV_PLAN §1 carried B-157 and B-161 as work for 48 and 43 versions
+   after they were fixed, and B-109 and B-094 in the cosmetic tail. A struck-out
+   (~~…~~) mention is history and is skipped. */
+console.log('\nthe plan\'s work list names only open bugs\n');
+{
+  const plan  = fs.readFileSync(path.join(DEV, 'DEV_PLAN.md'), 'utf8');
+  const bugsT = fs.readFileSync(path.join(DEV, 'BUGS.md'), 'utf8');
+  /* The clusters under "What to do next", and gate 4's bug row. A struck row
+     (first cell ~~…~~) and an italic paragraph are history, and are skipped. */
+  const a = plan.indexOf('### What to do next'), b = plan.indexOf('### The four gates');
+  const clusters = a >= 0 && b > a ? plan.slice(a, b) : '';
+  const gate4 = (plan.match(/^\| \*\*Bugs\*\* \|.*$/m) || [''])[0];
+  const live = [clusters, gate4].join('\n\n').split(/\n\s*\n/)
+    .filter(par => !/^\*[^*]/.test(par.trim()))
+    .join('\n\n').split('\n').filter(l => !/^\|\s*~~/.test(l)).join('\n')
+    .replace(/~~[\s\S]*?~~/g, '');
+  const openIds = new Set([...bugsT.matchAll(/^### (B-\d{3})\b/gm)].map(m => m[1]));
+  const fixedIds = new Set([...bugsT.matchAll(/^\| \*\*(B-\d{3})\*\* \|/gm)].map(m => m[1]));
+  const named = [...new Set([...live.matchAll(/\bB-\d{3}\b/g)].map(m => m[0]))];
+  check(named.length > 0, `${named.length} bug id(s) named in §1's work list and gate tables`);
+  const closed = named.filter(id => fixedIds.has(id) && !openIds.has(id));
+  check(closed.length === 0, 'none of them is already fixed',
+        closed.map(id => `         ${id} is in BUGS.md's Fixed table`).join('\n')
+        + '\n         remove it from the list, or strike it through with the version that closed it');
+}
+
 console.log('\nthe Fixed table stays one line per bug\n');
 {
   const bugs = fs.readFileSync(path.join(DEV, 'BUGS.md'), 'utf8');
