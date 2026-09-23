@@ -1,5 +1,5 @@
 # UNIFIED AUDIT: the audit of record
-**Updated:** 2026-09-23 · **Version:** v3.14.416
+**Updated:** 2026-09-23 · **Version:** v3.14.417
 *LIVE. Started against v3.14.221 and bumped with every version since, because a
 stale audit of record is worse than none. Findings keep the build they were found
 against. `dev/audits/AUDIT_INDEX.md` indexes the frozen audits this replaced.*
@@ -25,9 +25,9 @@ its own line.
 | **[§8 Notes from the passes](#8-notes-kept-from-the-passes)** | what each wave examined · the journal session · the refuted guard proposal |
 | **[§9 How this audit has been wrong](#9-how-this-audit-has-been-wrong)** | its own corrections, kept because the pattern repeats |
 
-**46 findings — 37 closed, 0 half, 9 open. 18 conflicts — 15 settled, 3 live.**
+**46 findings — 38 closed, 0 half, 8 open. 18 conflicts — 15 settled, 3 live.**
 Every count is computed from the table that holds the rows and never carried
-forward: §1's board has the **12** rows still outstanding — 9 open findings and
+forward: §1's board has the **11** rows still outstanding — 8 open findings and
 the 3 live conflicts — and §5's ledgers hold what is done. v3.14.314 changed two
 states and miscounted the header by one in the same edit; **so did the line this
 replaces**, which said 32 closed / 2 half against a ledger holding 31 and 3, and
@@ -51,7 +51,6 @@ the severity if it is also a bug.
 |---|---|---|---|---|
 | **L-043** | controls | — | 21 array-shaped fields, six controls, three declaring none. Deferred by decision v3.14.408; trigger is D28 or D37 | — |
 | **L-044** | controls | — | `list` edits an array through one comma-separated text box. Absorbed into D62 A v3.14.408; still unfixed, tracked in gate 3 | **B-139** |
-| **L-034** | fill · timing | — | The unit of work is the token, and 44% of the work is re-work | — |
 | **L-006** | guards | — | The suite's mutation score is 56%, and 31% of assertion sites are regexes against source text | — |
 | **L-013** | fill · timing | — | The observed annotation order corrects D46. Order decided v3.14.408, built v3.14.409; still n=1 | — |
 | **L-039** | references | — | `pinned_examples` is a reference nothing sweeps and nothing counts | — |
@@ -74,8 +73,8 @@ so?* — and **all three are closed**: L-031 and L-032 at v3.14.335, and **L-027
 the one that crosses into Python, at v3.14.365 with B-157**. References and
 integrity is the other — *what happens to the thing that pointed at it?* — and
 **L-033, the one that lost data, closed at v3.14.336** and **L-036 at v3.14.343
-with D59**, leaving **L-039** alone. And L-034 is on its own — not a defect, the largest measured lever in the
-document.
+with D59**, leaving **L-039** alone. L-034, the largest measured lever in the
+document and not a defect, closed at v3.14.416 with D40.
 
 *Corrected v3.14.396, twice over: this paragraph said L-027 "remains" for 31
 versions after §5's ledger recorded it closed, and said the same of L-036 for 53.
@@ -119,8 +118,9 @@ open does not need an argument, only a pointer.*
 
 ### 2.2 Fill and timing — the right value, at the right moment
 
-*What the app proposes or writes on its own, in which direction, and when. L-034
-is the largest measured item in this document and is not a defect.*
+*What the app proposes or writes on its own, in which direction, and when. L-034,
+the largest measured item in this document, closed at v3.14.416 (D40); its body
+goes at the next comb.*
 
 *Restored v3.14.397. This heading was deleted at v3.14.387 by a compression pass
 that removed the section and left both its bodies in place — so §2 ran 2.1 → 2.3
@@ -706,7 +706,7 @@ open keep their reasoning, because that is the instruction for doing them.*
 
 ### 5.1 Findings closed
 
-*Every finding that is closed — 35 of 42, and none is half any more. The other 7 are open: §1 ranks them and §2 carries their bodies, so repeating them here would be a second place to keep in step. The line each came from is a field rather than part of the id, so an item can move between subjects without going stale. A closed body is removed at the comb after it closes (see §2); the full text is in `dev/archive/changes/`.*
+*Every finding that is closed — 38 of 46, and none is half any more. The other 8 are open: §1 ranks them and §2 carries their bodies, so repeating them here would be a second place to keep in step. The line each came from is a field rather than part of the id, so an item can move between subjects without going stale. A closed body is removed at the comb after it closes (see §2); the full text is in `dev/archive/changes/`.*
 
 | L | line | finding | state | what survives |
 |---|---|---|---|---|
@@ -745,6 +745,7 @@ open keep their reasoning, because that is the instruction for doing them.*
 | **L-028** | G1 | The gap counter pays for the field table once per record, and the panel asks twice | ✅ v3.14.337 | the memo, not the walk: one slot against two questions meant every repaint paid twice — `gapRows()` repeated 2.68 → **0.156 ms** |
 | **L-029** | A | Dead code, verified against the interpolation trap | ✅ v3.14.337 · **B-174** | the finding was right twice over: the duplicate id was a live bug, not a styling untidiness — `getElementById` took the header and the annotator preview overwrote the app title |
 | **L-037** | D · S2 | Machine translations are indistinguishable from human ones | ✅ v3.14.338 | setting a class nothing had set showed the rule was wrong too: dimming means ABSENT on that card, so it takes D43’s `·auto` mark |
+| **L-034** | B | The unit of work is the token, and 44% of the work is re-work | ✅ v3.14.416 · **D40** | offered, never applied: a copy is a chip or a reviewed panel row, fills only empty fields, and names its source in `from` |
 
 ### 5.2 Conflicts settled
 

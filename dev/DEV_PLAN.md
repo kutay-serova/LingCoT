@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-23 · **Version:** v3.14.416
+**Updated:** 2026-09-23 · **Version:** v3.14.417
 
 | § | What is in it |
 |---|---|
@@ -34,7 +34,7 @@ are in `PRACTICES.md`.*
 
 ### What to do next
 
-**6 open bugs, 9 open findings, 3 live conflicts**, sorted by what each buys.
+**7 open bugs, 8 open findings, 3 live conflicts**, sorted by what each buys.
 *`BUGS.md` and `UNIFIED_AUDIT.md` are the sources — take the counts from their
 tables rather than from this line, which has been wrong twice.*
 
@@ -184,7 +184,7 @@ New capability rather than model correctness, plus the cosmetic tail.
 
 | | |
 |---|---|
-| **Features** | D37 · D28 · D31 · D34 · D40 · D41 · D25 P3 · D20 · D24 · D29 P2 |
+| **Features** | D37 · D28 · D31 · D34 · D41 · D25 P3 · D20 · D24 · D29 P2 |
 | **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name · B-094 five document fields stored and never shown |
 | **Retired** | F5, the parse field as primary surface — on evidence 2026-08-29: D46's session put POS *before* the parse, so the parse is the pivot for what sits below it, not the opening move. **Half of it shipped anyway**: D53 stage E ✅ v3.14.300 built the per-segment lexicon offer under the parse field, which was F5's other claim. Only "primary surface" was retired (UNIFIED conflict ⑮, settled v3.14.310) |
 
@@ -238,7 +238,7 @@ not cover:
 | | from | state |
 |---|---|---|
 | **S5** | `SCRIPTS_AUDIT.md` | whether `corpus_optimize.py` earns its place. Decide when D29 P2 is scoped |
-| **F2–F5** | `ANNOTATION_FILL_AUDIT.md` | resolved, do not carry as work. F2 ⊂ D40 · F3 ✅ v3.14.269 · F4's residue ✅ v3.14.266 · F5 absorbed into and corrected by D46 |
+| **F2–F5** | `ANNOTATION_FILL_AUDIT.md` | resolved, do not carry as work. F2 ⊂ D40 ✅ v3.14.416 · F3 ✅ v3.14.269 · F4's residue ✅ v3.14.266 · F5 absorbed into and corrected by D46 |
 
 ---
 
@@ -263,7 +263,6 @@ in §3, because it is real open work that is no longer a feature in progress.*
 | [D49](#d49-machine-parseable-lexicon-export) | machine-parseable lexicon export | S | — | **UNGATED v3.14.282** | `dev/design/D49_lexicon_export.md` |
 | [D25 P3](#d25-p3-constituency-parse) | constituency parse | ? | — | unscoped | `dev/design/D25_dependency_parse.md` (P1/P2) |
 | [D31](#d31-ordering-of-multi-entry-fields) | ordering of multi-entry fields | XS | I2 | REDUCED v3.14.273 | `dev/design/D31_multi_entry_order.md` |
-| [D40](#d40-offer-the-annotators-own-earlier-work) | offer the annotator their own earlier work: repeated sentences and word forms | A S · B XS–S · C M · D S–M | — | **PLANNED v3.14.411**, stages A–D | `dev/design/D40_repeat_reuse.md` (plan) · `dev/design/D40_reuse_earlier_work.md` (reasoning) |
 | [D41](#d41-reader-mode) | Reader Mode | B: S–M, A: M–L | D39 | not scheduled | `dev/design/D41_reader_mode.md` |
 | [D39](#d39-standardized-keyboard-shortcuts) | standardized keyboard shortcuts | S | I2 | gate 3 | — |
 | [D37](#d37-derived-forms-and-paradigms) | derived forms and paradigms | ? | — | not scheduled; owns `variants` matching since D35 C | `dev/design/D37_paradigms.md` |
@@ -367,29 +366,6 @@ reconciles by content, not index, so there is no migration and no provenance
 work. **What survives: one ▲▼ control on one row editor, as a consumer of I2.**
 The open question it still owns — **is position meaning, or is primacy a flag?**
 — decides **B-139** for free.
-
-### D40: Offer the annotator their own earlier work
-
-**Planned v3.14.411.** Plan: `dev/design/D40_repeat_reuse.md`. Reasoning:
-`dev/design/D40_reuse_earlier_work.md`. Both prerequisites closed (D35 ✅
-v3.14.282, B-144 ✅ v3.14.298).
-
-| stage | what | size |
-|---|---|---|
-| A | runtime sentence-text index, keyed on folded text | S |
-| B | translation and transliteration offers (chips) in the sentence forms | XS–S |
-| C | sentence copy offer, with review panel and bulk-from-source; fill-only | M |
-| D | word chips, one per distinct analysis incl. transliterations; `differs` note on filled fields | S–M |
-
-Decided 2026-09-22: copy, not link · offer, never apply · folded-text identity ·
-no post-save propagation and no bulk word fill (the annotator sees the values
-before anything is written) · transliterations offered only from an identical
-form or sentence, never by rule · filled fields get a `differs` note in the word
-editor only.
-
-**Branch:** `d40-annotation-offers`. Released in two batches: A+B+D, then C.
-Procedure: `PRACTICES.md` §1 Branches. No file-format change beyond an optional
-`from` key on derived prov moments; plan §5 has the compatibility table.
 
 ### D41: Reader Mode
 
@@ -548,6 +524,7 @@ trigger is a tester annotating (gate 2), not a code change.
 |---|---|---|
 | **The queue · chains A and B** | v3.14.358–384 | the ordering that emptied gate 1. **A finished the corpora** — A1 the missing 只 lemma, A2 `metadata.tracked` stripped, A3 dependency parses, A4 the neutral participant identity, A5 the free translations, A6 **B-169** — and **B made finishing them faster**: D61's lemma chip, B-108, L-040/B-191, L-038. Then steps 1–8: the save path (B-110/149/150), **B-143** numbering loaded homographs, **D52**, **B-154**, **B-114**, **B-123**'s backfill last, the fixture swap, and the two search guards rewritten. **The ordering was the product**: B-143 first meant every later step could ask *which of these two?* and be answered; D52 before B-123 meant the backfill could not manufacture duplicates nothing could undo |
 | **Two warnings that outlived the chains** | — | **A3's first re-measurement reported zero roots in both corpora and was wrong twice over** — it looked for `dep_head` where the field is `head`, and counted `dep_rel === 'root'`, which **B-015** decided is never stored. *A check whose answer is fixed by a design decision, read as a measurement.* And **D61's source 1 fires on ZERO tokens in these corpora**, because every linked token already carries a lemma; anyone building on it should re-measure rather than assume it is idle only for now |
+| **D40** | v3.14.413–416 | reuse of repeated content, all four stages: a sentence-text index keyed on folded text (A); translation and transliteration offers in the sentence forms (B); a sentence copy panel that writes only empty fields and shows conflicts (C); the same word's analyses as chips, with a *differs* note on filled fields (D). Offer, never apply; copied values stamped `from` their source. Closed L-034, B-211, B-212. `dev/design/D40_repeat_reuse.md` (build), `dev/design/D40_reuse_earlier_work.md` (reasoning) |
 | **D58** | v3.14.384–386 | the shipped test data: `samples/` is two typologically contrastive corpora, byte-identical to the live ones, and `dev/tests/fixtures/` holds specimens named for the guard or bug they serve. **The split is by AUDIENCE** — a user should see a corpus worth imitating, and several guards need data no user should imitate. §3's rule, *a specimen with no reader is not a keepsake*, deleted six reader paths, the `legacy` tier and `legacyKey`. `dev/design/D58_fixture_set.md` |
 | **D34** | v3.14.306–319 | session tracker & missing-annotation panel, all five stages. **"Missing" is three reasons, not one** — derived-when-applicable, inapplicable-to-the-project, genuinely missing; a counter built from the `core` tier would have opened by reporting 301 missing parses, every one wrong. The tracked set is the annotator's, not the table's. `dev/design/D34_session_tracker.md` |
 | **D53** | v3.14.298–302 | the fill pipeline, all six stages, closing **B-033**. The line that held throughout: **these stages offer, they do not apply.** `dev/design/D53_fill_pipeline.md` |

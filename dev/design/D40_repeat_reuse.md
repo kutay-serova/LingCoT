@@ -1,6 +1,9 @@
 # D40: reuse of repeated content, implementation plan
 **Updated:** 2026-09-22 · **Version:** v3.14.411
 
+**BUILT v3.14.413–416**, all four stages, in the order A, B, D, C. Each stage's
+section below carries a *Built* note where the build departed from the plan.
+
 Implementation plan for D40. The reasoning behind the feature stays in
 `dev/design/D40_reuse_earlier_work.md` (frozen, v3.14.274); this file carries
 the decisions taken on 2026-09-22 and the build order.

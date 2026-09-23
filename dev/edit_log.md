@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.14.416
+**Updated:** 2026-09-23 · **Version:** v3.14.417
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,27 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## D40 closed: moved to the completed index, L-034 closed (2026-09-24)
+**Version:** v3.14.417 · **Type:** chore · **Archives:** `dev/archive/changes/d40_closed/` (v3.14.416)
+**Touched:** dev/DEV_PLAN.md · dev/audits/UNIFIED_AUDIT.md · dev/design/D40_repeat_reuse.md
+
+**What changed.** D40 leaves `DEV_PLAN.md` §2 (row and section) for one row
+in §5, and leaves gate 4's feature list. `UNIFIED_AUDIT.md`: L-034 off the
+board and into the §5.1 ledger at v3.14.416; counts 37 → 38 closed, 9 → 8 open,
+board 12 → 11 rows; its body goes at the next comb. `DEV_PLAN.md` §1's summary
+line corrected to 7 open bugs (B-210 was opened at v3.14.413) and 8 findings.
+The D40 plan records that it shipped.
+
+**Why.** D40 stage C shipped at v3.14.416, the last of four.
+
+**Guard.** `doc_integrity_test.js`: the orphan check caught
+`D40_reuse_earlier_work.md` unnamed once the §2 row went, so the §5 row names
+both design files.
+
+**Verification.** `./dev/tests/run_all.sh` — **97 passed, 0 failed, 0 disabled.**
 
 ---
 
