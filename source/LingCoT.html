@@ -720,6 +720,10 @@ let _sSpanCache = new Map();
    matches on re-entry, the DOM is already up-to-date and render() returns
    immediately, avoiding a full innerHTML rebuild on back-navigation. */
 let _dataGen       = 0;
+/* Bumped by refreshFoldContext. Caches keyed on folded text check it as well
+   as _dataGen: changing the corpus language changes every key without any
+   data mutation. */
+let _foldGen       = 0;
 let _renderCacheKey = null;
 
 /* ── PyWebView ready gate ─────────────────────────────────────────────────────
@@ -1738,6 +1742,66 @@ function deindexPara(para) {
       deindexWordForms(word);
     }
   }
+}
+
+/* ── D40 stage A · sentences with the same text ────────────────────────────────
+   The lookup behind the translation pre-fill (stage B) and the sentence copy
+   offer (stage C). Two sentences match when their folded text matches: case,
+   punctuation and spacing between tokens do not count (D40 decision 3).
+
+   Built lazily and keyed on `_dataGen` and `_foldGen`, the same idiom as the nav
+   and example caches, rather than kept in step by every save path. The key
+   depends only on the text, so each sentence's key is cached against its own
+   text and a rebuild after an ordinary word save is one Map insert per sentence.
+
+   Values are sentence IDS. B-057 lost a sentence because a Map from text to
+   sentence object kept only the first of two identical ones. */
+
+let _sentTextIdx = { gen: -1, fold: -1, map: new Map() };
+const _sentKeyMemo = new WeakMap();        // sent → { text, fold, key }
+
+// @fn sentKey, the folded text two sentences must share to count as the same
+function sentKey(text) {
+  return String(text || '').split(/[^\p{L}\p{N}\p{M}]+/u)
+    .filter(Boolean).map(normForm).join(' ');
+}
+
+// @fn _sentKeyOf, sentKey for a stored sentence, recomputed only when its text changes
+function _sentKeyOf(sent) {
+  const text = sent.text || '';
+  const m = _sentKeyMemo.get(sent);
+  if (m && m.text === text && m.fold === _foldGen) return m.key;
+  const key = sentKey(text);
+  _sentKeyMemo.set(sent, { text, fold: _foldGen, key });
+  return key;
+}
+
+// @fn sentTextIndex, folded text → [sentence id], across every document
+function sentTextIndex() {
+  if (_sentTextIdx.gen === _dataGen && _sentTextIdx.fold === _foldGen) return _sentTextIdx.map;
+  const map = new Map();
+  for (const d of (S.docs || []))
+    for (const sect of (d.sections || []))
+      for (const para of (sect.paragraphs || []))
+        for (const sent of (para.sentences || [])) {
+          const k = _sentKeyOf(sent);
+          if (!k) continue;                    // punctuation only: matches nothing
+          if (!map.has(k)) map.set(k, []);
+          map.get(k).push(sent.id);
+        }
+  _sentTextIdx = { gen: _dataGen, fold: _foldGen, map };
+  return map;
+}
+
+/* @fn sameTextSentences, the other sentences with this sentence's folded text,
+   in corpus order. Takes a sentence or a bare text, so the add form can ask
+   before the sentence exists. */
+function sameTextSentences(sentOrText) {
+  const isSent = sentOrText && typeof sentOrText === 'object';
+  const key = isSent ? _sentKeyOf(sentOrText) : sentKey(sentOrText);
+  if (!key) return [];
+  const self = isSent ? sentOrText.id : null;
+  return (sentTextIndex().get(key) || []).filter(id => id !== self);
 }
 
 /* ── E26: morpheme materialization (corpus ↔ lexicon de-synch fix) ─────────────
@@ -2926,6 +2990,7 @@ function refreshFoldContext(rebuild = true) {
     ? (LANG_TO_CANONICAL[raw] || LANG_TO_CANONICAL[raw.toLowerCase()] || raw)
     : raw;
   const ctx = setFoldContext(canon, _foldSampleText());
+  _foldGen++;
   logEvent('info', 'fold-context',
     `lang=${canon || '—'} locale=${ctx.locale || 'default'} script=${ctx.script || 'none'}`);
 

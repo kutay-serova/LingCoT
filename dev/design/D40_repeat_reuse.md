@@ -64,14 +64,19 @@ dictionary parse and POS chips, the D61 lemma chips, machine translation.
   space. Punctuation is decided by the same test the IGT renderer uses to draw a
   token as punctuation. A sentence without words is keyed from its tokenized
   text, so a sentence just added is findable before anyone opens it.
-- `S.sentTextRefs`: `key → [sent_id]`. Built in `buildCorpusIndex`, maintained
-  by `saveSentence`, `saveSentenceAdd`, the section re-parse and sentence delete,
-  next to the existing `indexWordForms` calls.
+- `sentTextIndex()`: `key → [sent_id]`. **Built as a lazy cache on `_dataGen`
+  and `_foldGen`** (changed at build time from "maintained by every save path":
+  one writer instead of five, and the per-sentence key is memoised against its
+  text, so a rebuild after a word save is one Map insert per sentence).
+  `sameTextSentences(sentOrText)` is the reader.
 - Runtime only. Nothing is written to any file.
 - Lookups are by id, never by text-to-object map: B-057 lost data because a Map
   keyed by sentence text kept only the first of two identical sentences.
-- The key changes with the fold context (`refreshFoldContext`), so the index is
-  rebuilt when the corpus language changes, as the word form index already is.
+- The key changes with the fold context, so `refreshFoldContext` bumps
+  `_foldGen` and the index re-keys.
+- `sentKey` folds each run of letters, digits and combining marks with
+  `normForm` and drops everything else, rather than reusing the IGT
+  punctuation test on tokens: it has to work on a bare text before tokenizing.
 
 ### B · translation and transliteration pre-fill
 
