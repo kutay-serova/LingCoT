@@ -161,6 +161,18 @@ const ACKNOWLEDGED = {
 
      The 25 s between `navigate: word-edit` and this line, in the same log, is
      the typing. Remove this entry when B-193 closes. */
+  "[JS] offer filled nothing su · N row(s) on screen":
+    "D40 stage D, before release (change d40d-word-chips). A stale strip again, " +
+    "B-193's shape: an analysis chip filled the morpheme rows through synthetic " +
+    "input events, which do not repaint the morphology strip, so its chips were " +
+    "clicked against rows already full. takeWordAnalysis now repaints it.",
+
+  "[JS] offer filled nothing lAr · N row(s) on screen":
+    "D40 stage D, same take as the `su` entry.",
+
+  "[JS] offer filled nothing sI · N row(s) on screen":
+    "D40 stage D, same take as the `su` entry.",
+
   "[JS] offer filled nothing tilki · N row(s) on screen":
     "B-193, FIXED v3.14.367 — a STALE strip, not B-108. Fired under v3.14.365, " +
     "which has B-108's fix. The chip was drawn against empty rows and clicked " +

@@ -551,6 +551,8 @@
   "offer.field.type": "type",
   "offer.field.transliterations": "transliteration",
   "offer.same_text": "same text, {loc}",
+  "offer.same_word": "same word, {loc}",
+  "offer.differs": "{n} other {form} differ:",
   "btn.offer.review": "Review…",
   "btn.offer.dismiss": "Not now",
   "btn.offer.accept": "Accept",

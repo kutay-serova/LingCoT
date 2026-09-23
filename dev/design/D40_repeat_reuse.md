@@ -41,7 +41,7 @@ B-144 ✅ v3.14.298.
 | A | runtime sentence-text index | S | — | planned |
 | B | translation and transliteration offers in sentence edit/add forms | XS–S | A | built |
 | C | sentence copy offer with review panel | M | A | planned |
-| D | word chips and `differs` notes in the word editor | S–M | — | planned |
+| D | word chips and `differs` notes in the word editor | S–M | — | built |
 
 Build order A → B → D → C (changed 2026-09-23: repeated words cost more than
 repeated sentences in the 2026-09-22 session). A, B and D are released together.
@@ -197,7 +197,11 @@ persisted; after a restart the copy is reverted by hand like any other edit.
   (`differs`, not `inconsistent`), because a homograph differs legitimately.
 - The strip is hidden when every field agrees with every other occurrence, or
   when the form occurs nowhere else.
-- Reuses the D61 lemma-strip layout and the `lemmaSeenAs` counting.
+- Built: the analysis strip sits under the title; the differs notes sit under
+  POS, word gloss, parse, lemma and the transliteration editor. A word gloss is
+  filled only when the source token has one typed; a composed one follows from
+  the morpheme rows. Morpheme rows are filled by position when the row count
+  matches. The mark is `offerSrc` `corpus:<word id>`, read by `_offerMoment`.
 
 ## 4. Provenance
 

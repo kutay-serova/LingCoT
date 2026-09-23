@@ -4128,7 +4128,7 @@ function resolveLemma(form) {
    handler marks the input it wrote into, and stampFieldProv reads the mark. A
    new offer provider cannot forget to do it, because it does not do it. */
 
-const OFFER_MARKS = { will: '=', new: '+', stop: '!' };
+const OFFER_MARKS = { will: '=', new: '+', stop: '!', differs: '≠' };
 
 // @fn offerStripHtml
 function offerStripHtml(opts) {
@@ -4222,6 +4222,198 @@ function refreshWordPosStrip() {
   const host = document.getElementById('ew-pos-strip');
   if (!inp || !host) return;
   host.innerHTML = wordPosStripHtml(inp.dataset.wordForm || '', inp.value);
+}
+
+/* ══ D40 stage D · the same word elsewhere in this corpus ═════════════════════
+   The word editor offers what other tokens of the same folded form carry.
+     · A strip under the title, one chip per distinct analysis. A click fills the
+       fields that are EMPTY in the form, including the morpheme rows, and
+       nothing else.
+     · Under each filled field whose value other tokens do not share, a
+       `differs` note with their values; a click replaces the field's value.
+   Nothing is stored before Save. A value saved as taken is stamped
+   _copyFieldProv(<word id>) through the field's `offerSrc`, `corpus:<id>`;
+   typing over it clears the mark (D42), so an edited value is the annotator's. */
+
+let _ewAnalyses = [];      // the analyses the open word editor's chips index into
+
+/* @fn wordAnalysisOf, what a token carries, in the shape the editor fields hold */
+function wordAnalysisOf(w) {
+  const ms = w.morphemes || [];
+  return {
+    translits: (w.transliterations || []).filter(x => x && x.text).map(x => ({ label: x.label || '', text: x.text })),
+    pos:    w.part_of_speech || '',
+    gloss:  wordGloss(w) || '',
+    stored: w.gloss || '',                     // a gloss typed on the word, not composed
+    parse:  w.morphological_parse || '',
+    lemma:  lemmaFormOf(w.lemma_id) || '',
+    lemmaId: w.lemma_id || '',                 // which homograph, when the form has several
+    morphs: ms.map(m => ({ gloss: m.gloss || '', pos: m.part_of_speech || '', type: m.type || '' })),
+  };
+}
+
+/* @fn wordAnalyses, distinct analyses of this word's form elsewhere in the
+   corpus, commonest first; a tie goes to the first in corpus order. */
+function wordAnalyses(word) {
+  const items = [];
+  for (const ref of formRefs('word', word.form)) {
+    if (ref.word_id === word.id) continue;
+    const w = S.wordById.get(ref.word_id)?.word;
+    if (!w) continue;
+    const a = wordAnalysisOf(w);
+    if (!a.translits.length && !a.pos && !a.gloss && !a.parse && !a.lemma) continue;
+    items.push({ key: JSON.stringify(a), from: w.id, a });
+  }
+  return _rankValues(items);
+}
+
+/* @fn _ewFormState, the word editor's current values, read off the form */
+function _ewFormState() {
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    translits: readTransliterationsEditor('ew-translit').filter(x => x.text),
+    pos: val('ew-pos'), gloss: val('ew-gloss'), parse: val('ew-parse'), lemma: val('ew-lemma'),
+  };
+}
+
+/* @fn _analysisFills, would this analysis fill anything empty in the form? */
+function _analysisFills(a, f) {
+  const have = new Set(f.translits.map(x => x.label));
+  return a.translits.some(x => !have.has(x.label)) ||
+         (a.pos && !f.pos) || (a.parse && !f.parse) || (a.lemma && !f.lemma) ||
+         (!f.gloss && (a.stored || a.gloss));
+}
+
+// @fn _wordOfferMeta, "same word, P1 S2", with a count when more than one token carries it
+function _wordOfferMeta(o) {
+  return t('offer.same_word', { loc: provFromLabel(o.from) }) + (o.n > 1 ? ` · ${o.n}×` : '');
+}
+
+/* @fn refreshWordOffers, draw or redraw the analysis strip and the differs
+   notes. Reads the form, so it follows typing and takes. */
+function refreshWordOffers() {
+  if (S.view !== 'word-edit') return;
+  const word = findWord(S.wordId)?.word;
+  if (!word) return;
+  const f = _ewFormState();
+  _ewAnalyses = wordAnalyses(word);
+
+  const top = document.getElementById('ew-seen-strip');
+  if (top) top.innerHTML = offerStripHtml({ offers: _ewAnalyses
+    .map((o, i) => ({ o, i })).filter(({ o }) => _analysisFills(o.a, f))
+    .map(({ o, i }) => ({
+      act: 'word-analysis', value: String(i), src: 'corpus', from: o.from,
+      label: [o.a.parse || o.a.translits[0]?.text || word.form, o.a.gloss, o.a.pos].filter(Boolean).join(' · '),
+      meta: _wordOfferMeta(o) })) });
+
+  /* One note per filled field: the values other tokens carry instead. */
+  const differs = (hostId, cur, key, target) => {
+    const host = document.getElementById(hostId);
+    if (!host) return;
+    const others = cur ? _rankValues(_ewAnalyses.flatMap(o => {
+      const v = o.a[key];
+      return v && v !== cur ? [{ key: v, from: o.from }] : [];
+    })) : [];
+    const n = others.reduce((sum, x) => sum + _ewAnalyses.find(o => o.from === x.from).n, 0);
+    host.innerHTML = others.length ? offerStripHtml({
+      verdict: { kind: 'differs', text: t('offer.differs', { n, form: word.form }) },
+      offers: others.map(x => ({ act: 'set', target, value: x.key, label: x.key,
+                                  src: 'corpus:' + x.from, meta: provFromLabel(x.from) })) }) : '';
+  };
+  differs('ew-pos-differs',   f.pos,   'pos',   'ew-pos');
+  differs('ew-gloss-differs', f.gloss, 'gloss', 'ew-gloss');
+  differs('ew-parse-differs', f.parse, 'parse', 'ew-parse');
+  differs('ew-lemma-differs', f.lemma, 'lemma', 'ew-lemma');
+
+  /* Transliterations per label: a label this token has, with other values elsewhere. */
+  const tlHost = document.getElementById('ew-translit-differs');
+  if (tlHost) {
+    const offers = [];
+    let n = 0;
+    for (const mine of f.translits) {
+      const others = _rankValues(_ewAnalyses.flatMap(o => {
+        const v = o.a.translits.find(x => x.label === mine.label)?.text;
+        return v && v !== mine.text ? [{ key: v, from: o.from }] : [];
+      }));
+      for (const x of others) {
+        n += _ewAnalyses.find(o => o.from === x.from).n;
+        offers.push({ act: 'translit-set', rowLabel: mine.label, value: x.key, src: 'corpus',
+                      from: x.from, label: `${mine.label ? mine.label + ' · ' : ''}${x.key}`, meta: provFromLabel(x.from) });
+      }
+    }
+    tlHost.innerHTML = offers.length ? offerStripHtml({
+      verdict: { kind: 'differs', text: t('offer.differs', { n, form: word.form }) }, offers }) : '';
+  }
+}
+
+/* @fn _ewSet, put a value in an editor field as an offer taken from `from` */
+function _ewSet(el, value, from) {
+  if (!el) return;
+  el.value = value;
+  el.dataset.offerSrc = 'corpus:' + from;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/* @fn takeWordAnalysis, fill the form's empty fields from one analysis */
+function takeWordAnalysis(btn) {
+  const o = _ewAnalyses[+btn.dataset.offerValue];
+  if (!o) return;
+  const a = o.a, from = o.from, f = _ewFormState();
+  const $ = id => document.getElementById(id);
+
+  // Transliterations: the labels the form does not have, as new rows.
+  const have = new Set(f.translits.map(x => x.label));
+  const add = a.translits.filter(x => !have.has(x.label));
+  const rowsEl = $('ew-translit-rows');
+  if (add.length && rowsEl) {
+    const d = ROW_EDITORS.translit;
+    for (const r of [...rowsEl.querySelectorAll('.' + d.rowClass)])
+      if (!d.fields(r).text && !d.fields(r).label) r.remove();
+    rowsEl.insertAdjacentHTML('beforeend', add.map(d.build).join(''));
+    if (!f.translits.length) $('ew-translit').dataset.offerSrc = 'corpus:' + from;
+  }
+  if (a.pos && !f.pos) _ewSet($('ew-pos'), a.pos, from);
+  if (a.parse && !f.parse) _ewSet($('ew-parse'), a.parse, from);   // rebuilds the morpheme rows
+
+  // Morpheme rows, by position, only where empty. A monomorphemic word has one row.
+  const rows = [...document.querySelectorAll('#ew-morph-rows .morph-edit-row')];
+  if (rows.length === a.morphs.length)
+    rows.forEach((row, i) => {
+      const m = a.morphs[i];
+      for (const [sel, v] of [['.morph-gloss-input', m.gloss], ['.morph-pos-input', m.pos], ['.morph-type-input', m.type]]) {
+        const el = row.querySelector(sel);
+        if (el && v && !el.value.trim()) _ewSet(el, v, from);
+      }
+    });
+  // A typed word gloss; a composed one follows from the morpheme rows.
+  if (a.stored && !f.gloss) _ewSet($('ew-gloss'), a.stored, from);
+  if (a.lemma && !f.lemma) {
+    if (a.lemmaId) $('ew-lemma').dataset.lemmaId = a.lemmaId;   // before the input event repaints the strip
+    _ewSet($('ew-lemma'), a.lemma, from);
+  }
+  // The morpheme suggestions were drawn for rows that are now filled.
+  if (typeof refreshMorphSuggest === 'function') refreshMorphSuggest();
+  logEvent('info', 'word chip taken', 'analysis');
+  refreshWordOffers();
+}
+
+/* @fn takeWordTranslit, a differs chip for one transliteration label */
+function takeWordTranslit(btn) {
+  const d = ROW_EDITORS.translit;
+  const row = [...document.querySelectorAll('#ew-translit-rows .' + d.rowClass)]
+    .find(r => d.fields(r).label === (btn.dataset.offerLabel || ''));
+  const el = row?.querySelector('.translit-text');
+  if (!el) return;
+  el.value = btn.dataset.offerValue || '';
+  document.getElementById('ew-translit').dataset.offerSrc = 'corpus:' + btn.dataset.offerFrom;
+  logEvent('info', 'word differs taken', 'transliteration');
+  refreshWordOffers();
+}
+
+/* @fn _offerMoment, the stamp for a value that came from an offer chip:
+   a copy naming its source for `corpus:<id>`, a lexicon fill otherwise. */
+function _offerMoment(src) {
+  return String(src).startsWith('corpus:') ? _copyFieldProv(src.slice(7)) : _derivedFieldProv();
 }
 
 /* ══ D61 · lemma proposals ═══════════════════════════════════════════════════
@@ -4394,7 +4586,7 @@ function _corpusLangCode() {
    it, so "what happens on a miss" is answered in the same place and the same
    words in both. The decision moves to before the save, where it is still cheap, after the save it is a duplicate somebody has to merge. */
 // @fn lemmaStripHtml
-function lemmaStripHtml(form, inputId, origForm = '', word = null, newAnyway = false) {
+function lemmaStripHtml(form, inputId, origForm = '', word = null, newAnyway = false, chosenId = '') {
   // D42: a provider now. It decides WHAT to say; offerStripHtml decides how.
   const r = resolveLemma(form);
   /* D61: an EMPTY field is where a proposal belongs, and until now it was the
@@ -4455,18 +4647,23 @@ function lemmaStripHtml(form, inputId, origForm = '', word = null, newAnyway = f
      `stop` — saving as it stands writes nothing, which is true until one of
      these is clicked — but the offers are the answer rather than an apology. */
   if (r.status === 'ambiguous') {
+    /* B-211: the pick has to show, as B-161 says of the exact branch. Without
+       `chosenId` the strip repainted to the same question after a click, and the
+       choice, which the save did honour, looked like a click that did nothing. */
+    const chosen = r.candidates.find(l => l.id === chosenId);
     const picks = r.candidates.map(l => {
       const g = lemmaGroup(l.id);
       return { label: `${l.form}${l.homograph ? '\u00b7' + l.homograph : ''}`,
                meta: t('label.lemma.group_size', { entries: g.entries.length, tokens: g.tokens.length }),
-               value: l.form, target: inputId, act: 'lemma-pick', entryId: l.id };
+               value: l.form, target: inputId, act: 'lemma-pick', entryId: l.id, taken: l === chosen };
     });
     /* D35 B3's "Not this one…" one layer over: the annotator may mean a lemma
        that is not on the list, and until now the field could not say so at all. */
     picks.push({ label: t('btn.lemma.new_anyway'), meta: null,
                  value: (form || '').trim(), target: inputId, act: 'lemma-new' });
-    return offerStripHtml({ verdict: { kind: 'stop',
-      text: t('hint.lemma.ambiguous', { n: r.candidates.length }) }, offers: picks });
+    return offerStripHtml({ verdict: chosen
+      ? { kind: 'will', text: `${t('hint.lemma.will_link')} — ${chosen.form}${chosen.homograph ? '\u00b7' + chosen.homograph : ''}` }
+      : { kind: 'stop', text: t('hint.lemma.ambiguous', { n: r.candidates.length }) }, offers: picks });
   }
 
   /* L-017: the field was already linked to a lemma and now names something that
@@ -4505,8 +4702,12 @@ function refreshLemmaStrip(inputId) {
   /* B-161: the field's standing answer is part of what the strip has to say.
      Read here rather than held in a variable because `takeOffer` writes it to
      the dataset and the save reads it from there — one place holds it. */
+  /* B-211: the lemma chosen in the field, or the token's own link while the
+     field still shows what was saved. */
+  const chosenId = inp.dataset.lemmaId ||
+    (word && inp.value.trim() === (inp.dataset.original || '').trim() ? (word.lemma_id || '') : '');
   host.innerHTML = lemmaStripHtml(inp.value, inputId, inp.dataset.original || '', word,
-                                  inp.dataset.lemmaNew === '1');
+                                  inp.dataset.lemmaNew === '1', chosenId);
 }
 
 /* @fn takeOffer, the single accept path for every offer in the app.
@@ -4520,6 +4721,8 @@ function takeOffer(btn) {
   const src = btn.dataset.offerSrc || '';
 
   if (act === 'copy-row') { takeCopyRow(btn); return; }    // D40 stage B
+  if (act === 'word-analysis') { takeWordAnalysis(btn); return; }   // D40 stage D
+  if (act === 'translit-set')  { takeWordTranslit(btn); return; }
 
   if (act === 'set') {
     const inp = document.getElementById(btn.dataset.offerTarget);
@@ -10024,6 +10227,9 @@ function renderWord() {
   const actionBtns  = _wordIsEmpty ? annotateBtn : `${annotateBtn}${lexiconBtn}`;
   // S3: a one-line hint makes the Annotate-vs-Lexicon split explicit, shown only
   // in the state where both are offered (filled token with no dict entry yet).
+  // B-212: the word's own transliterations, which this view did not draw.
+  const translitHtml = (word.transliterations || []).some(x => x && x.text)
+    ? `<div class="word-view-translit">${renderTransliterationsView(word.transliterations)}</div>` : '';
   const actionHint  = (!_wordIsEmpty && !_hasDictEntry)
     ? `<div class="word-action-hint">${t('hint.view.word.annotate_vs_lexicon')}</div>` : '';
 
@@ -10042,6 +10248,7 @@ function renderWord() {
         ${actionBtns}
       </div>
       ${actionHint}
+      ${translitHtml}
       ${word.morphological_parse ? `<div class="word-view-parse">${esc(word.morphological_parse)}</div>` : ''}
       ${wordGloss(word, { gaps: true }) ? `<div class="word-view-gloss">${esc(wordGloss(word, { gaps: true }))}</div>` : ''}
     </div>
@@ -11002,7 +11209,7 @@ function stampFieldProv(obj, fieldsMap) {
       /* B-127: interned, not an object. The serializer now converts either shape,
          but the format's own statement is that `field_prov` holds an index, and
          a writer that quietly disagrees with it is how this went wrong. */
-      stampField(obj, field, normCur !== '' ? (from ? _derivedFieldProv() : p) : null);
+      stampField(obj, field, normCur !== '' ? (from ? _offerMoment(from) : p) : null);
       /* B-027. HERE because this is the one loop that already knows a field's
          name, its new value, and that the value CHANGED — so the report fires
          when someone writes a tag, not on every re-save of a record that has
@@ -12642,6 +12849,7 @@ function renderWordEdit() {
       <span class="edit-badge">${t('badge.editing')}</span>
     </div>
     ${annotatorBar()}
+    <div id="ew-seen-strip"></div>
     <div class="edit-group" ${provTipAttr(word, 'transliterations')}>
       <label class="edit-label">${t('label.editor.transliterations')}</label>
       ${/* B-045 · D32 step 3. One box over a multi-label array is what this was:
@@ -12656,6 +12864,7 @@ function renderWordEdit() {
           (word.transliterations && word.transliterations.length)
             ? word.transliterations
             : (word.transliteration ? [{ label: '', text: word.transliteration }] : []))}
+      <div id="ew-translit-differs"></div>
     </div>
     <!-- D46 appendix, v3.14.409: the order is transliteration, POS, word gloss,
          parse, morpheme rows, lemma. POS is a closed vocabulary answered in a
@@ -12668,6 +12877,7 @@ function renderWordEdit() {
       <label class="edit-label" for="ew-pos">${t('label.abbr.pos')}</label>
       <input class="edit-input ac-input" data-ac-pool="pos" type="text" ${LING_ATTRS_UPPER} id="ew-pos" value="${esc(word.part_of_speech || '')}" data-original="${esc(word.part_of_speech || '')}" data-word-form="${escAttr(word.form || '')}" autocomplete="off" placeholder="${t('label.abbr.pos')}">
       <div id="ew-pos-strip">${wordPosStripHtml(word.form, word.part_of_speech || '')}</div>
+      <div id="ew-pos-differs"></div>
       ${chipRowHtml('ew-pos', word.part_of_speech || '', POS_CHOICES, 'pos-select', 'upper', 'word')}
     </div>
     <div class="edit-group" ${provTipAttr(word, 'gloss')}>
@@ -12680,11 +12890,13 @@ function renderWordEdit() {
                 title="${t('title.editor.leipzig')}"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-list-bullets"/></svg></button>
       </div>
       <div id="ew-gloss-derive">${derivePreviewHtml(word, 'gloss', _ewGlossNow)}</div>
+      <div id="ew-gloss-differs"></div>
     </div>
     <div class="edit-group" ${provTipAttr(word, 'morphological_parse')}>
       <label class="edit-label" for="ew-parse">${t('label.editor.morph_parse')}</label>
       <input class="edit-input" type="text" ${LING_ATTRS} id="ew-parse" dir="auto" value="${esc(parseVal)}" data-original="${esc(parseVal)}" placeholder="${t('placeholder.editor.word_parse')}">
       <div id="ew-parse-derive">${derivePreviewHtml(word, 'morphological_parse', parseVal)}</div>
+      <div id="ew-parse-differs"></div>
       <div id="ew-parse-guide">${parseGuideHtml(parseVal)}</div>
       <div class="edit-hint">${t('hint.es.morph_segmentation')}</div>
       ${S.dictionary.length ? renderMorphSuggestPanel(word.form, parseVal, word) : ''}
@@ -12699,7 +12911,8 @@ function renderWordEdit() {
              data-ac-pool="lemma" autocomplete="off" autocorrect="off" spellcheck="false"
              value="${escAttr(curLemmaForm)}" data-original="${escAttr(curLemmaForm)}"
              placeholder="${t('placeholder.editor.lemma_form_long')}">
-      <div id="ew-lemma-strip">${lemmaStripHtml(curLemmaForm, 'ew-lemma', '', word)}</div>
+      <div id="ew-lemma-strip">${lemmaStripHtml(curLemmaForm, 'ew-lemma', '', word, false, word.lemma_id || '')}</div>
+      <div id="ew-lemma-differs"></div>
       <div class="edit-hint">${t('hint.es.lemma_autocomplete')}</div>
     </div>
     <div class="edit-group" ${provTipAttr(word, 'comments')}>
@@ -13954,7 +14167,7 @@ function saveWord(wordId, sentId) {
 
          One rule, read per input, so a fourth offerable field cannot be added
          without a stamp — there is nowhere left to forget it. */
-      const _mFrom = el => (el?.dataset.offerSrc ? _derivedFieldProv() : mp);
+      const _mFrom = el => (el?.dataset.offerSrc ? _offerMoment(el.dataset.offerSrc) : mp);
       const _mStamp = (key, val, orig, el) => {
         if ((val || '') === orig) return;
         if (val) morphFieldProv[key] = _mFrom(el);
@@ -14158,7 +14371,7 @@ function saveWord(wordId, sentId) {
     chosenId:  _lemmaEl?.dataset.lemmaId  || '',
     newAnyway: _lemmaEl?.dataset.lemmaNew === '1' });
   _setWordLemma(word, _newLemmaId);
-  stampFieldProv(word, { lemma_id: { orig: _lemmaOrig, cur: wLemma } });
+  stampFieldProv(word, { lemma_id: { orig: _lemmaOrig, cur: wLemma, from: offerSrcOf('ew-lemma') } });
 
   // S2: register any new POS / type / translit-label values this edit introduced,
   // so they appear in the label autocompletes elsewhere.

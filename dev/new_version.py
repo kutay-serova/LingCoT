@@ -33,6 +33,8 @@ BRANCHES (v3.14.412)
     --release numbers every change file in the order it was started, prepends
     the entries to edit_log.md, stamps the docs once and moves each change file
     into its archive folder. Commit the result, then merge with --ff-only.
+    A bug fixed on the branch goes in BUGS.md's Fixed table as fixed in
+    `pending:<slug>`; --release writes the version there.
 
     Slugs on a branch are the build label, so they are short: lower case,
     digits, - and _, at most 16 characters.
@@ -289,6 +291,13 @@ def release():
 
     set_version_py(new.lstrip('v'))
     stamp_docs(old, new)
+
+    # A bug fixed on the branch is listed in BUGS.md as fixed in `pending:<slug>`.
+    if os.path.exists(BUGS):
+        text = open(BUGS, encoding='utf-8').read()
+        for v, c, _ in released:
+            text = text.replace(f'pending:{c["slug"]}', v)
+        open(BUGS, 'w', encoding='utf-8').write(text)
 
     # Moved, not deleted: the archive keeps the change file as it was written.
     for _, c, _ in released:

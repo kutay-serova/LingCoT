@@ -124,8 +124,13 @@ check(/function takeOffer\(/.test(html), 'which reaches exactly one handler');
    is a mechanism that quietly does nothing. */
 check(/dataset\.offerSrc = src/.test(html),
       'taking an offer marks the field it wrote into');
-check(/from \? _derivedFieldProv\(\) : p/.test(html),
+check(/from \? _offerMoment\(from\) : p/.test(html),
       'and stampFieldProv stamps a marked field as derived, not as the annotator');
+/* D40 stage D: `_offerMoment` is derived either way; a `corpus:<id>` mark adds
+   the source through _copyFieldProv, which spreads _derivedFieldProv. */
+check(/_copyFieldProv\(src\.slice\(7\)\) : _derivedFieldProv\(\)/.test(fnSrc('LingCoT.html', '_offerMoment') || '') &&
+      /\.\.\._derivedFieldProv\(/.test(fnSrc('LingCoT.html', '_copyFieldProv') || ''),
+      'and _offerMoment is derived for every mark, naming the source for a corpus copy');
 /* v3.14.280: was `from: offerSrcOf('ew-gloss')`, which pinned the spelling of
    ONE source of the mark. B-141 added a second — a value the app assembled from
    the morphemes is no more the annotator's than one taken from a chip — so the
@@ -167,7 +172,7 @@ check(/from \? _derivedFieldProv\(\) : p/.test(html),
    individually is how two of them came to be missed. */
 {
   const save = decomment(fnSrc('LingCoT.html', 'saveWord'));
-  check(/dataset\.offerSrc\s*\?\s*_derivedFieldProv\(\)/.test(save),
+  check(/dataset\.offerSrc\s*\?\s*_offerMoment\(el\.dataset\.offerSrc\)/.test(save),
         'a morpheme field marked by an offer is stamped derived, read from the input');
   const stamped = ['gloss', 'part_of_speech', 'type']
     .filter(f => new RegExp(`_mStamp\\('${f}'`).test(save));

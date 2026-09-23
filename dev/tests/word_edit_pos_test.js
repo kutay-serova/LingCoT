@@ -244,7 +244,7 @@ test('B-093: saveWord reads the field back and stamps it', () => {
   assert(/_mStamp\('type'/.test(save),
          'and stamps provenance when it changed — a type the annotator typed is theirs, '
          + 'which is what distinguishes it from the derived stamp B-089 writes');
-  assert(/dataset\.offerSrc \? _derivedFieldProv\(\)/.test(save),
+  assert(/dataset\.offerSrc \? _offerMoment\(el\.dataset\.offerSrc\)/.test(save),
          'and a type that arrived from an offer is stamped derived instead (B-165)');
   /* v3.14.236: spelled `type: (mType || existing?.type) || undefined` since
      B-124 moved the rebuild into mergeMorpheme. Same rule; that the cleared

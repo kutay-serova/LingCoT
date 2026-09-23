@@ -244,6 +244,17 @@ function bindEvents() {
          "nominal subject" without the user having to open anything. */
   // D48 stage B: the id comes from the field table, not from this file.
   refreshSentenceOffers();                // D40 stage B, no-op outside the sentence forms
+  refreshWordOffers();                    // D40 stage D, no-op outside the word editor
+  /* Follow the form: typing into a field changes what differs and what an
+     analysis would still fill. */
+  if (S.view === 'word-edit')
+    for (const id of ['ew-pos', 'ew-gloss', 'ew-parse', 'ew-lemma', 'ew-translit'])
+      document.getElementById(id)?.addEventListener('input', () => refreshWordOffers());
+  /* The transliteration mark sits on the container, which the D42 handler does
+     not clear; a keystroke in any of its rows makes the list the annotator's. */
+  document.getElementById('ew-translit')?.addEventListener('input', e => {
+    if (e.isTrusted) delete e.currentTarget.dataset.offerSrc;
+  });
 
   const esWords = document.getElementById(fieldId('sentence', 'words'));
   const esStale = document.getElementById('es-dep-stale');
@@ -1689,6 +1700,7 @@ function initDelegatedListeners() {
         if (m[2] === 'add') addRowTo(m[1], rowBtn);
         else                removeRowFrom(m[1], rowBtn);
         refreshSentenceOffers();          // D40 stage B: a removed row may be offered again
+        refreshWordOffers();              // D40 stage D, likewise in the word editor
         return;
       }
       /* Not a row collection — `save-section-add`, `src-pick-add`, `tag-add`

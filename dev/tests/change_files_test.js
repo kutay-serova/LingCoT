@@ -37,7 +37,7 @@ const r = rel => fs.readFileSync(path.join(T, rel), 'utf8');
 const exists = rel => fs.existsSync(path.join(T, rel));
 
 w('dev/DEV_PLAN.md', '# Plan\n**Updated:** 2026-01-01 · **Version:** v3.14.1\n');
-w('dev/BUGS.md',     '# Bugs\n**Updated:** 2026-01-01 · **Version:** v3.14.1\n');
+w('dev/BUGS.md',     '# Bugs\n**Updated:** 2026-01-01 · **Version:** v3.14.1\n\n| **B-001** | S3 | pending:d40a-index | a bug |\n');
 w('dev/edit_log.md', '# Log\n**Updated:** 2026-01-01 · **Version:** v3.14.1\n\n---\n\n'
                    + '## First (2026-01-01)\n**Version:** v3.14.1 · **Type:** chore · **Archives:** none\n'
                    + '**Touched:** — documentation only\n\n---\n');
@@ -113,6 +113,8 @@ try {
   check(version() === '3.14.3', `version.py is the final number, unlabelled (${version()})`);
   check(/\*\*Version:\*\* v3\.14\.3/.test(r('dev/DEV_PLAN.md')) && /\*\*Version:\*\* v3\.14\.3/.test(r('dev/BUGS.md')),
         'the docs are stamped once, to the final number');
+  check(/\| \*\*B-001\*\* \| S3 \| v3\.14\.2 \|/.test(r('dev/BUGS.md')),
+        'a bug fixed in pending:<slug> gets that change\'s version');
   check(!exists('dev/changes/d40a-index.md') && exists('dev/archive/changes/d40a-index/change_d40a-index.md'),
         'change files move into their archive folders');
   check(/git merge --ff-only feat/.test(res.stdout), 'it prints the fast-forward merge');

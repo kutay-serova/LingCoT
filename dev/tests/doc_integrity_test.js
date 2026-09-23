@@ -480,6 +480,9 @@ console.log('\nedit_log integrity');
       orders.set(ch[2], f);
       const tch = (/\*\*Touched:\*\*\s*(.+)/.exec(body) || [])[1];
       if (!tch) { bad.push(`         ${f} has no **Touched:** line`); continue; }
+      /* The edit-log word cap, checked here so it fails before --release. */
+      if (body.split(/\s+/).length > 400 && !/dev\/audits\//.test(body))
+        bad.push(`         ${f} is over the 400-word edit-log cap`);
       if (!HAVE_ARCHIVE || /^—|^documentation only/i.test(tch)) continue;
       const dir = path.join(DEV, 'archive', 'changes', slug);
       const have = fs.existsSync(dir) ? fs.readdirSync(dir).join('\n') : '';
@@ -491,7 +494,12 @@ console.log('\nedit_log integrity');
           bad.push(`         ${f} touched ${raw} — no pre-edit copy in dev/archive/changes/${slug}/`);
       }
     }
-    if (chFiles.length)
+    /* A bug fixed on the branch waits in BUGS.md as `pending:<slug>`; the slug
+       must be an open change, or --release would never replace it. */
+    const bugsTxt = fs.readFileSync(path.join(DEV, 'BUGS.md'), 'utf8');
+    for (const m of bugsTxt.matchAll(/pending:([a-z0-9_-]+)/g))
+      if (!chFiles.includes(`${m[1]}.md`)) bad.push(`         BUGS.md says fixed in pending:${m[1]}, and no such change is open`);
+    if (chFiles.length || /pending:/.test(bugsTxt))
       check(bad.length === 0, `${chFiles.length} open change file(s) are well-formed and archived`, bad.join('\n'));
     else
       console.log('  --   change files — none open (main, or a branch before its first change)');
