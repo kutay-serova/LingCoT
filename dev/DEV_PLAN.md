@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-23 · **Version:** v3.14.418
+**Updated:** 2026-09-23 · **Version:** v3.14.419
 
 | § | What is in it |
 |---|---|
@@ -104,7 +104,7 @@ true before each audience sees this*. Set v3.14.188.
 | Gate | Before | The question | Open |
 |---|---|---|---|
 | ~~[1](#gate-1--before-git-init)~~ | `git init` | can history start clean? | **✅ TAKEN v3.14.391–392** — 214 files, disclosed, signed off, and **B-206** found by the hook on the first commit |
-| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 4 |
+| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 7 |
 | [3](#gate-3--before-the-first-stable-version) | the first stable version | is the data model settled enough that users' files keep opening? | 8 |
 | [4](#gate-4--can-wait-for-the-next-stable) | — | new capability and the cosmetic tail | 12 |
 
@@ -160,6 +160,34 @@ or hitting a wall?
 | ◑ | a fresh-machine install | `setup.py` has never been run by anyone but its author. **Half taken v3.14.394**: the published repo was cloned onto a clean Linux machine and `build_env.py` run for real. It **succeeded** — venv built, all packages resolved, `~/LingCoT-Data/` created — and then every command it printed afterwards failed (**B-207**, 67 of them). What is still owed is the half this cannot reach: **macOS, by double-click, on a machine with no developer tooling.** `setup.command` opens a browser when python3 is absent, and the Gatekeeper refusal path in `setup.md` has never been walked by a stranger |
 | ✅ | an annotator quickstart | **`QUICKSTART.md`, v3.14.395**, linked from README Contents. Grew past "half a page" on purpose: it is a guided tour of every major feature in the order a first session meets them — corpus, ingest, gloss, dictionary and the offer strip, translation, dependency parse, search, Progress, export — because a tester who never reaches search cannot report on it. GUI only, **no terminal commands**: the audience is linguists, not developers, and the Section text box makes the whole path clickable. Guarded by `quickstart_labels_test.js` |
 
+| — | **D41** Reader Mode, both modes | added v3.14.419; the build's plan is below |
+| — | an interface language picker, with `haw.json` | added v3.14.419; the build's plan is below |
+
+##### The tester's build: v3.15.0
+
+Decided v3.14.419. Branch `tester-build`, one change file per step, released
+together with `new_version.py --release --minor`.
+
+| step | change | what | done when |
+|---|---|---|---|
+| 1 | `tb-settings` | user settings move out of the repo: `resources/locale/settings.json` is tracked and rewritten by the theme toggle. Defaults stay in the repo; the user copy lives in the data folder; migrated once | toggling the theme leaves `git status` clean |
+| 2 | `tb-i18n` | English fallback in `t()`; locale list read from `resources/locale/`; picker in Settings, applied without restart; `haw.json` as a copy of `en.json` except `_meta` (`locale: "haw"`, `language: "ʻŌlelo Hawaiʻi"`); key and placeholder parity guard; **B-210** | switching to `haw` and back changes nothing visible; the guard fails on a missing key or placeholder |
+| 3 | `tb-strings` | every finding in `dev/audits/I18N_AUDIT_2026-09-24.md` (S1–S6, R1–R13, H1) moves into `en.json`, and the audit's scanner becomes a suite guard | the scanner reports 0 |
+| 4 | `tb-reader-cols` | D41 B, column view | a section reads as text against translation, read-only |
+| 5 | `tb-reader-igt` | D41 A, interlinear, with the highlight rule below | hover and popup behave as specified |
+| 6 | `tb-release` | release notes, tester instructions, `--minor` in `new_version.py` | v3.15.0 tagged; the macOS clean-machine install walked on this build |
+
+**Decisions.** Both reader modes ship. The reader popup is read-only; editing
+stays in the annotation views. `haw.json` is a placeholder copy until
+translation starts, and translation starts after step 3, so the translator
+receives the complete key set. Windows is out of this build (gate 4).
+
+**Highlight rule, Reader Mode A.** Hovering a word highlights, by default, every
+word with the same spelling (`normForm`). If the hovered word has a `dict_id`,
+only words with the same `dict_id` are highlighted. A toolbar switch
+*Highlight: word / lemma* changes the rule to same `lemma_id`. The popup names
+the rule that matched.
+
 #### Gate 3 — before the first stable version
 
 The theme is the data model: past this point there are users' files that must
@@ -184,7 +212,7 @@ New capability rather than model correctness, plus the cosmetic tail.
 
 | | |
 |---|---|
-| **Features** | D37 · D28 · D31 · D34 · D41 · D25 P3 · D20 · D24 · D29 P2 |
+| **Features** | D37 · D28 · D31 · D34 · D25 P3 · D20 · D24 · D29 P2 · a Windows build (`setup` and the host have only run on macOS and Linux) |
 | **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name · B-210 the gloss legend's "derived" |
 | **Retired** | F5, the parse field as primary surface — on evidence 2026-08-29: D46's session put POS *before* the parse, so the parse is the pivot for what sits below it, not the opening move. **Half of it shipped anyway**: D53 stage E ✅ v3.14.300 built the per-segment lexicon offer under the parse field, which was F5's other claim. Only "primary surface" was retired (UNIFIED conflict ⑮, settled v3.14.310) |
 
@@ -379,7 +407,9 @@ two-column layout, sentence-level hover-highlighting already works, and
 `SECTION_PARA_BATCH = 30` already lazy-loads. **A is the larger half**: per-word
 highlighting needs an identity rule (form, `dict_id` or lemma — D35 again) and
 the IGT renderer has only ever run one sentence at a time. **Read-only is the
-smaller promise and the one the name implies.** Any new view must reach
+smaller promise and the one the name implies.** *Scheduled v3.14.419 for
+the tester's build (gate 2): both modes, popup read-only, identity rule decided
+there.* Any new view must reach
 `_renderCacheKey`: tier toggles change the screen without changing nav state,
 which is the B-008 / B-011 / B-019 family.
 

@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.14.418
+**Updated:** 2026-09-23 · **Version:** v3.14.419
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,30 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## Tester's build planned as v3.15.0; interface text audited before translation (2026-09-23)
+**Version:** v3.14.419 · **Type:** decision · **Archives:** `dev/archive/changes/tester_build_plan/` (v3.14.418)
+**Touched:** dev/DEV_PLAN.md · dev/audits/I18N_AUDIT_2026-09-24.md (new) · dev/audits/AUDIT_INDEX.md
+
+**The decision.** Gate 2 gains D41 (both modes, read-only popup) and an
+interface language picker with `haw.json` as a placeholder copy of `en.json`.
+Six steps on branch `tester-build`, released as v3.15.0 (DEV_PLAN gate 2).
+Reader Mode A highlights by spelling, narrowed to `dict_id` when the word has
+one, with a switch to `lemma_id`. Windows moves to gate 4.
+
+**The audit.** `dev/audits/I18N_AUDIT_2026-09-24.md`: every user-visible string
+checked against `en.json`. 6 static-shell findings, 31 rendered strings in 13
+places, 1 host string. Resource descriptions (257 keys) and fonts (ʻokina,
+kahakō) are covered.
+
+**Alternatives considered, and why not.** Translating before the strings move
+would hand the translator an incomplete file. Keeping `settings.json` in the
+repo would put every tester's theme and locale into `git status`.
+
+**What this binds.** Step order: settings, i18n, strings, then the two reader
+modes. `--minor` is added to `new_version.py` in the last step.
 
 ---
 
