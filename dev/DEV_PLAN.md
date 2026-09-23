@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-04 · **Version:** v3.14.410
+**Updated:** 2026-09-22 · **Version:** v3.14.411
 
 | § | What is in it |
 |---|---|
@@ -263,7 +263,7 @@ in §3, because it is real open work that is no longer a feature in progress.*
 | [D49](#d49-machine-parseable-lexicon-export) | machine-parseable lexicon export | S | — | **UNGATED v3.14.282** | `dev/design/D49_lexicon_export.md` |
 | [D25 P3](#d25-p3-constituency-parse) | constituency parse | ? | — | unscoped | `dev/design/D25_dependency_parse.md` (P1/P2) |
 | [D31](#d31-ordering-of-multi-entry-fields) | ordering of multi-entry fields | XS | I2 | REDUCED v3.14.273 | `dev/design/D31_multi_entry_order.md` |
-| [D40](#d40-offer-the-annotators-own-earlier-work) | offer the annotator their own earlier work | M | — | re-scoped to word level; **B-144 ✅ v3.14.298 unblocked it** | `dev/design/D40_reuse_earlier_work.md` |
+| [D40](#d40-offer-the-annotators-own-earlier-work) | offer the annotator their own earlier work: repeated sentences and word forms | A S · B XS–S · C M · D S–M | — | **PLANNED v3.14.411**, stages A–D | `dev/design/D40_repeat_reuse.md` (plan) · `dev/design/D40_reuse_earlier_work.md` (reasoning) |
 | [D41](#d41-reader-mode) | Reader Mode | B: S–M, A: M–L | D39 | not scheduled | `dev/design/D41_reader_mode.md` |
 | [D39](#d39-standardized-keyboard-shortcuts) | standardized keyboard shortcuts | S | I2 | gate 3 | — |
 | [D37](#d37-derived-forms-and-paradigms) | derived forms and paradigms | ? | — | not scheduled; owns `variants` matching since D35 C | `dev/design/D37_paradigms.md` |
@@ -370,18 +370,26 @@ The open question it still owns — **is position meaning, or is primacy a flag?
 
 ### D40: Offer the annotator their own earlier work
 
-**Re-scoped v3.14.273 to word level, with the value measured.** Live: 22 word
-forms recur; the tokens sharing a form disagree in **exactly one**. The
-addressable set is **17 of 162 words** live, 19 of 98 sample. **Morpheme level is
-dropped** — 0 of 77 live morphemes have an empty gloss.
+**Planned v3.14.411.** Plan: `dev/design/D40_repeat_reuse.md`. Reasoning:
+`dev/design/D40_reuse_earlier_work.md`. Both prerequisites closed (D35 ✅
+v3.14.282, B-144 ✅ v3.14.298).
 
-**The one disagreement is a homograph**, which is why the D35 gate is real rather
-than cautious: `yüzdüm` → `swim-PST-1.SG` and `peel-PST-1.SG`. **A prerequisite
-the spec did not know it had: B-144** — D40 settles identity on `normForm` while
-`S.wordFormRefs` is keyed on the raw form (101 keys against 99 folded). Four
-rules it cannot avoid: **offer, never apply** · `normForm` for the object
-language · homographs make it wrong sometimes · a copied field carries its own
-provenance marker, naming the source occurrence.
+| stage | what | size |
+|---|---|---|
+| A | runtime sentence-text index, keyed on folded text | S |
+| B | translation and transliteration pre-fill in the sentence forms | XS–S |
+| C | sentence copy offer, with review panel and bulk-from-source; fill-only | M |
+| D | word chips, one per distinct analysis incl. transliterations; `differs` note on filled fields | S–M |
+
+Decided 2026-09-22: copy, not link · offer, never apply · folded-text identity ·
+no post-save propagation and no bulk word fill (the annotator sees the values
+before anything is written) · transliterations offered only from an identical
+form or sentence, never by rule · filled fields get a `differs` note in the word
+editor only.
+
+**Branch:** `d40-annotation-offers`, merged to main fast-forward at each stage
+boundary (A+B, C, D). Procedure: `PRACTICES.md` §1 Branches. No file-format change beyond an optional `from` key
+on derived prov moments; plan §5 has the compatibility table.
 
 ### D41: Reader Mode
 

@@ -1,5 +1,5 @@
 # AUDIT INDEX: every audit and design document, what it is worth, and what in it is false
-**Updated:** 2026-09-04 · **Version:** v3.14.410
+**Updated:** 2026-09-22 · **Version:** v3.14.411
 
 This file is **live**. `new_version.py` stamps it and `doc_integrity_test.js`
 checks it, which is the whole reason it exists: the frozen documents it indexes

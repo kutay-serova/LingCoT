@@ -1,5 +1,5 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-04 · **Version:** v3.14.410
+**Updated:** 2026-09-22 · **Version:** v3.14.411
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.

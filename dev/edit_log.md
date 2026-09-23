@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-04 · **Version:** v3.14.410
+**Updated:** 2026-09-22 · **Version:** v3.14.411
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,37 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## D40 planned: reuse of repeated sentences and word forms (2026-09-22)
+**Version:** v3.14.411 · **Type:** decision · **Archives:** `dev/archive/changes/d40_repeat_reuse_plan/` (v3.14.410)
+**Touched:** dev/design/D40_repeat_reuse.md (new) · dev/DEV_PLAN.md · dev/PRACTICES.md
+
+**The decision.** D40 is built in four stages: a runtime sentence-text index
+(A), translation pre-fill in the sentence forms (B), a sentence copy offer with
+a review panel (C), and word chips in the word editor (D). Copy, not link;
+offer, never apply; sentences match on folded text. Transliterations, word and
+sentence, are offered only from an identical form or sentence, never by rule. A
+filled word field that differs from other occurrences gets a `differs` note in
+the word editor; the sentence copy panel stays fill-only.
+
+**Why.** Session of 2026-09-22 on `turkish_folk_songs_corpus`: p1 s3 repeats
+p1 s2 and started empty; three forms in p1 s1 were annotated twice by hand.
+The dictionary fill offer never reaches tokens without morphemes.
+
+**Alternatives considered, and why not.** A `repeat_of` link: new schema field,
+and search, export, LaTeX and re-tokenizing would all need to follow it. A
+post-save propagation toast and a bulk word-fill panel: both write values the
+annotator has not seen in context. Encoding the source in the `annotator` name:
+compatible, but it is the name-sniffing B-137 removed.
+
+**What this binds.** No stored change beyond an optional `from` key on derived
+prov moments; existing corpora open and save unchanged. Plan §5.
+
+**Branching.** D40 is the first feature built on a branch. `PRACTICES.md` §1
+gains the rules: one branch mints versions at a time, one commit per version,
+fast-forward merges at stage boundaries, no squash.
 
 ---
 
