@@ -114,8 +114,8 @@ console.log('\nthe free-text URL still commits on Save — a deliberate split');
     check(/googleTarget\(\)/.test(t), `a Google target is resolved: ${t}`);
 
   /* Executed: the fallback order is the decision, and reading cannot show it.
-     Interface language before English, because someone running the app in
-     Turkish is likelier to want Turkish. */
+     The corpus's metalanguage, else English. The interface language is never
+     used (xlate-target-en). */
   {
     const ctx = { LANG_TO_CANONICAL: { turkish: 'tur', tr: 'tur' }, _LOCALE: {}, doc: () => null };
     const fn = new Function('LANG_TO_CANONICAL', '_LOCALE', 'doc',
@@ -128,9 +128,9 @@ console.log('\nthe free-text URL still commits on Save — a deliberate split');
 
     check(call('tur') === 'tur', "the corpus's own metalanguage wins");
     check(call('Turkish') === 'tur', 'and is resolved through LANG_TO_CANONICAL like the source');
-    check(call(undefined, 'tr') === 'tur', 'with none declared, the interface language is used');
-    check(call('', 'tr') === 'tur', 'and a blank value counts as none rather than as empty');
-    check(call(undefined) === 'en', "English is the last resort, not the default");
+    check(call(undefined, 'tr') === 'en', 'with none declared, English, whatever the interface language');
+    check(call('', 'haw') === 'en', 'and a blank value counts as none rather than as empty');
+    check(call(undefined) === 'en', 'with no locale loaded, English as well');
     check(call('  tur  ') === 'tur', 'the declared value is trimmed');
   }
 

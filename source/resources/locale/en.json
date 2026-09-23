@@ -900,7 +900,7 @@
   "placeholder.editor.section_title_short": "Section title",
   "placeholder.editor.semantic_domain": "e.g. Body, Motion, Kinship",
   "placeholder.editor.sentence_text": "Enter the source-language sentence",
-  "placeholder.editor.translation_language": "The language you write translations in (default: the interface language)",
+  "placeholder.editor.translation_language": "The language you write translations in (default: English)",
   "placeholder.editor.type_pick": "Pick one below, or type it",
   "placeholder.editor.usage_notes": "e.g. formal register; archaic; Northern dialect",
   "placeholder.editor.variants": "comma-separated — dialect or spelling variants, not inflected forms",

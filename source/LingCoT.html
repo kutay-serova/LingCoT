@@ -16535,14 +16535,14 @@ function uiLocaleCode() {
    documentation: a Hawaiian-language project documents into Hawaiian, a Turkish
    fieldworker glosses into Turkish.
 
-   Falls back to the interface language rather than to English, because someone
-   running the app in Turkish is far more likely to want Turkish than English,
-   and 'en' as a last resort is a default rather than an assumption.
+   With none declared, English. The interface language is not a fallback
+   (changed at xlate-target-en): switching the UI language must not change what
+   machine translation writes into a corpus. Same rule as the CLI.
 
    Resolved through LANG_TO_CANONICAL like the source, so it accepts every shape
    a user might type. The NLLB server maps the canonical itself. */
 function translationTarget() {
-  const raw = (doc()?.metadata?.translation_language || '').trim() || uiLocaleCode();
+  const raw = (doc()?.metadata?.translation_language || '').trim() || 'en';
   return LANG_TO_CANONICAL[raw] || LANG_TO_CANONICAL[raw.toLowerCase()] || raw;
 }
 
