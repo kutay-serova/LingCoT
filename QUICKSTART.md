@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-09-23 · **Version:** v3.14.415
+**Updated:** 2026-09-23 · **Version:** v3.14.416
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
