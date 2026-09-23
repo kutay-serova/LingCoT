@@ -47,6 +47,9 @@ folder usually called LingCoT; your work lives here, in LingCoT-Data.
   - Do not move these files into the application folder.
   - Back up THIS folder. Backing up the application folder will not save your work.
     (In the app: Save -> Export as .zip also bundles a single corpus.)
+
+settings.json and vocabulary/ hold your app settings and the tags you added
+to the POS and morpheme-type lists.
 """
 
 
@@ -197,3 +200,23 @@ def migrate_legacy_corpora(project_root, ask, say) -> int:
     for s in skipped:
         say("warn", f"Skipped {s}")
     return moved
+
+
+# ── User settings and vocabulary (tb-settings) ────────────────────────────────
+# The app used to write these into source/resources/, i.e. into the repository:
+# every theme toggle dirtied git, and an update overwrote the user's choices.
+# The repo keeps read-only defaults; the user's copies live here.
+USER_FILES = {
+    "settings.json",                  # ui_locale, theme
+    "vocabulary/pos_tags.json",       # tags adopted from the tag drawer
+    "vocabulary/type_choices.json",
+}
+
+
+# @fn user_file_path
+def user_file_path(name: str) -> Path:
+    """Path of one of USER_FILES in the workspace. Anything else is refused, so
+    the page cannot use this to write arbitrary files."""
+    if name not in USER_FILES:
+        raise PermissionError(f"not a user file: {name!r}")
+    return WORKSPACE / name

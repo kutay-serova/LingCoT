@@ -352,6 +352,61 @@ print(json.dumps({'dirIsStr': isinstance(d, str),
         + '         the bridge needs strings, so the conversion belongs here');
 }
 
+console.log('\nsettings and vocabulary are written to the workspace, never the app folder');
+{
+  /* tb-settings. The theme toggle rewrote source/resources/locale/settings.json
+     and the tag drawer rewrote pos_tags.json / type_choices.json: every tester's
+     choices showed up in git, and an update overwrote them. The host no longer
+     has a method that writes under source/ at all. */
+  check(!/def\s+write_file\s*\(/.test(pywCode), 'the host has no write_file',
+        '         a bridge method that writes inside source/ writes into the repository');
+  const js = [html, ...fs.readdirSync(path.join(SRC, 'modules')).map(f => load('source/modules/' + f))].join('\n');
+  check(!/api\.write_file\s*\(/.test(js), 'and the page does not call one');
+  check(fs.existsSync(path.join(SRC, 'resources/locale/settings.default.json')),
+        'the repository keeps the defaults as settings.default.json');
+
+  // Executed: the real methods, with webview stubbed and a throwaway workspace.
+  const { execFileSync } = require('child_process');
+  const os = require('os');
+  const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'lingcot_ws_'));
+  const probe = `
+import importlib.util as ilu, json, os, sys, types
+sys.modules['webview'] = types.SimpleNamespace(OPEN_DIALOG=0, SAVE_DIALOG=1, FOLDER_DIALOG=2,
+                                               FileDialog=types.SimpleNamespace(OPEN=0, SAVE=1, FOLDER=2))
+sys.path.insert(0, ${JSON.stringify(SRC)})
+from importlib.machinery import SourceFileLoader
+spec = ilu.spec_from_loader('app', SourceFileLoader('app', ${JSON.stringify(path.join(SRC, 'LingCoT.pyw'))}))
+m = ilu.module_from_spec(spec); spec.loader.exec_module(m)
+api = m.Api()
+out = {'first': api.read_user_file('vocabulary/pos_tags.json')}
+api.write_user_file('vocabulary/pos_tags.json', '[{"tag": "CLF"}]')
+out['back'] = api.read_user_file('vocabulary/pos_tags.json')
+out['where'] = os.path.join(os.environ['LINGCOT_WORKSPACE'], 'vocabulary', 'pos_tags.json')
+out['landed'] = os.path.isfile(out['where'])
+out['refused'] = []
+for bad in ('../escape.json', 'LingCoT.html', 'resources/pos_tags.json'):
+    try: api.write_user_file(bad, 'x')
+    except PermissionError: out['refused'].append(bad)
+m.Api._LEGACY_SETTINGS = os.path.join(os.environ['LINGCOT_WORKSPACE'], 'legacy_settings.json')
+open(m.Api._LEGACY_SETTINGS, 'w').write('{"ui_locale": "haw", "theme": "light"}')
+out['migrated'] = api.read_user_file('settings.json')
+print(json.dumps(out))
+`;
+  let r = null, err = '';
+  try {
+    r = JSON.parse(execFileSync('python3', ['-c', probe],
+      { encoding: 'utf8', env: { ...process.env, LINGCOT_WORKSPACE: ws } }).trim().split('\n').pop());
+  } catch (e) { err = String(e.stderr || e.message).trim().split('\n').slice(-3).join(' '); }
+  check(r !== null, 'the host loads with webview stubbed', `         ${err}`);
+  if (r) {
+    check(r.first === null, 'a user file that does not exist yet reads as null, not an error');
+    check(r.landed && r.back === '[{"tag": "CLF"}]', 'a write lands in the workspace and reads back');
+    check(r.refused.length === 3, 'names outside USER_FILES are refused', `         refused only ${JSON.stringify(r.refused)}`);
+    check(r.migrated && /"haw"/.test(r.migrated), 'an old in-repo settings.json is migrated on first read');
+  }
+  try { fs.rmSync(ws, { recursive: true, force: true }); } catch (_) {}
+}
+
 console.log('\nthe README does not send users the other way');
 {
   check(!/Share the `corpora\/\[name\]\/` folder.*Git/.test(readme),

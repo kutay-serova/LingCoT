@@ -134,3 +134,8 @@ Claude outputs/
 # ── OS noise ──────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# tb-settings: the app used to write user settings here. They now live in the
+# workspace (~/LingCoT-Data/settings.json); the repo default is settings.default.json.
+# A leftover copy is migrated on first run and is never committed again.
+source/resources/locale/settings.json

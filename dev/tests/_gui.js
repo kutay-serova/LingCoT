@@ -123,7 +123,12 @@ function makeBridge(outDir, corpusPath) {
     read_file:  rel => { const p = path.join(SRC, rel);
                          return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; },
     read_abs:   abs => fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null,
-    write_file: (rel, t) => { writes.push(['write_file', rel, (t||'').length]); return true; },
+    read_user_file:  name => { const p = path.join(outDir, '_user', name);
+                               return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; },
+    write_user_file: (name, t) => { writes.push(['write_user_file', name, (t||'').length]);
+                                    const p = path.join(outDir, '_user', name);
+                                    fs.mkdirSync(path.dirname(p), { recursive: true });
+                                    fs.writeFileSync(p, t || ''); return true; },
     write_abs:  (abs, t) => { writes.push(['write_abs', path.basename(abs), (t||'').length]);
                               fs.mkdirSync(path.dirname(abs), { recursive: true });
                               fs.writeFileSync(abs, t || ''); return true; },
@@ -224,7 +229,7 @@ async function boot({ outDir, corpusPath, headed = false } = {}) {
     return api[m](...a);
   });
   await page.addInitScript(() => {
-    const names = ['read_file','read_abs','write_file','write_abs','append_abs','truncate_abs',
+    const names = ['read_file','read_abs','read_user_file','write_user_file','write_abs','append_abs','truncate_abs',
                    'setup_corpus_dir','get_workspace','get_app_info','get_server_status',
                    'open_dialog','save_dialog','zip_export','export_dict_pdf',
                    'start_nllb_server','stop_nllb_server','log_js','open_project'];

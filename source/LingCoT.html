@@ -411,10 +411,27 @@ let _LOCALE = {};
 /* ══════════════════════════════════════════════════════════════════════════════
    B1. THEME (light / dark "Warm ink"). Applied as <html data-theme>. Persisted in
    localStorage (this is a real pywebview webview, so it survives restarts); the
-   settings.json `theme` key is the declarative default used only when no local
-   choice exists yet (read in loadLocale, after pywebview is ready).
+   settings `theme` key is the default used only when no local choice exists yet
+   (read in loadLocale, after pywebview is ready).
 ══════════════════════════════════════════════════════════════════════════════ */
 let _theme = 'light';
+/* User settings: resources/locale/settings.default.json (read-only, in the repo)
+   overlaid by settings.json in the workspace. Filled by loadLocale. */
+let _settings = { ui_locale: 'en' };
+let _settingsLoaded = false;
+// @fn saveSettings, merge a change into the workspace settings.json.
+// Skipped before loadLocale has read the file, so an early theme toggle cannot
+// overwrite a saved locale with the defaults; the theme is in localStorage anyway.
+function saveSettings(patch) {
+  Object.assign(_settings, patch);
+  if (!_settingsLoaded) return;
+  try {
+    const api = window.pywebview && window.pywebview.api;
+    if (api && typeof api.write_user_file === 'function')
+      Promise.resolve(api.write_user_file('settings.json', JSON.stringify(_settings, null, 2) + '\n'))
+        .catch(err => logEvent('warn', 'settings not saved', String(err)));
+  } catch (_) {}
+}
 const _THEME_ICONS = {
   // Phosphor sun / moon, the icon shows the mode you'll switch TO.
   sun:  '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></svg>',
@@ -430,16 +447,11 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', _theme);
   updateThemeToggle();
 }
-// @fn toggleTheme, flip light↔dark, persist to localStorage (+ settings.json if writable).
+// @fn toggleTheme, flip light↔dark, persist to localStorage and settings.json.
 function toggleTheme() {
   applyTheme(_theme === 'dark' ? 'light' : 'dark');
   try { localStorage.setItem('lingcot_theme', _theme); } catch (_) {}
-  // Best-effort: keep settings.json in sync if the host exposes a writer (feature-detected).
-  try {
-    if (window.pywebview && window.pywebview.api && typeof window.pywebview.api.write_file === 'function') {
-      window.pywebview.api.write_file('resources/locale/settings.json', JSON.stringify({ ui_locale: (typeof _LOCALE === 'object' && _LOCALE._meta && _LOCALE._meta.locale) || 'en', theme: _theme }, null, 2));
-    }
-  } catch (_) {}
+  saveSettings({ theme: _theme });
 }
 // @fn updateThemeToggle, render the floating button for the current theme.
 // Icon always shows; the text label appears only once the locale is loaded
@@ -6578,8 +6590,8 @@ let POS_META = {};
    freely, so "not in Leipzig" is not a defect, and `dep_rel` has no free-text
    control to mistype into. Adding one is a line in this table. */
 const TAG_POOLS = {
-  part_of_speech: { pool: () => POS_CHOICES,  file: 'resources/pos_tags.json' },
-  type:           { pool: () => TYPE_CHOICES, file: 'resources/type_choices.json' },
+  part_of_speech: { pool: () => POS_CHOICES,  file: 'vocabulary/pos_tags.json' },
+  type:           { pool: () => TYPE_CHOICES, file: 'vocabulary/type_choices.json' },
 };
 
 /* @fn unknownTag, null when the value is fine, else what is wrong with it.
@@ -7124,7 +7136,8 @@ function tagDrawerHtml(inputId, cur, pool, action, fold, field) {
    serialising the pools, because the file may carry `scope` and `group` keys
    this app models loosely and a rewrite from memory would flatten them.
 
-   NOT SCOPED TO THE OPEN CORPUS. `write_file` writes inside the app folder, so
+   NOT SCOPED TO THE OPEN CORPUS. The tag goes to the workspace's vocabulary/
+   file (tb-settings; it used to be written into the app folder), so
    a tag adopted while annotating Turkish is offered when Mandarin is opened
    next. That is the same scope the shipped file has always had, and the drawer
    groups by use in the OPEN corpus, so an unused tag sits under "not used yet"
@@ -7148,12 +7161,12 @@ async function adoptTag(field, value) {
 
   try {
     await _pwReady;
-    const text = await window.pywebview.api.read_file(spec.file);
-    const data = JSON.parse(text);
+    const text = await window.pywebview.api.read_user_file(spec.file);
+    const data = text ? JSON.parse(text) : [];
     if (!Array.isArray(data)) throw new Error('vocabulary file is not a list');
     if (data.some(d => (typeof d === 'string' ? d : d && d.tag) === v)) return true;
     data.push({ tag: v, description: '' });
-    await window.pywebview.api.write_file(spec.file, JSON.stringify(data, null, 2) + '\n');
+    await window.pywebview.api.write_user_file(spec.file, JSON.stringify(data, null, 2) + '\n');
   } catch (err) {
     /* The tag works for this session either way. Saying so is the point: a
        vocabulary that silently forgets what was added to it is worse than one
@@ -15781,6 +15794,24 @@ async function loadLeipzigGlosses() {
   } catch (_) { /* file missing, embedded defaults remain active */ }
 }
 
+// @fn readUserVocab, tags added from the tag drawer, kept in the workspace.
+// [] when the file does not exist yet or cannot be read.
+async function readUserVocab(file) {
+  try {
+    const api = window.pywebview.api;
+    if (typeof api.read_user_file !== 'function') return [];
+    const text = await api.read_user_file(file);
+    const data = text ? JSON.parse(text) : [];
+    return Array.isArray(data) ? data : [];
+  } catch (_) { return []; }
+}
+// @fn withUserVocab, the shipped list plus the user's tags it does not already have.
+function withUserVocab(shipped, extra) {
+  const tagOf = d => (typeof d === 'string' ? d : d && d.tag);
+  const have = new Set(shipped.map(tagOf));
+  return shipped.concat(extra.filter(d => tagOf(d) && !have.has(tagOf(d))));
+}
+
 // @fn loadPosTags
 // Reads resources/pos_tags.json via PyWebView and overrides the embedded
 // POS_CHOICES fallback.  File format: [{ "tag": "NOUN", "description": "." }.]
@@ -15789,8 +15820,9 @@ async function loadPosTags() {
   await _pwReady;
   try {
     const text = await window.pywebview.api.read_file('resources/pos_tags.json');
-    const data = JSON.parse(text);
+    let data = JSON.parse(text);
     if (Array.isArray(data) && data.length) {
+      data = withUserVocab(data, await readUserVocab('vocabulary/pos_tags.json'));
       POS_CHOICES = data.map(d => (typeof d === 'string' ? d : d.tag));
       // D27 P1: keep the descriptions too, the selection category autocomplete
       // shows them as hints.  Previously discarded by the .map above.
@@ -15879,8 +15911,9 @@ async function loadTypeChoices() {
   await _pwReady;
   try {
     const text = await window.pywebview.api.read_file('resources/type_choices.json');
-    const data = JSON.parse(text);
+    let data = JSON.parse(text);
     if (Array.isArray(data) && data.length) {
+      data = withUserVocab(data, await readUserVocab('vocabulary/type_choices.json'));
       TYPE_CHOICES = data.map(d => (typeof d === 'string' ? d : d.tag));
       // D27 P4: keep the descriptions this file has always carried.
       TYPE_DESCRIPTIONS = {};
@@ -15916,26 +15949,28 @@ async function loadDepRelations() {
 
 // @fn loadLocale
 // Reads resources/locale/{lang}.json via PyWebView and populates _LOCALE.
-// lang is read from resources/locale/settings.json { "ui_locale": "en" };
-// falls back to "en" if the settings file is missing or unreadable.
+// lang comes from the settings: resources/locale/settings.default.json, overlaid
+// by settings.json in the workspace (read_user_file). Falls back to "en".
 // On success, calls render() so any t() calls in the current view reflect
 // the loaded strings.  If the locale file is missing, _LOCALE stays empty
 // and t() returns key strings as readable English fallback.
 async function loadLocale() {
   await _pwReady;
-  let lang = 'en';
+  const api = window.pywebview.api;
+  let dflt = {}, user = {};
+  try { dflt = JSON.parse(await api.read_file('resources/locale/settings.default.json')) || {}; } catch (_) {}
   try {
-    const settingsText = await window.pywebview.api.read_file('resources/locale/settings.json');
-    const settings = JSON.parse(settingsText);
-    if (typeof settings.ui_locale === 'string' && settings.ui_locale) {
-      lang = settings.ui_locale;
-    }
-    // B1: settings.json `theme` is the declarative default, applied only when the
-    // user has no stored (localStorage) choice yet, so a manual toggle always wins.
-    if (!_readStoredTheme() && (settings.theme === 'dark' || settings.theme === 'light')) {
-      applyTheme(settings.theme);
-    }
-  } catch (_) { /* settings missing, default to 'en' */ }
+    const u = typeof api.read_user_file === 'function' ? await api.read_user_file('settings.json') : null;
+    if (u) user = JSON.parse(u) || {};
+  } catch (_) { /* unreadable user file: defaults apply, and the next save rewrites it */ }
+  _settings = { ..._settings, ...dflt, ...user };
+  _settingsLoaded = true;
+  const lang = (typeof _settings.ui_locale === 'string' && _settings.ui_locale) || 'en';
+  // B1: the settings theme applies only when the user has no stored
+  // (localStorage) choice yet, so a manual toggle always wins.
+  if (!_readStoredTheme() && (_settings.theme === 'dark' || _settings.theme === 'light')) {
+    applyTheme(_settings.theme);
+  }
   try {
     const text = await window.pywebview.api.read_file(`resources/locale/${lang}.json`);
     const data = JSON.parse(text);

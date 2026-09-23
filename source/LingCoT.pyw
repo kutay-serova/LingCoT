@@ -15,6 +15,7 @@ import os
 import tempfile
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -67,7 +68,7 @@ from log_setup import setup_session_logger
 from version import __version__ as APP_VERSION
 from workspace import (WORKSPACE as _WORKSPACE_PATH,
                        CORPORA_DIR as _CORPORA_DIR_PATH,
-                       ensure_workspace)
+                       ensure_workspace, user_file_path)
 WORKSPACE   = str(_WORKSPACE_PATH)
 CORPORA_DIR = str(_CORPORA_DIR_PATH)
 from pathlib import Path as _Path
@@ -156,21 +157,41 @@ class Api:
             _log.error(f"read_file failed for {rel_path!r}: {exc}")
             raise
 
-    def write_file(self, rel_path, content):
-        """Write a bundled data file. Same path restriction as read_file.
-        Used for: saving edits to data files (e.g. custom Leipzig glosses)."""
-        full = os.path.normpath(os.path.join(BASE, rel_path))
-        if not full.startswith(BASE + os.sep) and full != BASE:
-            _log.warning(f"write_file blocked path escape attempt: {rel_path!r}")
-            raise PermissionError("Access outside the app directory is not allowed.")
+    # ── User settings and vocabulary (workspace, not the app folder) ─────────
+    # There is deliberately no write_file: nothing the page does may write inside
+    # source/, which is the repository (tb-settings).
+
+    # Shipped copy of settings.json before tb-settings; migrated once.
+    _LEGACY_SETTINGS = os.path.join(BASE, 'resources', 'locale', 'settings.json')
+
+    def read_user_file(self, name):
+        """Read one of workspace.USER_FILES. Returns None if it does not exist yet,
+        which is the normal state on first run, so it is not logged as an error.
+        settings.json is first copied from the old in-repo location if only that exists."""
+        path = user_file_path(name)
+        if name == 'settings.json' and not path.exists() and os.path.isfile(self._LEGACY_SETTINGS):
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(self._LEGACY_SETTINGS, path)
+                _log.info(f"settings.json migrated to {path}")
+            except OSError as exc:
+                _log.warning(f"settings.json migration failed: {exc}")
+        if not path.exists():
+            return None
+        return path.read_text(encoding='utf-8')
+
+    def write_user_file(self, name, content):
+        """Write one of workspace.USER_FILES, atomically (temp file + os.replace)."""
+        path = user_file_path(name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + '.tmp')
         try:
-            os.makedirs(os.path.dirname(full), exist_ok=True)
-            with open(full, 'w', encoding='utf-8') as f:
-                f.write(content)
-            _log.debug(f"write_file: {rel_path} ({len(content):,} chars)")
+            tmp.write_text(content, encoding='utf-8')
+            os.replace(tmp, path)
+            _log.debug(f"write_user_file: {name} ({len(content):,} chars)")
             return True
         except Exception as exc:
-            _log.error(f"write_file failed for {rel_path!r}: {exc}")
+            _log.error(f"write_user_file failed for {name!r}: {exc}")
             raise
 
     # ── User corpus / dictionary files (absolute paths anywhere on disk) ──────

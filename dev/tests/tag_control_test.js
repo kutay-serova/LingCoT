@@ -417,7 +417,10 @@ console.log('\nB-027 · an unknown tag');
     api: {
       read_file: async f => (f === 'resources/pos_tags.json'
         ? '[{"tag":"NOUN","description":"n"}]' : '[]'),
-      write_file: async (f, c) => { ctx.__written = [f, c]; return true; },
+      // tb-settings: adopted tags live in the workspace, over the shipped list.
+      read_user_file: async f => (f === 'vocabulary/pos_tags.json'
+        ? '[{"tag":"CLF","description":""}]' : null),
+      write_user_file: async (f, c) => { ctx.__written = [f, c]; return true; },
       /* Present because the bridge stub makes the boot path run: with no
          `pywebview` these are never reached, and with one they are. */
       get_workspace: async () => ({}),
@@ -518,12 +521,14 @@ console.log('\nB-027 · an unknown tag');
           '       an "add this" button for a tag already in the list is the\n'
         + '       offer-that-does-nothing shape (B-108, B-166, B-193)');
     const w = ctx.__written;
-    check(w && w[0] === 'resources/pos_tags.json',
-          'and it is written to the project vocabulary file, not only to memory',
+    check(run("POS_CHOICES.includes('CLF')") && run("POS_CHOICES.includes('NOUN')"),
+          'the shipped list and the workspace vocabulary are both loaded');
+    check(w && w[0] === 'vocabulary/pos_tags.json',
+          'and it is written to the workspace vocabulary file, not only to memory',
           `       wrote: ${JSON.stringify(w && w[0])} — in memory only, the tag is\n`
         + '       gone next launch and the annotator is asked again');
     const back = w ? JSON.parse(w[1]) : [];
-    check(back.some(x => x.tag === 'EVID') && back.some(x => x.tag === 'NOUN'),
+    check(back.some(x => x.tag === 'EVID') && back.some(x => x.tag === 'CLF') && !back.some(x => x.tag === 'NOUN'),
           'appended to what the file held, rather than replacing it',
           `       ${JSON.stringify(back)} — serialising the pool from memory\n`
         + '       would flatten the scope and group keys the app models loosely');
