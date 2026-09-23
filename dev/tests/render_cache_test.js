@@ -63,6 +63,7 @@ const check = (ok, label, detail) => {
    Each entry names the function that does the repainting, so a reader can check
    the claim. Delete the entry if that path ever goes away. */
 const TARGETED_REFRESH = {
+  _copyPanel:       'renderCopyPanel() repaints #copy-panel-body, which sits outside #content',
   _dictFilter:      'rerenderDictTable() repaints the tbody directly',
   _dictTypeFilter:  'rerenderDictTable() repaints the tbody directly',
   _dictShowDomain:  'rerenderDictTable(true) repaints thead + tbody directly',

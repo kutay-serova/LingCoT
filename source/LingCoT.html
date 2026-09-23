@@ -1955,6 +1955,420 @@ function stampCopies(copies) {
   if (copies.length) logEvent('info', 'sentence offer kept', copies.length);
 }
 
+/* ══ D40 stage C · copy a sentence's annotation to one with the same text ══════
+   A banner on the sentence view when a sentence with the same folded text
+   (stage A) would fill something empty here, and, on an annotated sentence,
+   when it could fill its repeats. The review panel shows every value per word;
+   Copy writes only ticked rows and only EMPTY fields. A field holding a
+   different value is shown as a conflict and never written here: the word
+   editor's differs note (stage D) is where it is changed.
+
+   Written through `mutate` (journal, session tracker), stamped
+   _copyFieldProv(<source sentence id>). "Undo copy" restores an in-memory
+   snapshot for the rest of the session; D56 is the general undo. */
+
+let _copyPanel = null;     // what the open panel shows
+let _copyUndo  = null;     // { from, targets: [{ sentId, sent, words: [{ id, snap }] }] }
+
+/* @fn _copyCell, one field: nothing in the source, write, already there, or a conflict */
+function _copyCell(cur, val) {
+  if (!val) return { state: 'none' };
+  if (!cur) return { state: 'write', val };
+  return cur === val ? { state: 'same', val } : { state: 'conflict', cur, val };
+}
+
+// @fn _lemmaLabel, a lemma's citation form with its homograph number
+function _lemmaLabel(id) {
+  const l = lemmaById(id);
+  return l ? `${l.form}${l.homograph ? '·' + l.homograph : ''}` : '';
+}
+
+/* @fn wordCopyPlan, what copying `src` onto `tgt` would do, field by field.
+   `headMap` maps a source word's sentence-local id to the aligned target's. */
+function wordCopyPlan(src, tgt, headMap) {
+  const p = { src, tgt, cells: {}, ops: [] };
+  const norm = f => normForm(f || '');
+
+  // Morphemes first: whether the composed gloss can be written depends on them.
+  const sm = src.morphemes || [], tm = tgt.morphemes || [];
+  if (sm.length && !tm.length) p.ops.push({ op: 'morphemes' });
+  else if (sm.length && sm.length === tm.length && sm.every((m, i) => norm(m.form) === norm(tm[i].form)))
+    sm.forEach((m, i) => {
+      for (const f of ['gloss', 'type', 'part_of_speech'])
+        if (m[f] && !tm[i][f]) p.ops.push({ op: 'morph-field', i, field: f, val: m[f] });
+      if (m.dict_id && !tm[i].dict_id && findDictEntry(m.dict_id)) p.ops.push({ op: 'morph-field', i, field: 'dict_id', val: m.dict_id });
+    });
+  const morphsCarryGloss = p.ops.some(o => o.op === 'morphemes' || (o.op === 'morph-field' && o.field === 'gloss'));
+
+  // Transliterations, per label the target lacks.
+  const tHave = (tgt.transliterations || []).filter(x => x && x.text);
+  const sHave = (src.transliterations || []).filter(x => x && x.text);
+  const add = sHave.filter(x => !tHave.some(y => (y.label || '') === (x.label || '')));
+  const clash = sHave.some(x => tHave.some(y => (y.label || '') === (x.label || '') && y.text !== x.text));
+  p.cells.translit = add.length ? { state: 'write', val: add.map(x => x.text).join(' / ') }
+    : !sHave.length ? { state: 'none' }
+    : clash ? { state: 'conflict', cur: tHave.map(x => x.text).join(' / '), val: sHave.map(x => x.text).join(' / ') }
+    : { state: 'same', val: sHave.map(x => x.text).join(' / ') };
+  if (add.length) p.ops.push({ op: 'translits', val: add });
+
+  p.cells.parse = _copyCell(tgt.morphological_parse || '', src.morphological_parse || '');
+  if (p.cells.parse.state === 'write') p.ops.push({ op: 'field', field: 'morphological_parse', val: src.morphological_parse });
+
+  p.cells.gloss = _copyCell(wordGloss(tgt) || '', wordGloss(src) || '');
+  if (p.cells.gloss.state === 'write') {
+    if (src.gloss) p.ops.push({ op: 'field', field: 'gloss', val: src.gloss });
+    else if (!morphsCarryGloss) p.cells.gloss = { state: 'none' };   // nothing here would carry it
+  }
+
+  p.cells.pos = _copyCell(tgt.part_of_speech || '', src.part_of_speech || '');
+  if (p.cells.pos.state === 'write') p.ops.push({ op: 'field', field: 'part_of_speech', val: src.part_of_speech });
+
+  const sl = lemmaById(src.lemma_id) ? src.lemma_id : '';
+  p.cells.lemma = !sl ? { state: 'none' }
+    : !tgt.lemma_id ? { state: 'write', val: _lemmaLabel(sl) }
+    : tgt.lemma_id === sl ? { state: 'same', val: _lemmaLabel(sl) }
+    : { state: 'conflict', cur: _lemmaLabel(tgt.lemma_id) || tgt.lemma_id, val: _lemmaLabel(sl) };
+  if (p.cells.lemma.state === 'write') p.ops.push({ op: 'lemma', val: sl });
+
+  if (src.dict_id && !tgt.dict_id && findDictEntry(src.dict_id)) p.ops.push({ op: 'field', field: 'dict_id', val: src.dict_id });
+
+  // Dependency: the head remapped through the alignment; skipped if its token has no match.
+  if ('head' in src && !('head' in tgt)) {
+    const head = src.head === null ? null : headMap.get(src.head);
+    if (head !== undefined) p.ops.push({ op: 'dep', head, rel: src.dep_rel || null });
+  }
+  p.fields = p.ops.reduce((n, o) => n + (o.op === 'translits' ? o.val.length : o.op === 'morphemes' ? sm.length : 1), 0);
+  return p;
+}
+
+/* @fn sentenceCopyPlan, the whole of what copying `src` onto `tgt` would do */
+function sentenceCopyPlan(src, tgt) {
+  const sw = src.words || [], tw = tgt.words || [];
+  const { pairs } = alignTokens(sw, tw.map(w => w.form));
+  const headMap = new Map(pairs.map(([i, j]) => [depLocalId(sw[i].id), depLocalId(tw[j].id)]));
+  const bySrc = new Map(pairs.map(([i, j]) => [j, i]));
+  const rows = tw.map((w, j) => {
+    if (!_navIsToken(w)) return { tgt: w, punct: true };
+    const i = bySrc.get(j);
+    return i === undefined ? { tgt: w, noMatch: true } : wordCopyPlan(sw[i], w, headMap);
+  });
+  const sent = { ops: [], cells: {} };
+  const tr = (src.translations || []).find(x => x && x.text);
+  const hasTr = (tgt.translations || []).some(x => x && x.text);
+  sent.cells.translation = !tr ? { state: 'none' } : !hasTr ? { state: 'write', val: tr.text }
+    : (tgt.translations || []).some(x => x && x.text === tr.text) ? { state: 'same', val: tr.text }
+    : { state: 'conflict', cur: (tgt.translations.find(x => x && x.text) || {}).text, val: tr.text };
+  if (sent.cells.translation.state === 'write') sent.ops.push({ op: 'translation', val: tr });
+  const tl = (src.transliterations || []).filter(x => x && x.text &&
+    !(tgt.transliterations || []).some(y => y && y.text && (y.label || '') === (x.label || '')));
+  if (tl.length) sent.ops.push({ op: 'translits', val: tl });
+  const words = rows.filter(r => r.ops && r.ops.length).length;
+  const fields = rows.reduce((n, r) => n + (r.fields || 0), 0) + sent.ops.reduce((n, o) => n + (o.op === 'translits' ? o.val.length : 1), 0);
+  return { src, tgt, rows, sent, words, fields,
+           deps: rows.filter(r => r.ops && r.ops.some(o => o.op === 'dep')).length };
+}
+
+/* @fn _sentSignature, two sources with the same annotation are one offer */
+function _sentSignature(sn) {
+  return JSON.stringify([(sn.translations || []).find(x => x && x.text)?.text || '',
+                         (sn.words || []).map(w => wordAnalysisOf(w))]);
+}
+
+/* @fn copyOffersFor, what the sentence view can offer for `sent`.
+   `into`: distinct sources that would fill something here, most fields first.
+   `out`: this sentence's repeats it would fill something in. */
+function copyOffersFor(sent) {
+  const others = sameTextSentences(sent).map(id => S.sentById.get(id)?.sent)
+    .filter(sn => sn && (sn.words || []).length);
+  if (!(sent.words || []).length) return { into: [], out: [], others };
+  const bySig = new Map();
+  for (const sn of others) {
+    const plan = sentenceCopyPlan(sn, sent);
+    if (!plan.fields) continue;
+    const k = _sentSignature(sn);
+    if (bySig.has(k)) bySig.get(k).n++; else bySig.set(k, { plan, n: 1 });
+  }
+  const into = [...bySig.values()].sort((a, b) => b.plan.fields - a.plan.fields);
+  const out = others.map(sn => sentenceCopyPlan(sent, sn)).filter(p => p.fields);
+  return { into, out, others };
+}
+
+/* @fn refreshCopyBanner, the banner above the interlinear gloss */
+function refreshCopyBanner() {
+  const host = document.getElementById('sent-copy-banner');
+  if (!host) return;
+  const sent = findSent(S.sentId)?.sent;
+  if (!sent) { host.innerHTML = ''; return; }
+  const strip = (kind, mark, text, btns) =>
+    `<div class="offer-strip offer-${kind} copy-banner"><span class="offer-verdict"><span class="offer-mark">${mark}</span>${esc(text)}</span>${btns}</div>`;
+  const btn = (action, label) => `<button class="btn btn-sm" type="button" data-action="${action}">${esc(label)}</button>`;
+  let html = '';
+  const done = _copyUndo && _copyUndo.targets.find(x => x.sentId === sent.id);
+  if (done) html += strip('will', '✓', t('copy.done', { loc: sentPosLabel(_copyUndo.from), w: done.w, f: done.f }),
+                         btn('copy-undo', t('copy.undo')));
+  const off = copyOffersFor(sent);
+  if (off.into.length) {
+    const top = off.into[0].plan;
+    const annotated = (top.src.words || []).filter(w => hasAnnotation(w)).length;
+    html += strip('will', '=', t('copy.banner_in', { loc: sentPosLabel(top.src.id), n: annotated }),
+                  btn('copy-review-in', t('copy.review')));
+  }
+  if (off.out.length)
+    html += strip('will', '=', t('copy.banner_out', { n: off.others.length, k: off.out.length }),
+                  btn('copy-review-out', t('copy.review_out')));
+  host.innerHTML = html;
+}
+
+// @fn _copyCellHtml, what will be written stands out; what already matches recedes
+function _copyCellHtml(c) {
+  if (!c || c.state === 'none') return '<span class="copy-none">·</span>';
+  if (c.state === 'same') return `<span class="copy-same" title="${escAttr(c.val)}">✓</span>`;
+  if (c.state === 'conflict')
+    return `<span class="copy-conflict" title="${escAttr(t('copy.state.conflict'))}"><span>${esc(c.cur)}</span><span class="copy-ne">\u2260</span><s>${esc(c.val)}</s></span>`;
+  return `<span class="copy-new">${esc(c.val)}</span>`;
+}
+
+const _COPY_COLS = ['translit', 'parse', 'gloss', 'pos', 'lemma'];
+
+// @fn _copyRowKind, write (something to fill), conflict only, or quiet (all matches)
+function _copyRowKind(r) {
+  if (r.fields) return 'write';
+  return _COPY_COLS.some(k => r.cells[k]?.state === 'conflict') ? 'conflict' : 'quiet';
+}
+
+/* @fn copyTableHtml, one target sentence's rows; `pi` indexes the plan.
+   Rows with nothing to write and no conflict are hidden behind a toggle, so
+   the table shows what the decision is about. */
+function copyTableHtml(plan, pi) {
+  const head = ['word', ...(_COPY_COLS)].map(k => `<th>${esc(t('copy.col.' + k))}</th>`).join('');
+  const tr = plan.sent.cells.translation;
+  const tlOps = plan.sent.ops.find(o => o.op === 'translits');
+  const sentRow = (tr && (tr.state === 'write' || tr.state === 'conflict')) || tlOps
+    ? `<tr class="copy-sentrow"><td></td><td class="copy-form">${esc(t('copy.sentence'))}</td><td colspan="5">
+        ${tr && tr.state !== 'none' && tr.state !== 'same' ? `<span class="copy-lbl">${esc(t('copy.col.translation'))}</span> ${_copyCellHtml(tr)}` : ''}
+        ${tlOps ? `<span class="copy-lbl">${esc(t('copy.col.translit'))}</span> <span class="copy-new">${esc(tlOps.val.map(x => x.text).join(' / '))}</span>` : ''}
+      </td></tr>` : '';
+  let quiet = 0;
+  const rows = plan.rows.map((r, ri) => {
+    if (r.punct) return '';
+    if (r.noMatch) return `<tr class="copy-off"><td></td><td class="copy-form">${esc(r.tgt.form)}</td><td colspan="5">${esc(t('copy.nomatch'))}</td></tr>`;
+    const kind = _copyRowKind(r);
+    if (kind === 'quiet') quiet++;
+    const box = r.fields ? `<input type="checkbox" class="copy-row" data-pi="${pi}" data-ri="${ri}" data-n="${r.fields}" checked>` : '';
+    return `<tr class="copy-r-${kind}"><td>${box}</td><td class="copy-form">${esc(r.tgt.form)}</td>${
+      _COPY_COLS.map(k => `<td>${_copyCellHtml(r.cells[k])}</td>`).join('')}</tr>`;
+  }).join('');
+  const more = quiet ? `<button type="button" class="btn btn-ghost btn-sm copy-more" data-action="copy-more">${esc(t('copy.show_quiet', { n: quiet }))}</button>` : '';
+  return `<div class="copy-tbl"><table><thead><tr><th></th>${head}</tr></thead><tbody>${sentRow}${rows}</tbody></table>${more}</div>`;
+}
+
+// @fn _copySummary, "3 words to fill · 1 conflict · 4 already match"
+function _copySummary(plan) {
+  const kinds = plan.rows.filter(r => r.cells).map(_copyRowKind);
+  const conflicts = plan.rows.filter(r => r.cells && _COPY_COLS.some(k => r.cells[k]?.state === 'conflict')).length;
+  return [t('copy.sum.fill', { n: kinds.filter(k => k === 'write').length }),
+          conflicts ? t('copy.sum.conflict', { n: conflicts }) : '',
+          t('copy.sum.quiet', { n: kinds.filter(k => k === 'quiet').length })].filter(Boolean).join(' · ');
+}
+
+// @fn _copyKeyHtml, the three marks, once, above the table
+function _copyKeyHtml() {
+  return `<div class="copy-key"><span><span class="copy-new">${esc(t('copy.key.new'))}</span></span>
+    <span><span class="copy-same">✓</span> ${esc(t('copy.key.same'))}</span>
+    <span><span class="copy-conflict"><span>${esc(t('copy.key.here'))}</span><span class="copy-ne">\u2260</span><s>${esc(t('copy.key.there'))}</s></span> ${esc(t('copy.key.conflict'))}</span></div>`;
+}
+
+// @fn _copyPanelTitle
+function _copyPanelTitle(text) {
+  const el = document.getElementById('copy-panel-title');
+  if (el) el.textContent = text;
+}
+
+/* @fn renderCopyPanel */
+function renderCopyPanel() {
+  const body = document.getElementById('copy-panel-body');
+  if (!body || !_copyPanel) return;
+  const P = _copyPanel;
+  const foot = extra => `<div class="copy-foot">${extra ? `<div class="copy-note">${esc(extra)}</div>` : ''}
+      <div class="copy-acts"><button class="btn btn-ghost" data-action="copy-cancel">${esc(t('btn.editor.cancel'))}</button>
+      <button class="btn btn-primary" data-action="copy-apply" id="copy-apply"></button></div></div>`;
+  if (P.mode === 'in') {
+    const g = P.groups[P.gi], plan = g.plan;
+    const tabs = P.groups.length > 1 ? `<div class="copy-tabs">${P.groups.map((x, i) =>
+      `<button type="button" class="chip${i === P.gi ? ' on' : ''}" data-action="copy-tab" data-gi="${i}">${
+        esc(t('copy.tab', { loc: sentPosLabel(x.plan.src.id), n: x.n, f: x.plan.fields }))}</button>`).join('')}</div>` : '';
+    _copyPanelTitle(t('copy.title_in', { loc: sentPosLabel(plan.src.id) }));
+    body.innerHTML = `<div class="copy-srctgt"><span>${esc(t('copy.source'))}</span><span dir="auto">${esc(plan.src.text)}</span>
+        <span>${esc(t('copy.target'))}</span><span dir="auto">${esc(plan.tgt.text)}</span></div>
+      ${tabs}<div class="copy-sum">${esc(_copySummary(plan))}</div>${_copyKeyHtml()}${copyTableHtml(plan, 0)}
+      ${foot(t('copy.also') + (plan.deps ? ' ' + t('copy.also_deps', { n: plan.deps }) : ''))}`;
+  } else {
+    const src = P.plans[0].src;
+    _copyPanelTitle(t('copy.title_out', { loc: sentPosLabel(src.id) }));
+    body.innerHTML = `${_copyKeyHtml()}
+      ${P.plans.map((plan, pi) => `<div class="copy-block">
+          <input type="checkbox" class="copy-target" data-pi="${pi}" checked>
+          <details><summary>
+            <span class="copy-loc">${esc(sentPosLabel(plan.tgt.id))}</span>
+            <span dir="auto">${esc(plan.tgt.text)}</span>
+            <span class="copy-sum">${esc(_copySummary(plan))}</span></summary>
+          ${copyTableHtml(plan, pi)}</details></div>`).join('')}
+      ${foot(t('copy.also'))}`;
+  }
+  recountCopyPanel();
+}
+
+/* @fn _copySelection, the plans and the rows of each that are ticked */
+function _copySelection() {
+  const box = document.getElementById('copy-panel-body');
+  const P = _copyPanel;
+  const plans = P.mode === 'in' ? [P.groups[P.gi].plan] : P.plans;
+  return plans.map((plan, pi) => {
+    const on = P.mode === 'in' || box.querySelector(`.copy-target[data-pi="${pi}"]`)?.checked;
+    const rows = [...box.querySelectorAll(`.copy-row[data-pi="${pi}"]`)].filter(c => c.checked).map(c => +c.dataset.ri);
+    return { plan, rows: on ? rows : [], sent: on };
+  });
+}
+
+// @fn recountCopyPanel, the Copy button says what it will write
+function recountCopyPanel() {
+  const btn = document.getElementById('copy-apply');
+  if (!btn) return;
+  let w = 0, f = 0, n = 0;
+  for (const s of _copySelection()) {
+    const sf = s.sent ? s.plan.sent.ops.reduce((k, o) => k + (o.op === 'translits' ? o.val.length : 1), 0) : 0;
+    if (s.rows.length || sf) n++;
+    w += s.rows.length;
+    f += sf + s.rows.reduce((k, ri) => k + s.plan.rows[ri].fields, 0);
+  }
+  btn.textContent = _copyPanel.mode === 'in'
+    ? t(w === 1 ? 'copy.btn_1' : 'copy.btn', { w, f })
+    : t(n === 1 ? 'copy.btn_out_1' : 'copy.btn_out', { n, f });
+  btn.disabled = f === 0;
+}
+
+// @fn openCopyPanel
+function openCopyPanel(mode) {
+  const sent = findSent(S.sentId)?.sent;
+  if (!sent) return;
+  const off = copyOffersFor(sent);
+  _copyPanel = mode === 'in' ? { mode, groups: off.into, gi: 0 } : { mode, plans: off.out };
+  if (mode === 'in' ? !off.into.length : !off.out.length) return;
+  document.getElementById('copy-panel-box').hidden = false;
+  document.getElementById('copy-panel-backdrop')?.classList.add('open');
+  renderCopyPanel();
+}
+
+// @fn closeCopyPanel
+function closeCopyPanel() {
+  const box = document.getElementById('copy-panel-box');
+  if (box) box.hidden = true;
+  document.getElementById('copy-panel-backdrop')?.classList.remove('open');
+  _copyPanel = null;
+}
+
+/* @fn applyWordCopy, one row of a plan. Everything written is stamped `moment`. */
+function applyWordCopy(r, moment) {
+  const t = r.tgt, s = r.src;
+  deindexWordForms(t);
+  for (const o of r.ops) {
+    if (o.op === 'field' && o.field === 'dict_id') {
+      linkTo(t, { entry: findDictEntry(o.val) });      // the one writer of dict_id
+    } else if (o.op === 'field') {
+      t[o.field] = o.val;
+      stampField(t, o.field, moment);
+    } else if (o.op === 'translits') {
+      const had = (t.transliterations || []).some(x => x && x.text);
+      t.transliterations = [...(t.transliterations || []).filter(x => x && x.text),
+                            ...o.val.map(x => ({ label: x.label || '', text: x.text }))];
+      if (!had) stampField(t, 'transliterations', moment);
+    } else if (o.op === 'lemma') {
+      _setWordLemma(t, o.val);
+      stampField(t, 'lemma_id', moment);
+    } else if (o.op === 'dep') {
+      t.head = o.head;
+      if (o.rel) t.dep_rel = o.rel;
+    } else if (o.op === 'morphemes') {
+      t.morphemes = (s.morphemes || []).map((m, i) => {
+        const nm = { id: `${t.id}.m_${padId(i + 1)}`, form: m.form, prov: moment, prov_history: [moment] };
+        for (const f of ['gloss', 'type', 'part_of_speech']) if (m[f]) { nm[f] = m[f]; stampField(nm, f, moment); }
+        if ((m.transliterations || []).length) { nm.transliterations = m.transliterations.map(x => ({ ...x })); stampField(nm, 'transliterations', moment); }
+        if (m.dict_id && findDictEntry(m.dict_id)) linkTo(nm, { entry: findDictEntry(m.dict_id) });
+        return nm;
+      });
+    } else if (o.op === 'morph-field') {
+      const m = t.morphemes[o.i];
+      if (o.field === 'dict_id') linkTo(m, { entry: findDictEntry(o.val) });
+      else { m[o.field] = o.val; stampField(m, o.field, moment); }
+    }
+  }
+  Object.assign(t, appendProv(t, moment));
+  _deriveWordFields(t);                       // fill-only: the parse from the morphemes, if still empty
+  indexWordForms(t);
+}
+
+/* @fn applySentenceCopy, the ticked rows of each plan, one mutate for the lot */
+function applySentenceCopy(selection) {
+  const written = [], undo = [];
+  let W = 0, F = 0;
+  const from = selection[0]?.plan.src.id;
+  for (const { plan, rows, sent: withSent } of selection) {
+    if (!rows.length && !(withSent && plan.sent.ops.length)) continue;
+    const moment = _copyFieldProv(plan.src.id);
+    const tgt = plan.tgt;
+    const snap = { sentId: tgt.id,
+      sent: JSON.parse(JSON.stringify({ translations: tgt.translations, transliterations: tgt.transliterations })),
+      words: rows.map(ri => ({ id: plan.rows[ri].tgt.id, snap: JSON.parse(JSON.stringify(plan.rows[ri].tgt)) })), w: 0, f: 0 };
+    if (withSent)
+      for (const o of plan.sent.ops) {
+        if (o.op === 'translation') {
+          tgt.translations = [...(tgt.translations || []).filter(x => x && x.text),
+            stampElement({ text: o.val.text, source_id: o.val.source_id || null, date: o.val.date || null }, moment)];
+          snap.f++;
+        } else {
+          tgt.transliterations = [...(tgt.transliterations || []),
+            ...o.val.map(x => stampElement({ label: x.label || '', text: x.text }, moment))];
+          snap.f += o.val.length;
+        }
+      }
+    for (const ri of rows) { applyWordCopy(plan.rows[ri], moment); written.push(plan.rows[ri].tgt); snap.f += plan.rows[ri].fields; }
+    snap.w = rows.length;
+    written.push({ rec: tgt, shallow: true });
+    undo.push(snap);
+    W += snap.w; F += snap.f;
+  }
+  if (!written.length) return;
+  _copyUndo = { from, targets: undo };
+  logEvent('info', 'repeat copy accepted', `${W} word(s), ${F} field(s)`);
+  mutate('corpus', written);
+}
+
+/* @fn undoSentenceCopy, put the words and sentence fields back as they were */
+function undoSentenceCopy() {
+  if (!_copyUndo) return;
+  const written = [];
+  for (const u of _copyUndo.targets) {
+    const sent = findSent(u.sentId)?.sent;
+    if (!sent) continue;
+    for (const k of ['translations', 'transliterations'])      // a key it did not have stays absent
+      if (k in u.sent) sent[k] = u.sent[k]; else delete sent[k];
+    for (const { id, snap } of u.words) {
+      const w = findWord(id)?.word;
+      if (!w) continue;
+      deindexWordForms(w);
+      _setWordLemma(w, snap.lemma_id || null);
+      for (const k of Object.keys(w)) if (!(k in snap)) delete w[k];
+      Object.assign(w, snap);
+      indexWordForms(w);
+      written.push(w);
+    }
+    written.push({ rec: sent, shallow: true });
+  }
+  _copyUndo = null;
+  logEvent('info', 'repeat copy undone', written.length);
+  mutate('corpus', written);
+}
+
 /* ── E26: morpheme materialization (corpus ↔ lexicon de-synch fix) ─────────────
    The lexicon paths write `morphological_parse` and dict entries but never create
    the corpus morpheme objects, so annotating from the dictionary first left the
@@ -8582,6 +8996,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('offer-review')?.addEventListener('click', openOfferPanel);
   document.getElementById('offer-later')?.addEventListener('click', () => { _dictOffer = null; hideOfferBanner(); });
   document.getElementById('offer-panel-close')?.addEventListener('click', closeOfferPanel);
+  // D40 stage C
+  document.getElementById('copy-panel-close')?.addEventListener('click', closeCopyPanel);
+  document.getElementById('copy-panel-backdrop')?.addEventListener('click', closeCopyPanel);
+  document.getElementById('copy-panel-box')?.addEventListener('change', recountCopyPanel);
+  document.getElementById('copy-panel-box')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    switch (btn.dataset.action) {
+      case 'copy-tab':    _copyPanel.gi = +btn.dataset.gi; renderCopyPanel(); break;
+      case 'copy-cancel': closeCopyPanel(); break;
+      case 'copy-more':   btn.closest('.copy-tbl')?.classList.toggle('show-quiet'); btn.remove(); break;
+      case 'copy-apply': {
+        const sel = _copySelection();
+        closeCopyPanel();
+        applySentenceCopy(sel);
+        render();
+        break;
+      }
+    }
+  });
   document.getElementById('offer-panel-backdrop')?.addEventListener('click', closeOfferPanel);
   document.getElementById('offer-panel-box')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
@@ -9893,6 +10327,7 @@ function renderSentence() {
 
     igtHtml = `<div class="igt-section">
       <div class="igt-section-label">${t('label.view.sent.igt')}</div>
+      <div id="sent-copy-banner"></div>
       <div class="igt-legend">${legendRows}</div>
       <div class="igt-wrap">${cols}</div>
     </div>`;
@@ -16757,6 +17192,17 @@ initDelegatedListeners();
   </div>
   <!-- Built by renderOfferPanel(); every line of it is a proposal about data. -->
   <div class="sp-body" id="offer-panel-body"></div>
+</div>
+
+<!-- ── D40 stage C: copy a sentence's annotation to one with the same text ── -->
+<div id="copy-panel-backdrop"></div>
+<div id="copy-panel-box" hidden>
+  <div class="sp-header">
+    <span id="copy-panel-title" data-i18n="copy.panel">Copy annotation</span>
+    <button class="sp-close" id="copy-panel-close" title="Close" data-i18n-title="btn.editor.cancel"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-x"/></svg></button>
+  </div>
+  <!-- Built by renderCopyPanel(). -->
+  <div class="sp-body" id="copy-panel-body"></div>
 </div>
 
 <!-- ── D34 progress panel: this session, and what is still to do ── -->

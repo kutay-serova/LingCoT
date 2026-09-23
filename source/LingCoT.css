@@ -253,17 +253,17 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
 
 /* ── Save panel (centered modal) ─────────────────────────────────────────── */
 #save-panel-backdrop, #ncs-backdrop, #mf-backdrop, #gap-panel-backdrop,
-#offer-panel-backdrop {
+#offer-panel-backdrop, #copy-panel-backdrop {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.45); z-index: 200;
 }
 #save-panel-backdrop.open, #ncs-backdrop.open, #mf-backdrop.open,
-#gap-panel-backdrop.open, #offer-panel-backdrop.open { display: block; }
+#gap-panel-backdrop.open, #offer-panel-backdrop.open, #copy-panel-backdrop.open { display: block; }
 
 /* B-182: `#offer-panel-box` was left out of this list at v3.14.348 and had no
    position, no background and no z-index — it rendered in normal flow at the
    foot of the document, which is what the annotator's screenshot showed. */
-#save-panel-box, #ncs-box, #mf-box, #gap-panel-box, #offer-panel-box {
+#save-panel-box, #ncs-box, #mf-box, #gap-panel-box, #offer-panel-box, #copy-panel-box {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
   background: var(--surface); border: 1px solid var(--border);
   border-radius: calc(var(--r) * 2); box-shadow: 0 8px 32px rgba(0,0,0,.3);
@@ -3198,3 +3198,44 @@ details.prov-morpheme-inline {
 .gq-srow { display: flex; gap: 8px; font-size: 0.83rem; color: var(--text); }
 .gq-sk { color: var(--text-muted); min-width: 62px; }
 .gq-none { font-size: 0.83rem; color: var(--text-muted); font-style: italic; }
+
+/* ── D40 stage C: the sentence copy panel ───────────────────────────────────
+   After the shared modal rule on purpose: that rule sets every panel to 380px. */
+#copy-panel-box { width: min(1000px, 94vw); max-height: 88vh; display: flex; flex-direction: column; }
+#copy-panel-box .sp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.copy-banner { margin: 6px 0 10px; }
+.copy-banner .btn { margin-left: auto; }
+.copy-srctgt { display: grid; grid-template-columns: 64px 1fr; gap: 2px 12px; font-size: 0.92rem; margin-bottom: 12px; }
+.copy-srctgt span:nth-child(odd) { color: var(--text-muted); font-size: 0.78rem; padding-top: 2px; }
+.copy-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.copy-tabs .chip.on { border-color: var(--accent); }
+.copy-sum { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
+.copy-key { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.76rem; color: var(--text-muted); margin-bottom: 8px; }
+.copy-tbl { overflow-x: auto; }
+.copy-tbl table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+.copy-tbl th { text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.74rem; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.copy-tbl td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.copy-tbl td:first-child { width: 26px; }
+.copy-form { font-weight: 600; white-space: nowrap; }
+.copy-new { font-family: var(--mono); font-weight: 600; color: var(--accent); background: var(--accent-dim); border-radius: 4px; padding: 1px 5px; }
+.copy-same { color: var(--text-muted); }
+.copy-none { color: var(--text-muted); opacity: .5; }
+.copy-conflict { display: inline-flex; align-items: baseline; gap: 6px; border-left: 2px solid var(--warn-border); padding-left: 6px; font-family: var(--mono); }
+.copy-conflict s { color: var(--warn-text); }
+.copy-ne { color: var(--warn-text); font-family: inherit; }
+.copy-lbl { color: var(--text-muted); font-size: 0.76rem; margin-right: 4px; }
+.copy-lbl ~ .copy-lbl { margin-left: 14px; }
+.copy-sentrow td { background: var(--surface-dim); }
+.copy-r-quiet { display: none; }
+.copy-r-quiet td { color: var(--text-muted); }
+.copy-tbl.show-quiet .copy-r-quiet { display: table-row; }
+.copy-off td { color: var(--text-muted); font-style: italic; }
+.copy-more { margin-top: 6px; }
+.copy-block { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: var(--r); padding: 8px 12px; margin-bottom: 8px; }
+.copy-block details { flex: 1; min-width: 0; }
+.copy-block summary { display: flex; gap: 12px; align-items: baseline; cursor: pointer; flex-wrap: wrap; }
+.copy-block .copy-sum { margin: 0; }
+.copy-loc { color: var(--accent); }
+.copy-foot { margin-top: 14px; }
+.copy-note { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
+.copy-acts { display: flex; justify-content: flex-end; gap: 8px; }

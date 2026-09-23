@@ -245,6 +245,7 @@ function bindEvents() {
   // D48 stage B: the id comes from the field table, not from this file.
   refreshSentenceOffers();                // D40 stage B, no-op outside the sentence forms
   refreshWordOffers();                    // D40 stage D, no-op outside the word editor
+  refreshCopyBanner();                    // D40 stage C, sentence view only
   /* Follow the form: typing into a field changes what differs and what an
      analysis would still fill. */
   if (S.view === 'word-edit')
@@ -2142,6 +2143,15 @@ function initDelegatedListeners() {
      recording that the value came from the lexicon rather than from the person.
      takeOffer() does both, in LingCoT.html, so a new offer provider cannot
      forget the second half. */
+  // D40 stage C: the copy banner on the sentence view
+  contentEl.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="copy-review-in"], [data-action="copy-review-out"], [data-action="copy-undo"]');
+    if (!btn) return;
+    e.stopPropagation();
+    if (btn.dataset.action === 'copy-undo') { undoSentenceCopy(); render(); }
+    else openCopyPanel(btn.dataset.action === 'copy-review-in' ? 'in' : 'out');
+  });
+
   contentEl.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="offer-take"]');
     if (!btn || btn.classList.contains('offer-taken')) return;

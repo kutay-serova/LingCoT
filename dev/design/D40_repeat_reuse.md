@@ -40,7 +40,7 @@ B-144 ✅ v3.14.298.
 |---|---|---|---|---|
 | A | runtime sentence-text index | S | — | planned |
 | B | translation and transliteration offers in sentence edit/add forms | XS–S | A | built |
-| C | sentence copy offer with review panel | M | A | planned |
+| C | sentence copy offer with review panel | M | A | built |
 | D | word chips and `differs` notes in the word editor | S–M | — | built |
 
 Build order A → B → D → C (changed 2026-09-23: repeated words cost more than
@@ -166,6 +166,14 @@ block, with its own text, its own table as above and one checkbox per target.
 Same rules as above; nothing written that is not listed.
 
 **Log line.** `repeat copy accepted  <n> word(s), <f> field(s)`, counts only.
+
+**Built (change `d40c-sent-copy`).** `sentenceCopyPlan(src, tgt)` is the one
+planner the banner, the panel and the writer share. Dictionary links go through
+`linkTo`, the one writer of `dict_id`, so a copied link carries the lexicon-link
+stamp rather than the copy stamp. A word gloss is offered only when something
+would carry it: a typed gloss on the source, or morphemes being written. The
+banner can show both directions at once, and "Undo copy" in place of the
+incoming line after a copy.
 
 **Writing.** One writer, `acceptSentenceCopy(plan)`, through `mutate('corpus',
 words)` so the journal and session tracker are correct by construction, then
