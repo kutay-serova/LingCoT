@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "locale": "en",
-    "language": "English",
+    "locale": "haw",
+    "language": "ʻŌlelo Hawaiʻi",
     "version": "1.0",
     "phases_complete": [
       "1",
@@ -10,7 +10,7 @@
       "4",
       "5"
     ],
-    "note": "Key convention: <category>.<context>.<id>  e.g. btn.editor.save, label.editor.gloss, hint.editor.sentence"
+    "note": "Key convention: <category>.<context>.<id>  e.g. btn.editor.save, label.editor.gloss, hint.editor.sentence Placeholder: English copy of en.json until translated."
   },
   "alert.dep.heads_cleared": "{n} dependency head(s) pointed at tokens that no longer exist and have been cleared.",
   "alert.dict.backfill_none": "Nothing to link.\n\n{ambiguous} token(s) match more than one entry and need a person; {none} have no matching entry.",

@@ -223,7 +223,7 @@ console.log('\nresource resolvers: locale first, then the JSON, then empty');
 
   if (!missing.length) {
     const fn = new Function(
-      '_LOCALE', 'POS_DESCRIPTIONS', 'TYPE_DESCRIPTIONS',
+      '_LOCALE', 'POS_DESCRIPTIONS', 'TYPE_DESCRIPTIONS', '_LOCALE_EN',
       names.map(grab).join('\n') + `\nreturn {${names.join(',')}};`
     );
     const LOC = {
@@ -233,7 +233,7 @@ console.log('\nresource resolvers: locale first, then the JSON, then empty');
       'type.bound_morpheme.desc':  'LOCALE-TYPE',
       'pos.noun.desc':             'LOCALE-POS',
     };
-    const R = fn(LOC, { NOUN: 'json-pos' }, { 'bound.morpheme': 'json-type' });
+    const R = fn(LOC, { NOUN: 'json-pos' }, { 'bound.morpheme': 'json-type' }, {});
 
     check(R.resSlug('case marking') === 'case_marking',
           'resSlug turns a spaced tag into a key segment');

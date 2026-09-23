@@ -134,6 +134,8 @@
         <div class="file-menu-sep"></div>
         <!-- Theme toggle, moved here from fixed bottom-right (S3) -->
         <button class="file-menu-item theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light/dark mode"></button>
+        <!-- tb-i18n: interface language; options filled by initLocalePicker() -->
+        <label class="file-menu-item locale-pick" id="ui-locale-item"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-translate"/></svg><span data-i18n="label.nav.ui_language">Language</span><select id="ui-locale-select" aria-label="Interface language" data-i18n-aria="aria.nav.ui_language"></select></label>
       </div>
     </div>
   </div>
@@ -407,6 +409,9 @@
    markup above, which made the lookup succeed at boot and exposed the hazard.
    Keep this declaration first. */
 let _LOCALE = {};
+/* English strings, the fallback for any key the active locale lacks (tb-i18n).
+   Declared here for the same reason as _LOCALE: t() can run at top level. */
+let _LOCALE_EN = {};
 
 /* ══════════════════════════════════════════════════════════════════════════════
    B1. THEME (light / dark "Warm ink"). Applied as <html data-theme>. Persisted in
@@ -1498,6 +1503,12 @@ function wordGloss(w, opts) {
   if (w.gloss) return w.gloss;
   return compact || null;
 }
+/* @fn wordHasStoredTranslit, a transliteration typed on the word itself, as
+   opposed to one wordTranslit() joins from the morphemes (B-210). */
+function wordHasStoredTranslit(w) {
+  return (Array.isArray(w.transliterations) && w.transliterations.some(x => x && x.text)) || !!w.transliteration;
+}
+
 // @fn wordTranslit
 // Returns the transliteration for a word as a plain string.
 // label: 'any' (default) = first entry in the array; or a specific label like 'RR' or 'Yale'.
@@ -9528,7 +9539,8 @@ function render() {
   /* D35 B5: `lemmaId` is navigation state, so it belongs in the key. Two
      lemma groups visited in a row are the same view with the same _dataGen,
      which is precisely the B-011 shape — the second would not repaint. */
-  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}${searchKey}`;
+  // The locale is in the key so a language switch repaints the current view.
+  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}|${uiLocaleCode()}${searchKey}`;
   if (cacheKey === _renderCacheKey) {
     // B-011's diagnostic gap: a click that changed view-only state and hit this
     // early return produced NO log output at all, so "the handler never matched"
@@ -10290,7 +10302,7 @@ function renderSentence() {
     const showMGloss   = wExtras.some(d => d.mGloss);
 
     let legendRows = `<div class="igt-legend-row"><div class="igt-legend-swatch legend-form"></div><div class="igt-legend-label">${t('label.view.sent.legend_form')}</div></div>`;
-    if (showTranslit) legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-translit"></div><div class="igt-legend-label">Transliteration${wExtras.some((d, i) => !words[i].transliteration && d.translit) ? ' (derived)' : ''}</div></div>`;
+    if (showTranslit) legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-translit"></div><div class="igt-legend-label">${t(wExtras.some((d, i) => d.translit && !wordHasStoredTranslit(words[i])) ? 'label.view.sent.legend_translit_derived' : 'label.view.sent.legend_translit')}</div></div>`;
     if (showParse)    legendRows += `<div class="igt-legend-row"><div class="igt-legend-swatch legend-parse"></div><div class="igt-legend-label">${t('label.view.sent.legend_parse')}</div></div>`;
     /* D46 appendix, v3.14.409: word level, so `word_gloss`. The row below it is
        the morpheme line and names itself. `label.editor.gloss` stays the
@@ -15971,45 +15983,81 @@ async function loadLocale() {
   if (!_readStoredTheme() && (_settings.theme === 'dark' || _settings.theme === 'light')) {
     applyTheme(_settings.theme);
   }
-  try {
-    const text = await window.pywebview.api.read_file(`resources/locale/${lang}.json`);
-    const data = JSON.parse(text);
-    if (data && typeof data === 'object' && !Array.isArray(data)) {
-      _LOCALE = data;
-      logEvent('debug', 'Locale loaded', `${lang} (${Object.keys(data).length} keys)`);
-      // Apply locale to static HTML elements that carry data-i18n attributes.
-      // These live outside #content and are not rebuilt by render(), so they
-      // need a separate pass here every time a new locale is loaded.
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        el.textContent = t(el.dataset.i18n);
-      });
-      // Apply locale to static input placeholders (panels/modals outside #content).
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        el.placeholder = t(el.dataset.i18nPlaceholder);
-      });
-      // Apply locale to static title= tooltip attributes.
-      document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        el.title = t(el.dataset.i18nTitle);
-      });
-      // Apply locale to static aria-label= attributes.
-      document.querySelectorAll('[data-i18n-aria]').forEach(el => {
-        el.setAttribute('aria-label', t(el.dataset.i18nAria));
-      });
-      // Apply locale to elements whose content contains inline HTML markup (innerHTML).
-      // Used for help sidebar paragraphs and other mixed-markup static content.
-      document.querySelectorAll('[data-i18n-html]').forEach(el => {
-        el.innerHTML = t(el.dataset.i18nHtml);
-      });
-      updateThemeToggle();   // B1: localize the theme button label now strings are loaded
-      render();   // refresh view so all t() calls in template literals use the loaded strings
-    }
-  } catch (_) {
-    // Locale file missing or unreadable, _LOCALE stays empty, t() returns key
-    // strings as readable English fallback.  Still call render() so the view
-    // appears; keys are legible English by convention (no garbled UI).
-    updateThemeToggle();
-    render();
+  await applyLocale(lang);
+  initLocalePicker();
+}
+
+// @fn applyLocale
+// Loads resources/locale/{lang}.json (en.json is always loaded too, as the
+// fallback), re-labels the static markup, and repaints. Called at boot and by
+// the language picker. A missing or unreadable locale file falls back to English.
+async function applyLocale(lang) {
+  const api = window.pywebview.api;
+  const readLocale = async code => {
+    const data = JSON.parse(await api.read_file(`resources/locale/${code}.json`));
+    return (data && typeof data === 'object' && !Array.isArray(data)) ? data : null;
+  };
+  if (!_LOCALE_EN._meta) {
+    try { _LOCALE_EN = (await readLocale('en')) || {}; } catch (_) { /* keys show as-is */ }
   }
+  let data = null;
+  try { data = lang === 'en' ? _LOCALE_EN : await readLocale(lang); } catch (_) {}
+  if (!data) {
+    if (lang !== 'en') logEvent('warn', 'locale not found, using English', lang);
+    data = _LOCALE_EN;
+  }
+  _LOCALE = data;
+  if (Object.keys(data).length)
+    logEvent('debug', 'Locale loaded', `${uiLocaleCode()} (${Object.keys(data).length} keys)`);
+  // Static markup outside #content is not rebuilt by render().
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  });
+  // Mixed-markup content (help sidebar etc.) is set as innerHTML.
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.documentElement.lang = uiLocaleCode();
+  updateThemeToggle();   // B1: the theme button label comes from the locale
+  render();              // template literals call t() at render time
+}
+
+// @fn initLocalePicker
+// Fills the File menu's language select from the host's list of locale files.
+// Hidden when the host cannot list them (older host, or tests without a bridge).
+async function initLocalePicker() {
+  const sel  = document.getElementById('ui-locale-select');
+  const item = document.getElementById('ui-locale-item');
+  if (!sel || !item) return;
+  let list = [];
+  try {
+    const api = window.pywebview.api;
+    if (typeof api.list_locales === 'function') list = (await api.list_locales()) || [];
+  } catch (_) {}
+  if (!list.length) { item.style.display = 'none'; return; }
+  const cur = uiLocaleCode();
+  sel.innerHTML = list.map(l =>
+    `<option value="${escAttr(l.locale)}"${l.locale === cur ? ' selected' : ''}>${esc(l.language || l.locale)}</option>`
+  ).join('');
+  item.style.display = '';
+  if (sel.dataset.bound) return;
+  sel.dataset.bound = '1';
+  sel.addEventListener('change', async () => {
+    const lang = sel.value;
+    saveSettings({ ui_locale: lang });
+    await applyLocale(lang);
+    logEvent('info', 'interface language changed', lang);
+    document.getElementById('file-dropdown')?.classList.remove('open');
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -16356,7 +16404,7 @@ function escAttr(str) { return esc(str); }
      aria.panel.ann.filter   alert.file.parse_failed
      confirm.entry.delete   hint.editor.sentence */
 function t(key, vars) {
-  let s = _LOCALE[key] ?? key;
+  let s = _LOCALE[key] ?? _LOCALE_EN[key] ?? key;
   if (vars) s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
   return s;
 }
@@ -16380,7 +16428,7 @@ function t(key, vars) {
    them would fork a corpus by whatever UI language it was annotated in. */
 // @fn tRes
 function tRes(key, fallback) {
-  return _LOCALE[key] ?? fallback ?? '';
+  return _LOCALE[key] ?? _LOCALE_EN[key] ?? fallback ?? '';
 }
 
 /* Tags contain spaces ('direct object', 'case marking'), and locale keys are

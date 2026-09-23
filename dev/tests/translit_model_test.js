@@ -152,5 +152,19 @@ console.log('\n3 · one editor, at every level that declares one\n');
         '       the old box fell through `else if (!length)` and left the value in place');
 }
 
+console.log('\n4 · the legend says "derived" only when it is (B-210)\n');
+{
+  const ctx = vm.createContext({});
+  vm.runInContext(fnSrc('LingCoT.html', 'wordHasStoredTranslit'), ctx);
+  const has = w => vm.runInContext('wordHasStoredTranslit', ctx)(w);
+  check(has({ transliterations: [{ label: 'IPA', text: "so'ɰuk" }] }), 'a typed transliteration is stored, not derived');
+  check(!has({ transliterations: [], morphemes: [{ transliterations: [{ text: 'so' }] }] }),
+        'a word with only morpheme transliterations has none stored');
+  check(has({ transliteration: 'legacy' }), 'the pre-v3.14.303 scalar still counts');
+  const legend = read('LingCoT.html').match(/legend-translit"><\/div><div class="igt-legend-label">([^\n]*)/);
+  check(legend && /wordHasStoredTranslit\(words\[i\]\)/.test(legend[1]) && !/!words\[i\]\.transliteration\b/.test(legend[1]),
+        'the legend asks wordHasStoredTranslit, not the legacy scalar alone');
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

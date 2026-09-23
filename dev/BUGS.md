@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**7 open** · 0 S1 · 0 S2 · 7 S3  |  **206 fixed**  |  **1 withdrawn** (B-096)
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **207 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -15,7 +15,7 @@ is how a consistency script found it at v3.14.397.*
 |---|---|---|---|
 | **S1** | 0 | blocks use, or loses data silently | none |
 | **S2** | 0 | visible and wrong, but workable | none |
-| **S3** | 7 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181, B-210 |
+| **S3** | 6 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181 |
 
 Counts are checked by `doc_integrity_test.js`, so they cannot drift from the
 entries below. Update them in the same commit that opens or closes a bug.
@@ -29,7 +29,6 @@ below already is.*
 | Theme | Bugs | Waiting on |
 |---|---|---|
 | export and output | B-028 | a decision, not a patch |
-| interlinear view | B-210 | nothing, one condition |
 | vocabularies and stored data | B-029, B-035, B-136 | nothing — three separate small decisions |
 | tooling | B-170, B-181 | B-170 wants a vacuity floor; B-181 is `new_version.py --add` |
 
@@ -113,22 +112,6 @@ thirteen that once reported success while checking nothing, are in
 ---
 
 ## Open
-
-### B-210 · S3 · The gloss legend calls every transliteration "derived"
-
-**Found 2026-09-22**, in a screenshot of `turkish_folk_songs_corpus` p1 s2: IPA
-typed into each word's transliteration field is labelled *Transliteration
-(derived)*.
-
-`renderSentence` (`LingCoT.html`, the legend rows) decides "derived" with
-`!words[i].transliteration && d.translit`. `transliteration` is the pre-v3.14.303
-scalar; words store `transliterations[]` now, so the first half is always true
-and any shown transliteration is called derived. `wordTranslit` prefers the
-stored array and derives from the morphemes only when it is empty, so the test
-should ask the same question: no stored transliteration on that word.
-
-S3: a label, nothing written. It does misreport provenance on screen, which this
-project otherwise keeps exact.
 
 ### B-181 · S3 · `new_version.py --add` archives a file that has already been edited
 
@@ -285,6 +268,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-210** | S3 | pending:tb-i18n | **The gloss legend called every transliteration "derived".** It tested the pre-v3.14.303 scalar `transliteration`, which words no longer carry, so a typed IPA line was labelled *Transliteration (derived)*. Found in a screenshot of `turkish_folk_songs_corpus` p1 s2. |
 | **B-214** | S3 | pending:tb-prep | **The B-213 edit dropped `hooks/prepare-commit-msg`'s executable bit**, and git skips a non-executable hook without a word, so commit `2c3f407` went out unstamped. Found by reading `git log`. |
 | **B-213** | S3 | pending:tb-prep | **The commit hook skipped any subject that named a version anywhere.** `Tester's build planned as v3.15.0` was taken as already stamped, so commit `eb0c8b4` (v3.14.419) carries no version and §8b cannot find it. Only a leading stamp counts now. |
 | **B-212** | S3 | v3.14.415 | **The word view never showed the word's transliterations.** The edit form wrote `transliterations[]` and the word view drew the parse and the gloss only, so a saved transliteration was visible in the sentence's gloss and nowhere on the word's own page. Found testing D40 stage D. |

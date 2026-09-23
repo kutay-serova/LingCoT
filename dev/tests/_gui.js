@@ -123,6 +123,9 @@ function makeBridge(outDir, corpusPath) {
     read_file:  rel => { const p = path.join(SRC, rel);
                          return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; },
     read_abs:   abs => fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null,
+    list_locales: () => fs.readdirSync(path.join(SRC, 'resources', 'locale'))
+      .filter(f => f.endsWith('.json') && !f.startsWith('settings'))
+      .map(f => ({ locale: f.slice(0, -5), language: JSON.parse(fs.readFileSync(path.join(SRC, 'resources', 'locale', f), 'utf8'))._meta.language })),
     read_user_file:  name => { const p = path.join(outDir, '_user', name);
                                return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; },
     write_user_file: (name, t) => { writes.push(['write_user_file', name, (t||'').length]);
@@ -229,7 +232,7 @@ async function boot({ outDir, corpusPath, headed = false } = {}) {
     return api[m](...a);
   });
   await page.addInitScript(() => {
-    const names = ['read_file','read_abs','read_user_file','write_user_file','write_abs','append_abs','truncate_abs',
+    const names = ['read_file','read_abs','read_user_file','write_user_file','list_locales','write_abs','append_abs','truncate_abs',
                    'setup_corpus_dir','get_workspace','get_app_info','get_server_status',
                    'open_dialog','save_dialog','zip_export','export_dict_pdf',
                    'start_nllb_server','stop_nllb_server','log_js','open_project'];

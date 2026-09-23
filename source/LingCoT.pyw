@@ -11,6 +11,7 @@ Requirements:  pip install pywebview   (or run setup.bat / setup.command once)
 """
 
 import atexit
+import json
 import os
 import tempfile
 import platform
@@ -156,6 +157,24 @@ class Api:
         except Exception as exc:
             _log.error(f"read_file failed for {rel_path!r}: {exc}")
             raise
+
+    def list_locales(self):
+        """Interface languages: every resources/locale/<code>.json whose _meta.locale
+        is <code>. Returns [{'locale', 'language'}], sorted by file name."""
+        d = os.path.join(BASE, 'resources', 'locale')
+        out = []
+        for f in sorted(os.listdir(d)):
+            if not f.endswith('.json') or f.startswith('settings'):
+                continue
+            try:
+                with open(os.path.join(d, f), encoding='utf-8') as fh:
+                    meta = json.load(fh).get('_meta') or {}
+            except (OSError, ValueError, AttributeError) as exc:
+                _log.warning(f"list_locales: skipped {f}: {exc}")
+                continue
+            if meta.get('locale') == f[:-5]:
+                out.append({'locale': f[:-5], 'language': str(meta.get('language') or f[:-5])})
+        return out
 
     # ── User settings and vocabulary (workspace, not the app folder) ─────────
     # There is deliberately no write_file: nothing the page does may write inside

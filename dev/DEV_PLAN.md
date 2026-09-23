@@ -34,7 +34,7 @@ are in `PRACTICES.md`.*
 
 ### What to do next
 
-**7 open bugs, 8 open findings, 3 live conflicts**, sorted by what each buys.
+**6 open bugs, 8 open findings, 3 live conflicts**, sorted by what each buys.
 *`BUGS.md` and `UNIFIED_AUDIT.md` are the sources — take the counts from their
 tables rather than from this line, which has been wrong twice.*
 
@@ -85,8 +85,7 @@ where a decided item goes to look open.*
 
 **B-028** PDF page numbers · **B-029** autocapitalize residue · **B-035** two
 languages, one native name · **B-181** `new_version.py --add` archives a file
-already edited · **B-210** the gloss legend calls every transliteration
-"derived".
+already edited.
 
 **One rule for reading this.** A is the only cluster with a deadline attached to
 it, because `git init` is irreversible and everything before it is cheap to
@@ -171,7 +170,7 @@ together with `new_version.py --release --minor`.
 | step | change | what | done when |
 |---|---|---|---|
 | 1 | `tb-settings` | user settings move out of the repo: `resources/locale/settings.json` is tracked and rewritten by the theme toggle. Defaults stay in the repo; the user copy lives in the data folder; migrated once | toggling the theme leaves `git status` clean |
-| 2 | `tb-i18n` | English fallback in `t()`; locale list read from `resources/locale/`; picker in Settings, applied without restart; `haw.json` as a copy of `en.json` except `_meta` (`locale: "haw"`, `language: "ʻŌlelo Hawaiʻi"`); key and placeholder parity guard; **B-210** | switching to `haw` and back changes nothing visible; the guard fails on a missing key or placeholder |
+| 2 | `tb-i18n` | English fallback in `t()`; locale list read from `resources/locale/`; picker in the File menu under the theme toggle, applied without restart; `haw.json` as a copy of `en.json` except `_meta` (`locale: "haw"`, `language: "ʻŌlelo Hawaiʻi"`); key parity guard (placeholders not compared, decided at tb-i18n); **B-210** | switching to `haw` and back changes nothing visible; the guard fails on a missing key |
 | 3 | `tb-strings` | every finding in `dev/audits/I18N_AUDIT_2026-09-24.md` (S1–S6, R1–R13, H1) moves into `en.json`, plus S7, found by the guard: `modal.autosave.hint` holds `<strong>` under `data-i18n`, which sets `textContent` | `i18n_literal_test.js` passes with an empty `pending` list |
 | 4 | `tb-reader-cols` | D41 B, column view | a section reads as text against translation, read-only |
 | 5 | `tb-reader-igt` | D41 A, interlinear, with the highlight rule below | hover and popup behave as specified |
@@ -213,7 +212,7 @@ New capability rather than model correctness, plus the cosmetic tail.
 | | |
 |---|---|
 | **Features** | D37 · D28 · D31 · D34 · D25 P3 · D20 · D24 · D29 P2 · a Windows build (`setup` and the host have only run on macOS and Linux) |
-| **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name · B-210 the gloss legend's "derived" |
+| **Bugs** | B-028 PDF page numbers · B-029 autocapitalize residue · B-035 two languages, one native name |
 | **Retired** | F5, the parse field as primary surface — on evidence 2026-08-29: D46's session put POS *before* the parse, so the parse is the pivot for what sits below it, not the opening move. **Half of it shipped anyway**: D53 stage E ✅ v3.14.300 built the per-segment lexicon offer under the parse field, which was F5's other claim. Only "primary surface" was retired (UNIFIED conflict ⑮, settled v3.14.310) |
 
 ---
