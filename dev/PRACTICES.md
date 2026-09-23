@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-09-22 · **Version:** v3.14.411
+**Updated:** 2026-09-23 · **Version:** v3.14.412
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its
@@ -18,7 +18,7 @@ evidence is advice, and advice gets argued with.
 | 9 | [Never log annotation content](#8-running-it) | any new log call | fieldwork licence |
 | 10 | [Write docs table-first and short](#9-writing-docs) | any doc edit | v3.14.274 |
 | 11 | [Assert on the FILE, not the object](#6-guards) | guarding anything a control writes | B-127, B-146, B-175 |
-| 12 | [Mint versions on one branch at a time; merge fast-forward only](#branches) | creating a branch | D40 (v3.14.411) |
+| 12 | [On a branch, change files; version numbers at release](#branches) | creating a branch | D40 (v3.14.411), v3.14.412 |
 
 ---
 
@@ -38,23 +38,31 @@ evidence is advice, and advice gets argued with.
 
 ### Branches
 
-A version number is stamped into 12 files and `doc_integrity_test.js` §8b finds
-a version's commit by the version string in its message. Two branches minting
-versions in parallel produce the same number twice: conflicts in every stamped
-file, and one version resolving to two commits.
+**Set v3.14.412.** A version number is assigned on `main`, when a batch of work
+reaches it, not when work starts on a branch. The stamp line in 12 files and
+the top of `edit_log.md` are then only ever written on `main`, so two branches
+never edit the same lines until one of them is released.
+
+| on | start a change | commits | finish |
+|---|---|---|---|
+| `main` | `new_version.py <slug> <files>`: number assigned now, as before | subject gets `vX.Y.Z` | commit and push |
+| a branch | the same command writes `dev/changes/<slug>.md` (`**Version:** pending`) and labels the build `<base>+<slug>` | subject gets `[<slug>]` | `new_version.py --release`, commit, `git merge --ff-only` into `main` |
 
 | rule | why |
 |---|---|
-| **Commit on main before branching** | the branch starts from a clean, versioned tree |
-| **One feature branch at a time mints versions** | while it is open, main takes no version. An urgent fix goes on the branch, or main is merged into the branch and the fix takes the branch's next number |
-| **One commit per version** | `prepare-commit-msg` puts the version in the subject; §8b reads it |
-| **Merge back at each stage boundary, after `run_all.sh`** | the checked-out branch is the build used for annotation; main must stay usable |
-| **`git merge --ff-only`** | linear history; fails loudly if main moved |
-| **No squash merges** | a squash folds several versions into one commit, the hook skips squash messages, and §8b loses them |
-| **Before merging a stage that changes the file format**, open a corpus saved by the branch build in the main build | D40 §5's compatibility claim, checked on real data |
+| **Commit on `main` before branching** | the branch starts from a clean, numbered tree |
+| **A change file is a batch, not a commit** | one per D40 stage, say. It becomes one version and one edit-log entry; its commits are found by `[<slug>]` (`doc_integrity_test.js` §8b) |
+| **Short slugs on a branch** | the slug is the build label in logs and bug reports: lower case, digits, `-`, `_`, at most 16 characters |
+| **Release at a stage boundary, after `run_all.sh`** | the checked-out branch is the build used for annotation; `main` must stay usable |
+| **`git merge --ff-only`** | linear history; fails loudly if `main` moved |
+| **No squash merges** | a squash loses the `[<slug>]` commits §8b reads |
+| **`main` moved while the branch was open** | merge `main` into the branch, keep `main`'s side of `source/version.py`, then `new_version.py --relabel` |
+| **A fix that cannot wait for the release** | `new_version.py --main <slug> <files>` numbers it at once; merge `main` into the branch afterwards |
+| **Before releasing a stage that changes the file format**, open a corpus saved by the branch build in the `main` build | D40 §5's compatibility claim, checked on real data |
 
-Branch names: the feature id and a slug, e.g. `d40-annotation-offers`. Delete
-the branch locally and on `origin` once its last stage is merged.
+Branch names: the feature id and a slug, e.g.
+`d40-annotation-offers`. Delete the branch locally and on `origin` once its last
+stage is released.
 
 ## 2. Contracts
 
@@ -98,8 +106,8 @@ table that did not before.
 
 ## 6. Guards
 
-**94 in `dev/tests/`. `run_all.sh` runs 92 by default — 92 pass, 0 disabled;
-`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 94.** Run `--slow`
+**95 in `dev/tests/`. `run_all.sh` runs 93 by default — 93 pass, 0 disabled;
+`--slow` adds `nllb_diag_test.py` and `gui_crud_test.js` for 95.** Run `--slow`
 before a release.
 
 **Two guards came out of gate 2 rather than out of the code.**

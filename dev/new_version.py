@@ -15,6 +15,28 @@ ENTRY TYPES
     decision  a choice and its reasoning; binds future work
     chore     tooling, docs, archiving — no behaviour change
 
+BRANCHES (v3.14.412)
+    On main, a change gets its version number when it starts, as before.
+
+    On any other branch the number is not assigned yet. The same command writes
+    a change file, dev/changes/<slug>.md, holding the entry with
+    `**Version:** pending`, archives the named files under the slug, and labels
+    the build in source/version.py as `<base>+<slug>`. Commits on the branch
+    carry `[<slug>]` (hooks/prepare-commit-msg). A change file is one batch of
+    work, e.g. one D40 stage, not one commit.
+
+        python3 dev/new_version.py d40a-index source/LingCoT.html   # on a branch
+        python3 dev/new_version.py --add dev/BUGS.md                # grows the current change
+        python3 dev/new_version.py --release                        # at the stage boundary
+        python3 dev/new_version.py --relabel                        # after merging main in
+
+    --release numbers every change file in the order it was started, prepends
+    the entries to edit_log.md, stamps the docs once and moves each change file
+    into its archive folder. Commit the result, then merge with --ff-only.
+
+    Slugs on a branch are the build label, so they are short: lower case,
+    digits, - and _, at most 16 characters.
+
     `finding` and `decision` imply --docs-only. A review that finds NOTHING is
     still worth an entry: "we looked at X and it was clean" is information, and
     its absence is why B-008 sat in a log unread for three months.
@@ -45,6 +67,7 @@ WHY IT EXISTS
 import os
 import re
 import shutil
+import subprocess
 import sys
 from datetime import date
 
@@ -75,6 +98,13 @@ QUICKSTART = os.path.join(ROOT, 'QUICKSTART.md')
 SETUP_MD   = os.path.join(ROOT, 'setup.md')
 SAMPLES_RM = os.path.join(ROOT, 'samples', 'README.md')
 LOG = os.path.join(DEV, 'edit_log.md')
+VERSION_PY = os.path.join(ROOT, 'source', 'version.py')
+
+# Change files for work on a branch; see BRANCHES in the docstring.
+CHANGES = os.path.join(DEV, 'changes')
+MAIN_BRANCHES = ('main', 'master')
+LABEL_RE = re.compile(r'[a-z0-9][a-z0-9_-]{0,15}')
+VERSION_LINE = re.compile(r'^(__version__\s*=\s*")([^"]*)(")', re.M)
 
 
 def current_version() -> str:
@@ -90,8 +120,199 @@ def bump(v: str) -> str:
     return 'v' + '.'.join(parts)
 
 
+def git_branch():
+    """Current branch name, or None outside git or on a detached HEAD."""
+    try:
+        out = subprocess.run(['git', '-C', ROOT, 'rev-parse', '--abbrev-ref', 'HEAD'],
+                             capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return None if out in ('', 'HEAD') else out
+
+
+def read_version_py():
+    """(number, label) from source/version.py; label is None on main."""
+    m = VERSION_LINE.search(open(VERSION_PY, encoding='utf-8').read())
+    if not m:
+        return None, None
+    num, _, label = m.group(2).partition('+')
+    return num, (label or None)
+
+
+def set_version_py(value):
+    txt = open(VERSION_PY, encoding='utf-8').read()
+    new = VERSION_LINE.sub(lambda m: m.group(1) + value + m.group(3), txt, count=1)
+    if new == txt and f'"{value}"' not in txt:
+        print('  !! could not set source/version.py — check it by hand')
+        return
+    open(VERSION_PY, 'w', encoding='utf-8').write(new)
+    print(f'  source/version.py -> {value}')
+
+
+def stamp_docs(old, new):
+    """Move every live doc's Version/Updated header from old to new."""
+    # BUGS.md carries the same stamp as DEV_PLAN. It was added by hand at
+    # v3.14.133 and would have rotted by the next version if the bump did not
+    # own it, which is the whole reason DEV_PLAN's is stamped here.
+    # v3.14.389: RENAMES.md joined this list the version after it was created.
+    # v3.14.399, B-208: README.md, setup.md, QUICKSTART.md and samples/README.md
+    # carried no stamp at all. `doc_integrity_test.js` now asserts this list
+    # against the tree instead of trusting anyone to remember.
+    for label, doc in (('DEV_PLAN', PLAN), ('BUGS', BUGS),
+                       ('PRACTICES', PRACTICES), ('dev/README', DEVREADME),
+                       ('edit_log', LOG_HDR), ('RENAMES', RENAMES),
+                       ('UNIFIED_AUDIT', UNIFIED), ('AUDIT_INDEX', AUDITINDEX),
+                       ('README', RDM_ROOT), ('QUICKSTART', QUICKSTART),
+                       ('setup.md', SETUP_MD), ('samples/README', SAMPLES_RM)):
+        if not os.path.exists(doc):
+            continue
+        text = open(doc, encoding='utf-8').read()
+        text = text.replace(f'**Version:** {old}', f'**Version:** {new}', 1)
+        text = re.sub(r'\*\*Updated:\*\*\s*[\d-]+',
+                      f'**Updated:** {date.today().isoformat()}', text, count=1)
+        open(doc, 'w', encoding='utf-8').write(text)
+        print(f'  {label} {old} -> {new}')
+
+
+def entry_headings(entry_type):
+    if entry_type == 'finding':
+        return ("**What was examined.**\n\n**What was found.**\n\n"
+                "**What follows.** (bugs filed, or explicitly nothing)\n")
+    if entry_type == 'decision':
+        return ("**The decision.**\n\n**Alternatives considered, and why not.**\n\n"
+                "**What this binds.**\n")
+    return ("**What changed.**\n\n**Why.**\n\n**Guard.**\n\n"
+            "**Verification.** `./dev/tests/run_all.sh` —\n")
+
+
+def change_files():
+    """Open change files as dicts, in the order they were started."""
+    out = []
+    if not os.path.isdir(CHANGES):
+        return out
+    for name in os.listdir(CHANGES):
+        if not name.endswith('.md') or name == 'README.md':
+            continue
+        path = os.path.join(CHANGES, name)
+        text = open(path, encoding='utf-8').read()
+        m = re.search(r'\*\*Order:\*\*\s*(\d+)', text)
+        out.append({'slug': name[:-3], 'path': path, 'text': text,
+                    'order': int(m.group(1)) if m else 0})
+    return sorted(out, key=lambda c: c['order'])
+
+
+def start_change(slug, entry_type, examined, files, docs_only):
+    """Branch path: a change file instead of a version number."""
+    if not LABEL_RE.fullmatch(slug):
+        sys.exit(f'"{slug}": on a branch the slug is the build label — '
+                 'lower case, digits, - and _, at most 16 characters (e.g. d40a-index)')
+    base = current_version()
+    frag = os.path.join(CHANGES, f'{slug}.md')
+    arc_dir = os.path.join(DEV, 'archive', 'changes', slug)
+    if os.path.exists(frag) or os.path.exists(arc_dir):
+        sys.exit(f'{slug} is already in use — pick another slug, or --add to it.')
+
+    touched = []
+    if docs_only and not files:
+        arc_ref = 'none — documentation only'
+        touched_line = '— documentation only'
+    else:
+        os.makedirs(arc_dir)
+        for f in files:
+            src = os.path.join(ROOT, f)
+            if not os.path.exists(src):
+                touched.append(f'{f} (new)')
+                continue
+            name, ext = os.path.splitext(os.path.basename(f))
+            shutil.copy2(src, os.path.join(arc_dir, f'{name}_pre_{slug}{ext}'))
+            touched.append(f)
+        arc_ref = f'`dev/archive/changes/{slug}/` ({base})'
+        touched_line = ' · '.join(touched)
+        print(f'  archived {len([t for t in touched if not t.endswith("(new)")])} file(s) -> {arc_dir}')
+
+    order = max([c['order'] for c in change_files()] or [0]) + 1
+    meta = f"**Version:** pending · **Type:** {entry_type} · **Archives:** {arc_ref}\n"
+    meta += f"**Touched:** {touched_line}\n"
+    meta += f"**Change:** `{slug}` · **Order:** {order}\n"
+    if entry_type == 'finding':
+        meta += f"**Examined:** {examined}\n**Filed:** \n"
+    os.makedirs(CHANGES, exist_ok=True)
+    with open(frag, 'w', encoding='utf-8') as fh:
+        fh.write(f"## TITLE ({date.today().isoformat()})\n{meta}\n{entry_headings(entry_type)}")
+    print(f'  wrote dev/changes/{slug}.md — replace TITLE and fill the headings')
+
+    num, _ = read_version_py()
+    set_version_py(f'{num or base.lstrip("v")}+{slug}')
+    print(f'\n{slug} started on branch {git_branch()}. No version number until --release.')
+    print('When done:  node dev/tests/doc_integrity_test.js')
+    print('            ./dev/tests/run_all.sh')
+    return 0
+
+
+def relabel():
+    """Point the build label at the newest change file, e.g. after merging main."""
+    frags = change_files()
+    num = current_version().lstrip('v')
+    set_version_py(f'{num}+{frags[-1]["slug"]}' if frags else num)
+    return 0
+
+
+def release():
+    """Number the open change files and write them into edit_log.md."""
+    branch = git_branch()
+    if branch in MAIN_BRANCHES:
+        sys.exit('--release runs on the feature branch, before the fast-forward merge.')
+    frags = change_files()
+    if not frags:
+        sys.exit('no change files in dev/changes/ — nothing to release')
+    unfinished = [c['slug'] for c in frags if re.match(r'## TITLE\b', c['text'])]
+    if unfinished:
+        sys.exit(f'give these a title first: {", ".join(unfinished)}')
+
+    old = current_version()
+    new = old
+    released = []
+    for c in frags:
+        new = bump(new)
+        text = c['text'].replace('**Version:** pending', f'**Version:** {new}', 1)
+        # The order only matters until the number is assigned.
+        text = re.sub(r' · \*\*Order:\*\*\s*\d+', '', text, count=1)
+        released.append((new, c, text.rstrip('\n') + '\n'))
+
+    # Newest first, so the last change started sits at the top.
+    log = open(LOG, encoding='utf-8').read()
+    head_end = log.index('\n---\n') + len('\n---\n')
+    block = ''.join(f'\n{text}\n---\n' for _, _, text in reversed(released))
+    open(LOG, 'w', encoding='utf-8').write(log[:head_end] + block + log[head_end:])
+    print(f'  edit_log: {len(released)} entr{"y" if len(released) == 1 else "ies"}, '
+          f'{released[0][0]} to {new}')
+
+    set_version_py(new.lstrip('v'))
+    stamp_docs(old, new)
+
+    # Moved, not deleted: the archive keeps the change file as it was written.
+    for _, c, _ in released:
+        arc_dir = os.path.join(DEV, 'archive', 'changes', c['slug'])
+        os.makedirs(arc_dir, exist_ok=True)
+        os.replace(c['path'], os.path.join(arc_dir, f'change_{c["slug"]}.md'))
+
+    versions = ', '.join(v for v, _, _ in released)
+    titles = '; '.join(re.match(r'## (.+?)(?: \(\d{4}-\d\d-\d\d\))?\s*$',
+                                t.split('\n', 1)[0]).group(1) for _, _, t in released)
+    print(f'\nReleased {versions}. Next:')
+    print('  node dev/tests/doc_integrity_test.js && ./dev/tests/run_all.sh')
+    print(f'  git add -A && git commit -m "{versions} — {titles}"')
+    print(f'  git switch main && git merge --ff-only {branch} && git push')
+    return 0
+
+
 def main() -> int:
     argv = list(sys.argv[1:])
+
+    if '--release' in argv:
+        return release()
+    if '--relabel' in argv:
+        return relabel()
 
     def take(flag):
         if flag not in argv:
@@ -127,6 +348,26 @@ def main() -> int:
         files = argv[i + 1:]
         if not files:
             sys.exit('--add needs at least one file')
+        # On a branch the build label names the change in progress.
+        _, label = read_version_py()
+        if label and os.path.exists(os.path.join(CHANGES, f'{label}.md')):
+            target = os.path.join(DEV, 'archive', 'changes', label)
+            os.makedirs(target, exist_ok=True)
+            for f in files:
+                src = os.path.join(ROOT, f)
+                if not os.path.exists(src):
+                    print(f'  {f} does not exist — record it as (new) instead')
+                    continue
+                name, ext = os.path.splitext(os.path.basename(f))
+                dest = os.path.join(target, f'{name}_pre_{label}{ext}')
+                if os.path.exists(dest):
+                    print(f'  {f} already archived for {label}')
+                    continue
+                shutil.copy2(src, dest)
+                print(f'  archived {f} -> {os.path.relpath(dest, ROOT)}')
+            print(f'\nAdd these to the **Touched:** line in dev/changes/{label}.md.')
+            return 0
+
         cur = current_version()
         slug_dirs = [d for d in os.listdir(os.path.join(DEV, 'archive', 'changes'))
                      if os.path.isdir(os.path.join(DEV, 'archive', 'changes', d))]
@@ -186,6 +427,16 @@ def main() -> int:
     slug = argv[0] if argv else 'notes'
     files = argv[1:]
 
+    # --main forces a version number on a branch, e.g. for a fix that must land
+    # before the branch is released.
+    force_main = '--main' in sys.argv
+    files = [f for f in files if f != '--main']
+    branch = git_branch()
+    if not force_main and ('--fragment' in sys.argv or
+                           (branch and branch not in MAIN_BRANCHES)):
+        return start_change(slug, entry_type, examined,
+                            [f for f in files if f != '--fragment'], docs_only)
+
     old = current_version()
     new = bump(old)
 
@@ -238,69 +489,24 @@ def main() -> int:
     meta += f"**Touched:** {touched_line}\n"
     if entry_type == 'finding':
         meta += f"**Examined:** {examined}\n**Filed:** \n"
-        headings = ("**What was examined.**\n\n**What was found.**\n\n"
-                    "**What follows.** (bugs filed, or explicitly nothing)\n")
-    elif entry_type == 'decision':
-        headings = ("**The decision.**\n\n**Alternatives considered, and why not.**\n\n"
-                    "**What this binds.**\n")
-    else:
-        headings = ("**What changed.**\n\n**Why.**\n\n**Guard.**\n\n"
-                    "**Verification.** `./dev/tests/run_all.sh` —\n")
 
     entry = f"""
 ## TITLE ({date.today().isoformat()})
 {meta}
-{headings}
+{entry_headings(entry_type)}
 ---
 """
     open(LOG, 'w', encoding='utf-8').write(log[:head_end] + entry + log[head_end:])
     print(f'  stubbed edit_log entry for {new} — replace TITLE and fill the headings')
 
-    # ── 3. bump source/version.py — the shipped string ──────────────────────
+    # ── 3. bump source/version.py, the shipped string ────────────────────────
     # Must move with the docs. A version.py left behind mislabels every log line
-    # and bug report the build produces, which is the exact failure this whole
-    # mechanism exists to prevent.
-    vp = os.path.join(ROOT, 'source', 'version.py')
-    if os.path.exists(vp):
-        txt = open(vp, encoding='utf-8').read()
-        bumped = re.sub(r'^(__version__\s*=\s*")[\d.]+(")',
-                        lambda m: m.group(1) + new.lstrip('v') + m.group(2),
-                        txt, count=1, flags=re.M)
-        if bumped == txt:
-            print('  !! could not bump source/version.py — check it by hand')
-        else:
-            open(vp, 'w', encoding='utf-8').write(bumped)
-            print(f'  source/version.py -> {new.lstrip("v")}')
+    # and bug report the build produces.
+    if os.path.exists(VERSION_PY):
+        set_version_py(new.lstrip('v'))
 
     # ── 4. bump the doc headers ──────────────────────────────────────────────
-    # BUGS.md carries the same stamp as DEV_PLAN. It was added by hand at
-    # v3.14.133 and would have rotted by the next version if the bump did not
-    # own it, which is the whole reason DEV_PLAN's is stamped here.
-    # v3.14.389: RENAMES.md joined this list the version after it was created.
-    # A live document that the bump does not own rots by the next version — the
-    # comment above says exactly that about BUGS.md, and it happened again five
-    # versions later to a document added by hand. Found by the pre-`git init`
-    # sweep, comparing every doc header against source/version.py.
-    #
-    # v3.14.399, B-208: and a THIRD time, to four documents this list had never
-    # owned — README.md, setup.md, QUICKSTART.md and samples/README.md carried no
-    # stamp at all. The comment above states the rule and the rule kept being
-    # broken by documents nobody thought to add, so `doc_integrity_test.js` now
-    # asserts the list against the tree instead of trusting anyone to remember.
-    for label, doc in (('DEV_PLAN', PLAN), ('BUGS', BUGS),
-                       ('PRACTICES', PRACTICES), ('dev/README', DEVREADME),
-                       ('edit_log', LOG_HDR), ('RENAMES', RENAMES),
-                       ('UNIFIED_AUDIT', UNIFIED), ('AUDIT_INDEX', AUDITINDEX),
-                       ('README', RDM_ROOT), ('QUICKSTART', QUICKSTART),
-                       ('setup.md', SETUP_MD), ('samples/README', SAMPLES_RM)):
-        if not os.path.exists(doc):
-            continue
-        text = open(doc, encoding='utf-8').read()
-        text = text.replace(f'**Version:** {old}', f'**Version:** {new}', 1)
-        text = re.sub(r'\*\*Updated:\*\*\s*[\d-]+',
-                      f'**Updated:** {date.today().isoformat()}', text, count=1)
-        open(doc, 'w', encoding='utf-8').write(text)
-        print(f'  {label} {old} -> {new}')
+    stamp_docs(old, new)
 
     print(f'\n{new} started. Edit freely — the pre-edit copies are already safe.')
     print('When done:  node dev/tests/doc_integrity_test.js')

@@ -314,11 +314,18 @@ console.log('\nthe version agrees in all three places');
         + '         report cannot be tied to a build');
   if (fs.existsSync(vpPath)) {
     const vp = fs.readFileSync(vpPath, 'utf8');
-    const codeV = /^__version__\s*=\s*["']([\d.]+)["']/m.exec(vp);
+    /* v3.14.412: on a branch the string is `<base>+<label>`, and the label must
+       name an open change file in dev/changes/. The number still has to match
+       the docs, because nothing is numbered until --release. */
+    const codeV = /^__version__\s*=\s*["']([\d.]+)(?:\+([a-z0-9_-]+))?["']/m.exec(vp);
     check(codeV && planV && `v${codeV[1]}` === planV[1],
           `source/version.py ${codeV ? 'v' + codeV[1] : '?'} matches the docs ${planV ? planV[1] : '?'}`,
           '         the shipped version and the documented version disagree —\n'
           + '         every log line and bug report from this build would be mislabelled');
+    if (codeV && codeV[2])
+      check(fs.existsSync(path.join(DEV, 'changes', `${codeV[2]}.md`)),
+            `the build label +${codeV[2]} names an open change file`,
+            `         dev/changes/${codeV[2]}.md is missing — run new_version.py --relabel`);
 
     /* pyproject.toml versions the SEPARATE v1.x packaging stream and must not be
        dragged into line. Assert the two are still distinct so nobody "fixes" it. */
@@ -452,6 +459,44 @@ console.log('\nedit_log integrity');
   else
     console.log('  --   pre-edit copies — skipped, dev/archive/ is not distributed');
 
+  /* ── 8a. Change files on a branch — v3.14.412 ─────────────────────────────
+     An entry waiting in dev/changes/ for --release. Same shape as an edit_log
+     entry except the version, which is `pending`, and the same completeness
+     rule: every touched file has a pre-edit copy under the change's slug. */
+  {
+    const chDir = path.join(DEV, 'changes');
+    const chFiles = fs.existsSync(chDir)
+      ? fs.readdirSync(chDir).filter(f => f.endsWith('.md') && f !== 'README.md') : [];
+    const bad = [], orders = new Map();
+    for (const f of chFiles) {
+      const slug = f.slice(0, -3), body = fs.readFileSync(path.join(chDir, f), 'utf8');
+      if (!/^## .+/m.test(body)) bad.push(`         ${f} has no ## heading`);
+      if (!/\*\*Version:\*\*\s*pending\b/.test(body)) bad.push(`         ${f} is not **Version:** pending`);
+      const t = (/\*\*Type:\*\*\s*([a-z]+)/.exec(body) || [])[1];
+      if (!['fix', 'feature', 'finding', 'decision', 'chore'].includes(t)) bad.push(`         ${f} has no valid **Type:**`);
+      const ch = /\*\*Change:\*\*\s*`([^`]+)`\s*·\s*\*\*Order:\*\*\s*(\d+)/.exec(body);
+      if (!ch || ch[1] !== slug) { bad.push(`         ${f} does not name itself on its **Change:** line`); continue; }
+      if (orders.has(ch[2])) bad.push(`         ${f} and ${orders.get(ch[2])} share **Order:** ${ch[2]}`);
+      orders.set(ch[2], f);
+      const tch = (/\*\*Touched:\*\*\s*(.+)/.exec(body) || [])[1];
+      if (!tch) { bad.push(`         ${f} has no **Touched:** line`); continue; }
+      if (!HAVE_ARCHIVE || /^—|^documentation only/i.test(tch)) continue;
+      const dir = path.join(DEV, 'archive', 'changes', slug);
+      const have = fs.existsSync(dir) ? fs.readdirSync(dir).join('\n') : '';
+      for (const raw of tch.split('·').map(x => x.trim()).filter(Boolean)) {
+        if (/\((new|moved|no pre-copy)\)\s*$/.test(raw)) continue;
+        const ext = path.extname(raw), base = ext ? path.basename(raw, ext) : path.basename(raw);
+        const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (!new RegExp(`^${esc(base)}_pre_${esc(slug)}${esc(ext)}$`, 'm').test(have))
+          bad.push(`         ${f} touched ${raw} — no pre-edit copy in dev/archive/changes/${slug}/`);
+      }
+    }
+    if (chFiles.length)
+      check(bad.length === 0, `${chFiles.length} open change file(s) are well-formed and archived`, bad.join('\n'));
+    else
+      console.log('  --   change files — none open (main, or a branch before its first change)');
+  }
+
   /* ── 8b. The same property, asked of GIT — conflict ⑪, v3.14.393 ──────────
      The two checks above read `dev/archive/`, which is gitignored, so on every
      clone they print `-- skipped` and the strongest documentation guard in the
@@ -501,11 +546,22 @@ console.log('\nedit_log integrity');
       .map(r => { const i = r.indexOf('\x1f'); return { sha: r.slice(0, i).trim(), msg: r.slice(i + 1) }; });
 
     const missing = [], rootExempt = [];
+    /* Whole version only: `v3.14.41` must not match a message naming v3.14.412. */
+    const namesVersion = (msg, v) =>
+      new RegExp(`(^|[^\\d.])${v.replace(/\./g, '\\.')}(?![\\d])`).test(msg);
+    const diffOf = sha => (g('diff', '--name-only', sha + '^', sha) || '').split('\n').filter(Boolean);
     for (const e of entries) {
-      const c = commits.find(c => c.msg.includes(e.version));
+      const c = commits.find(c => namesVersion(c.msg, e.version));
       if (!c) continue;
       if (g('rev-parse', '--verify', '-q', c.sha + '^') === null) { rootExempt.push(e.version); continue; }
-      const changed = new Set((g('diff', '--name-only', c.sha + '^', c.sha) || '').split('\n').filter(Boolean));
+      const changed = new Set(diffOf(c.sha));
+      /* v3.14.412: a version released from a change file did its work in the
+         branch commits carrying `[slug]`; the release commit only numbers it. */
+      const slug = (/\*\*Change:\*\*\s*`([^`]+)`/.exec(e.body) || [])[1];
+      if (slug)
+        for (const sc of commits.filter(x => x.msg.includes(`[${slug}]`)))
+          if (g('rev-parse', '--verify', '-q', sc.sha + '^') !== null)
+            for (const f of diffOf(sc.sha)) changed.add(f);
       const named = (e.touched && !/^—/.test(e.touched) && !/^documentation only/i.test(e.touched))
         ? e.touched.split('·').map(x => x.trim().replace(/\s*\([^)]*\)\s*$/, '')).filter(Boolean) : [];
       if (!named.length) continue;
@@ -884,6 +940,11 @@ console.log('\nedit_log entries stay short, or say where the long version lives\
   check(/os\.makedirs\(target, exist_ok=True\)/.test(nv),
         'and creates the folder when a docs-only version left none',
         '         without this, --add cannot rescue a change that grew past its original file list');
+  /* v3.14.412: the branch path. change_files_test.js runs it for real. */
+  check(/def start_change\(/.test(nv) && /def release\(/.test(nv) && /def relabel\(/.test(nv),
+        'the branch path exists: start_change, release, relabel');
+  check(/_pre_\{slug\}\{ext\}/.test(nv),
+        'a change file archives under its slug, not a version it does not have yet');
   check(/no archive folder holds/.test(nv) === false,
         'the dead-end message is gone, because the dead end is gone',
         '         it told the developer to start a version that was already started');

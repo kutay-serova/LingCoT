@@ -25,6 +25,11 @@
 #
 #  The version comes from source/version.py, which has been the single source of
 #  truth since v3.14.88. Never from a document header: those are bumped copies.
+#
+#  ON A BRANCH (v3.14.412) version.py reads `3.14.411+d40a-index`: no number has
+#  been assigned yet, and the label names the change in progress. The subject
+#  then gets `[d40a-index]`, which is how doc_integrity_test.js §8b finds the
+#  commits belonging to that change once --release gives it a number.
 # =============================================================================
 set -u
 
@@ -40,9 +45,13 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 VERSION_PY="$ROOT/source/version.py"
 [ -f "$VERSION_PY" ] || exit 0
 
-# `__version__ = "3.14.401"` -> v3.14.401
-VER=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([0-9.]*\)".*/v\1/p' "$VERSION_PY" | head -1)
-[ -n "$VER" ] || exit 0
+# `__version__ = "3.14.401"` -> v3.14.401; `"3.14.401+d40a-index"` -> [d40a-index]
+RAW=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_PY" | head -1)
+[ -n "$RAW" ] || exit 0
+case "$RAW" in
+  *+*) LABEL="${RAW#*+}"; STAMP="[$LABEL]" ;;
+  *)   LABEL="";          STAMP="v$RAW" ;;
+esac
 
 # The first line that is neither blank nor a git comment is the subject. For a
 # `-m` commit that is line 1; for an editor commit the template sits below it.
@@ -55,9 +64,13 @@ SUBJECT=$(sed -n "${SUBJECT_NO}p" "$MSG_FILE")
 case "$SUBJECT" in
   *v[0-9].[0-9][0-9].[0-9]*|*v[0-9].[0-9].[0-9]*) exit 0 ;;
 esac
+# Already carries this change's label.
+if [ -n "$LABEL" ]; then
+  case "$SUBJECT" in *"[$LABEL]"*) exit 0 ;; esac
+fi
 
 # Prepend in place. `sed -i` is avoided: BSD and GNU disagree about its argument.
 TMP="$MSG_FILE.lingcot"
-awk -v n="$SUBJECT_NO" -v v="$VER" 'NR==n{print v " — " $0; next} {print}' "$MSG_FILE" > "$TMP" \
+awk -v n="$SUBJECT_NO" -v v="$STAMP" 'NR==n{print v " — " $0; next} {print}' "$MSG_FILE" > "$TMP" \
   && cat "$TMP" > "$MSG_FILE" && rm -f "$TMP"
 exit 0

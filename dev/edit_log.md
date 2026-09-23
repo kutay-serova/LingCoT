@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-22 · **Version:** v3.14.411
+**Updated:** 2026-09-23 · **Version:** v3.14.412
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,36 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## Branch work gets change files; version numbers are assigned at release (2026-09-23)
+**Version:** v3.14.412 · **Type:** chore · **Archives:** `dev/archive/changes/versioning_change_files/` (v3.14.411)
+**Touched:** dev/new_version.py · hooks/prepare-commit-msg · dev/tests/doc_integrity_test.js · dev/tests/change_files_test.js (new) · dev/changes/README.md (new) · dev/PRACTICES.md · dev/README.md
+
+**What changed.** On any branch other than `main`, `new_version.py` writes the
+entry to `dev/changes/<slug>.md` with `**Version:** pending`, archives under the
+slug, and labels the build `<base>+<slug>` in `source/version.py`.
+`--release` numbers the open change files in the order they were started,
+prepends them to `edit_log.md`, stamps the docs once and moves each file into
+its archive folder. `--relabel` resets the label after merging `main` in;
+`--main` forces a number on a branch. The commit hook prefixes `[<slug>]` while
+the build is labelled. On `main` nothing changes.
+
+**Why.** Every version rewrote the stamp line in 12 files and the top of
+`edit_log.md`, so two branches minting versions conflicted on the same lines
+whatever numbers they used. Numbers are now assigned only on `main`.
+`PRACTICES.md` §1 Branches.
+
+**Guard.** `change_files_test.js`, 22 checks, runs the script and the hook in a
+throwaway repository. Three mutations (hook label, release order, build label)
+each fail it; the release-order one first escaped because the header stamp
+matched the version string. `doc_integrity_test.js`: open change files checked
+like entries (§8a); §8b credits a released change with its `[<slug>]` commits
+and matches whole version strings only; the version.py check accepts a label
+that names an open change file.
+
+**Verification.** `./dev/tests/run_all.sh` — **93 passed, 0 failed, 0 disabled.**
 
 ---
 

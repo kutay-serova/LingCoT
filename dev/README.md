@@ -1,5 +1,5 @@
 # dev/: plans, history, and the guard suite
-**Updated:** 2026-09-22 · **Version:** v3.14.411
+**Updated:** 2026-09-23 · **Version:** v3.14.412
 
 This directory is the development record. It is not needed to run LingCoT; see
 the top-level `README.md` and `setup.md` for that.
@@ -15,6 +15,7 @@ the top-level `README.md` and `setup.md` for that.
 | `tests/` | the guard suite. `./dev/tests/run_all.sh` runs the default set; `--slow` adds the two release checks |
 | `tests/_gui.js` | the app in headless Chromium, with the pywebview bridge backed by a real directory. Needs Playwright; exits 2 without it |
 | `archive/` | pre-edit snapshots, one folder per change. Not committed; see below |
+| `changes/` | edit-log entries for branch work, waiting for a version number. See `changes/README.md` |
 | `new_version.py` | starts a version: bumps, archives the files you are about to edit, stubs the log entry |
 
 ## How this record was written
