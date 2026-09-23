@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**7 open** · 0 S1 · 0 S2 · 7 S3  |  **204 fixed**  |  **1 withdrawn** (B-096)
+**7 open** · 0 S1 · 0 S2 · 7 S3  |  **206 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -285,6 +285,8 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-214** | S3 | pending:tb-prep | **The B-213 edit dropped `hooks/prepare-commit-msg`'s executable bit**, and git skips a non-executable hook without a word, so commit `2c3f407` went out unstamped. Found by reading `git log`. |
+| **B-213** | S3 | pending:tb-prep | **The commit hook skipped any subject that named a version anywhere.** `Tester's build planned as v3.15.0` was taken as already stamped, so commit `eb0c8b4` (v3.14.419) carries no version and §8b cannot find it. Only a leading stamp counts now. |
 | **B-212** | S3 | v3.14.415 | **The word view never showed the word's transliterations.** The edit form wrote `transliterations[]` and the word view drew the parse and the gloss only, so a saved transliteration was visible in the sentence's gloss and nowhere on the word's own page. Found testing D40 stage D. |
 | **B-211** | S2 | v3.14.415 | **Choosing between homograph lemmas (dA·1 / dA·2) looked like it did nothing.** The pick was stored and the save honoured it, but the strip's ambiguous branch repainted the same question: `lemmaStripHtml` was never told which lemma the field had chosen. B-161 had fixed the same thing in the exact branch. Found testing D40 stage D. |
 | **B-209** | **S1** | v3.14.401 | **The privacy hook has never run on a clone.** `hooks/pre-commit` was mode **100644 in every commit**, including the first, and git skips a non-executable hook *silently* — so the second of the two layers refusing fieldwork did not exist for anyone who cloned. It looked fine because it fired for real at v3.14.392 (B-206): the author's working copy had the bit from a `chmod`, while the index recorded 100644, and the working copy is the one that ran. **`chmod` alone is the trap** — the fix is `git update-index --chmod=+x` |

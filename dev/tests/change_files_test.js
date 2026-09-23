@@ -93,6 +93,13 @@ try {
   git('add', '-A'); git('commit', '-q', '-m', 'prefill');
   check(subject() === '[d40b-prefill] — prefill', 'its commits carry its own label');
 
+  // B-213: a version named inside the subject is not a stamp.
+  w('source/app.txt', 'three-b\n');
+  git('add', '-A'); git('commit', '-q', '-m', 'planned as v3.15.0');
+  check(subject() === '[d40b-prefill] — planned as v3.15.0', `a version in the text still gets the stamp (${subject()})`);
+  git('commit', '-q', '--amend', '-m', subject());
+  check(subject() === '[d40b-prefill] — planned as v3.15.0', 'an amend does not stamp twice');
+
   // ── 4. release refuses untitled entries ───────────────────────────────────
   res = nv('--release');
   check(res.status !== 0 && /title/.test(res.stderr + res.stdout),
@@ -131,6 +138,18 @@ try {
         'on main a change gets its number at once, as before');
 } finally {
   fs.rmSync(T, { recursive: true, force: true });
+}
+
+// B-214: git ignores a hook without the executable bit, silently. An editor
+// that rewrites the file can drop it; both the checkout and the index must keep it.
+console.log('\nthe hooks are executable\n');
+for (const h of ['pre-commit', 'prepare-commit-msg']) {
+  const p = path.join(ROOT, 'hooks', h);
+  check(fs.existsSync(p) && (fs.statSync(p).mode & 0o111) !== 0, `hooks/${h} is executable on disk`);
+  const idx = spawnSync('git', ['--no-optional-locks', 'ls-files', '-s', `hooks/${h}`], { cwd: ROOT, encoding: 'utf8' });
+  if (idx.status === 0 && idx.stdout.trim())
+    check(idx.stdout.startsWith('100755'), `and in the git index (${idx.stdout.slice(0, 6)})`,
+          `         git update-index --chmod=+x hooks/${h}`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

@@ -59,14 +59,11 @@ SUBJECT_NO=$(grep -n -m1 -vE '^[[:space:]]*($|#)' "$MSG_FILE" | cut -d: -f1)
 [ -n "$SUBJECT_NO" ] || exit 0
 SUBJECT=$(sed -n "${SUBJECT_NO}p" "$MSG_FILE")
 
-# Already carries A version — any version, not only the current one. An amend or
-# a reworded message must not collect a second stamp.
-case "$SUBJECT" in
-  *v[0-9].[0-9][0-9].[0-9]*|*v[0-9].[0-9].[0-9]*) exit 0 ;;
-esac
-# Already carries this change's label.
-if [ -n "$LABEL" ]; then
-  case "$SUBJECT" in *"[$LABEL]"*) exit 0 ;; esac
+# Already stamped: an amend or a reworded message must not collect a second
+# stamp. Only a LEADING stamp counts; a version named in the text ("planned as
+# v3.15.0") is not one (B-213).
+if printf '%s\n' "$SUBJECT" | grep -qE '^(v[0-9]+\.[0-9]+\.[0-9]+|\[[a-z0-9][a-z0-9_-]*\])( |,|$)'; then
+  exit 0
 fi
 
 # Prepend in place. `sed -i` is avoided: BSD and GNU disagree about its argument.

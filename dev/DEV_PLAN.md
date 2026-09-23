@@ -172,7 +172,7 @@ together with `new_version.py --release --minor`.
 |---|---|---|---|
 | 1 | `tb-settings` | user settings move out of the repo: `resources/locale/settings.json` is tracked and rewritten by the theme toggle. Defaults stay in the repo; the user copy lives in the data folder; migrated once | toggling the theme leaves `git status` clean |
 | 2 | `tb-i18n` | English fallback in `t()`; locale list read from `resources/locale/`; picker in Settings, applied without restart; `haw.json` as a copy of `en.json` except `_meta` (`locale: "haw"`, `language: "ʻŌlelo Hawaiʻi"`); key and placeholder parity guard; **B-210** | switching to `haw` and back changes nothing visible; the guard fails on a missing key or placeholder |
-| 3 | `tb-strings` | every finding in `dev/audits/I18N_AUDIT_2026-09-24.md` (S1–S6, R1–R13, H1) moves into `en.json`, and the audit's scanner becomes a suite guard | the scanner reports 0 |
+| 3 | `tb-strings` | every finding in `dev/audits/I18N_AUDIT_2026-09-24.md` (S1–S6, R1–R13, H1) moves into `en.json`, plus S7, found by the guard: `modal.autosave.hint` holds `<strong>` under `data-i18n`, which sets `textContent` | `i18n_literal_test.js` passes with an empty `pending` list |
 | 4 | `tb-reader-cols` | D41 B, column view | a section reads as text against translation, read-only |
 | 5 | `tb-reader-igt` | D41 A, interlinear, with the highlight rule below | hover and popup behave as specified |
 | 6 | `tb-release` | release notes, tester instructions, `--minor` in `new_version.py` | v3.15.0 tagged; the macOS clean-machine install walked on this build |
@@ -524,6 +524,7 @@ trigger is a tester annotating (gate 2), not a code change.
 | **C19** `prov_history` size cap | measured out of D50 stage 4, not built. Longest history anywhere is **5**, mean 1.36; since stage 4b an entry is an interned id costing ~3 bytes, so a cap of 100 would never fire and would save ~300 bytes if it did. Shape if needed: optional `max_prov_history` → drop oldest + `history_truncated:true` | a real session past ~50 |
 | **D22 Option B** | in-app NLLB download with streaming progress (A+D ✅ v3.14.43) | D29 P2 |
 | **D23 stretch** | PDF reverse-index appendix; thematic section headers when sorted by domain | — |
+| **Export language** | PDF and LaTeX exports (`dict_export.py`) stay English when the interface is in another language. Decided v3.14.419 for the tester's build; the export's language may differ from the interface's (a Hawaiian interface exporting an English dictionary), so it needs its own setting rather than following the picker | a request for a non-English export |
 | **D26** | morpheme-level `lemma_id` (word level shipped). Nothing writes the field, so there is no migration to carry — it is a feature | whenever it is built |
 | **G32 Option C** | manual homograph-picker UI (id-first resolution shipped) | D35 B2 |
 | **Search-B v1.1** | CSV/TSV export · result cap + pagination · n-grams · G²/PMI collocate stats | — |
