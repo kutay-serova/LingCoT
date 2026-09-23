@@ -52,8 +52,11 @@
 #
 # Measured v3.14.254: 19.3 s all in, 4.9 s without it.
 # Measured v3.14.340: +42 s for gui_crud_test.js, browser already installed.
+#
+# `pseudo_locale_test.js` is slow for the same reason: it draws every view in
+# the browser under a marked pseudo-locale (~8 s).
 # ---------------------------------------------------------------------------
-SLOW="nllb_diag_test.py gui_crud_test.js"
+SLOW="nllb_diag_test.py gui_crud_test.js pseudo_locale_test.js"
 
 cd "$(dirname "$0")" || exit 1
 filter="${1:-}"
@@ -91,6 +94,7 @@ if [ ${#slow_skipped[@]} -gt 0 ]; then
   printf '  \033[33mNOT RUN (slow):\033[0m %s\n' "${slow_skipped[*]}"
   printf '  \033[33m         nllb_diag_test.py is 14.4 s of real subprocess waits;\n'
   printf '  \033[33m         gui_crud_test.js is ~42 s and needs a Chromium a clone does not have.\n'
+  printf '  \033[33m         pseudo_locale_test.js is ~8 s and needs the same Chromium.\n'
   printf '  \033[33m         Run ./dev/tests/run_all.sh --slow before a release.\n'
   printf '  \033[33m         new_version.py prints the reminder.\033[0m\n'
 fi

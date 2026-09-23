@@ -147,6 +147,7 @@
 <script src="modules/project_files.js"></script>
 <script src="modules/participants.js"></script>
 <script src="modules/search.js"></script>
+<script src="modules/reader.js"></script>
 <script src="modules/events.js"></script>
 <script src="modules/language_maps.js"></script>
 <script src="modules/normalize.js"></script>
@@ -8258,8 +8259,9 @@ function go(view, opts = {}) {
   // channel that has found most of this week's bugs.
   logEvent('debug', `navigate: ${view}`,
            opts.wordId || opts.sentId || opts.dictEntryId || opts.dictForm || null);
+  closeReaderPop();
   render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!(view === 'reader' && _readerScrollSi != null)) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* Navigate back to the last corpus position recorded in S.corpusReturn.
@@ -9512,6 +9514,7 @@ const VIEW_RENDERERS = {
   'annotators':    renderAnnotatorsView,
   'sources':       renderSourcesView,
   'lemma':         renderLemma,        // D35 B5
+  'reader':        renderReader,       // D41
 };
 
 // @fn render
@@ -9540,7 +9543,7 @@ function render() {
      lemma groups visited in a row are the same view with the same _dataGen,
      which is precisely the B-011 shape — the second would not repaint. */
   // The locale is in the key so a language switch repaints the current view.
-  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}|${uiLocaleCode()}${searchKey}`;
+  const cacheKey = `${v}|${S.sectIdx}|${S.paraIdx}|${S.sentId}|${S.wordId}|${S.dictForm}|${S.dictEntryId}|${S.lemmaId}|${_dataGen}|${uiLocaleCode()}${searchKey}${v === 'reader' ? `|${_readerMode}` : ''}`;
   if (cacheKey === _renderCacheKey) {
     // B-011's diagnostic gap: a click that changed view-only state and hit this
     // early return produced NO log output at all, so "the handler never matched"
@@ -9672,7 +9675,7 @@ function renderBreadcrumb() {
   // Section level
   const secIdx = S.sectIdx ?? ((() => { const r = findSent(S.sentId); return r?.sectIdx ?? null; })());
   const sec = secIdx !== null ? sections()[secIdx] : null;
-  const secLabel = sec ? esc(sec.title || `Section ${secIdx + 1}`) : 'Section';
+  const secLabel = sec ? esc(sec.title || t('label.view.section_n', { n: secIdx + 1 })) : t('bc.section');
 
   if (baseV === 'section' || baseV === 'paragraph' || baseV === 'sentence' || baseV === 'word' || baseV === 'dict') {
     parts.push(`<span class="bc-sep">›</span>`);
@@ -9683,6 +9686,8 @@ function renderBreadcrumb() {
     }
   }
 
+  if (baseV === 'reader') parts.push(`<span class="bc-sep">›</span><span class="bc-cur">${t('label.reader.title')}</span>`);
+
   if (baseV === 'paragraph') {
     parts.push(`<span class="bc-sep">›</span><span class="bc-cur" data-bc-level="paragraph">${t('bc.paragraph', {n: (S.paraIdx ?? 0) + 1})}</span>`);
   }
@@ -9691,7 +9696,7 @@ function renderBreadcrumb() {
     const r = findSent(S.sentId);
     const pi = r ? r.paraIdx : null;
     const si = r ? r.sectIdx : null;
-    const pLabel = pi !== null ? `${t('bc.paragraph', {n: pi + 1})}` : 'Paragraph';
+    const pLabel = pi !== null ? t('bc.paragraph', { n: pi + 1 }) : '';
     if (pi !== null) {
       parts.push(`<span class="bc-sep">›</span>`);
       if (baseV === 'sentence') {
@@ -9792,7 +9797,7 @@ function renderDocument() {
       <div class="sec-block-header">
         <div class="sec-block-title" data-go="section" data-si="${si}"
              role="link" tabindex="0" title="${t('title.view.doc.open_section')}"
-             >${esc(sec.title || `Section ${si + 1}`)}${icon('caret-right')}</div>
+             >${esc(sec.title || t('label.view.section_n', { n: si + 1 }))}${icon('caret-right')}</div>
         <button class="edit-btn" data-go="section-edit" data-si="${si}">${icon('note-pencil')} ${t('btn.view.edit')}</button>
       </div>
       ${paraBlocks || `<p class="text-base text-muted text-italic">${t('status.empty.paragraphs')}</p>`}
@@ -9808,6 +9813,7 @@ function renderDocument() {
     <div class="doc-meta">
       <div class="view-title-row">
         <div class="doc-title">${esc(m.title || d.id)}</div>
+        <button class="edit-btn" data-action="reader-open" title="${escAttr(t('title.view.read'))}">${icon('book-open')} ${t('btn.view.read')}</button>
         <button class="edit-btn" data-go="document-edit">${icon('note-pencil')} ${t('btn.view.edit')}</button>
       </div>
       ${(() => {
@@ -9934,7 +9940,8 @@ function renderSection() {
   return `
     ${viewHeader(`data-go="document"`, `${esc(doc()?.metadata?.title || 'Document')}`)}
     <div class="view-title-row">
-      <div class="para-view-title">${esc(sec.title || `Section ${S.sectIdx + 1}`)}</div>
+      <div class="para-view-title">${esc(sec.title || t('label.view.section_n', { n: S.sectIdx + 1 }))}</div>
+      <button class="edit-btn" data-action="reader-open" data-si="${S.sectIdx}" title="${escAttr(t('title.view.read'))}">${icon('book-open')} ${t('btn.view.read')}</button>
       <button class="edit-btn" data-go="section-edit" data-si="${S.sectIdx}">${icon('note-pencil')} ${t('btn.view.edit')}</button>
     </div>
     ${secRenderSrcs.length
@@ -17382,6 +17389,8 @@ initDelegatedListeners();
 </div>
 
 <!-- ── Annotator preview panel (read-only info + edit button; shown in edit views) ── -->
+<!-- D41: Reader Mode sentence popup, read-only; filled by openReaderPop() -->
+<div id="reader-pop" role="dialog" aria-modal="false" aria-label="Sentence" data-i18n-aria="aria.reader.pop"></div>
 <div id="ann-preview-panel" role="dialog" aria-label="Annotator details" data-i18n-aria="aria.panel.ann.dialog" aria-modal="false">
   <div id="app-header">
     <span id="about-app-name"></span>

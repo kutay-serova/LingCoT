@@ -1787,6 +1787,38 @@ details.prov-morpheme-inline {
   transition: opacity .14s, transform .14s;
 }
 #ann-preview-panel.app-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* ── D41 Reader Mode ── */
+.reader-bar { display: flex; align-items: baseline; gap: 12px; margin: 4px 0 14px; }
+.reader-bar-title { font-weight: 700; font-size: 1.05rem; display: inline-flex; align-items: center; gap: 6px; }
+.reader-cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 36px; }
+.reader-colhead { display: contents; }
+.reader-colhead span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 10px; }
+.reader-sec { grid-column: 1 / -1; font-size: 1.1rem; font-weight: 700; margin: 22px 0 8px; }
+.reader-row { display: contents; }
+.reader-src, .reader-trl { font-size: 1.02rem; line-height: 1.75; margin-bottom: 14px; }
+.reader-trl { color: var(--text-muted); }
+.reader .s-span { cursor: pointer; border-radius: 3px; }
+.reader .s-span:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#reader-pop {
+  position: fixed; z-index: 910; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 2px 14px rgba(0,0,0,.15);
+  width: min(380px, 92vw); max-height: 60vh; overflow: auto;
+  opacity: 0; pointer-events: none; transform: translateY(-6px);
+  transition: opacity .14s, transform .14s;
+}
+#reader-pop.rp-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.rp-head { display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px 6px; border-bottom: 1px solid var(--border); }
+.rp-loc { font-size: 0.78rem; color: var(--text-muted); }
+.rp-close { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; }
+.rp-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; }
+.rp-text { font-size: 0.98rem; line-height: 1.5; }
+.rp-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; }
+.rp-lbl { color: var(--text-muted); font-size: 0.78rem; }
+.rp-tag { font-size: 0.72rem; color: var(--text-muted); }
+.rp-foot { padding: 6px 12px 10px; display: flex; justify-content: flex-end; }
 #app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 12px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0;

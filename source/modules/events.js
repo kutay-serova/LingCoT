@@ -407,6 +407,7 @@ function bindEvents() {
      A fresh observer must be attached to the new sentinel on every render. */
   const paraSentinel = document.getElementById('section-para-sentinel');
   if (paraSentinel) observeParaSentinel(paraSentinel);
+  if (S.view === 'reader') readerAfterRender();   // D41: batches, scroll to section
 
   /* The search query input. Enter runs it (per-render; the input is rebuilt). */
   document.getElementById('srch-input')?.addEventListener('keydown', e => {
@@ -1527,7 +1528,36 @@ function initDelegatedListeners() {
     const span = e.target.closest('.s-span[data-sid]');
     if (!span || e.target.closest('[data-go]')) return;
     e.stopPropagation();
+    // D41: in Reader Mode a sentence opens the read-only popup instead.
+    if (span.closest('.reader')) { openReaderPop(span); return; }
     go('sentence', { sentId: span.dataset.sid });
+  });
+
+  /* D41: Reader Mode entry, and its popup (outside #content). */
+  contentEl.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="reader-open"]');
+    if (!btn) return;
+    e.stopPropagation();
+    openReader(btn.dataset.si !== undefined ? parseInt(btn.dataset.si, 10) : null);
+  });
+  contentEl.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const span = e.target.closest('.reader .s-span[data-sid]');
+    if (!span) return;
+    e.preventDefault();
+    openReaderPop(span);
+  });
+  // Delegated on document: #reader-pop is below this script in the markup.
+  document.addEventListener('click', e => {
+    const pop = document.getElementById('reader-pop');
+    if (!pop || !pop.classList.contains('rp-visible')) return;
+    if (!pop.contains(e.target)) {
+      if (!e.target.closest('.reader .s-span')) closeReaderPop();
+      return;
+    }
+    if (e.target.closest('[data-action="reader-pop-close"]')) { closeReaderPop(); return; }
+    const link = e.target.closest('[data-go="sentence"]');
+    if (link) { closeReaderPop(); go('sentence', { sentId: link.dataset.sid }); }
   });
 
   /* Choice-chip clicks and expand-button clicks. D44: pos-select and type-select
@@ -1568,6 +1598,7 @@ function initDelegatedListeners() {
       ['ann-preview-panel', 'app-visible', closeAnnPreviewPanel],
       ['src-pick-panel',    'spp-visible', closeSrcPickPanel],
       ['ann-panel',         'ann-visible', closeAnnPanel],
+      ['reader-pop',        'rp-visible',  closeReaderPop],
     ];
     for (const [id, cls, close] of panels) {
       const el = document.getElementById(id);
