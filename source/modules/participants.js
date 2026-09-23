@@ -990,6 +990,30 @@ function _srcPickApply(srcId) {
    would be scope the audit never measured.
 ══════════════════════════════════════════════════════════════════════════════ */
 
+/* @fn _copyMarks, a pre-filled row's origin (D40 stage B), read back with its
+   values. Only present on a pre-filled row; takeCopyMarks removes them before
+   anything is stored. */
+function _copyMarks(row) {
+  if (!row.dataset.copyFrom) return {};
+  const m = { _copyFrom: row.dataset.copyFrom, _copyText: row.dataset.copyText || '' };
+  if (row.dataset.copyLabel !== undefined) m._copyLabel = row.dataset.copyLabel;
+  return m;
+}
+
+/* @fn _copyAttrs, the same marks written onto a row, plus the "from P1 S2" note */
+function _copyAttrs(row) {
+  if (!row?._copyFrom) return { attrs: '', note: '' };
+  let attrs = ` data-copy-from="${esc(row._copyFrom)}" data-copy-text="${esc(row._copyText || '')}"`;
+  if (row._copyLabel !== undefined) attrs += ` data-copy-label="${esc(row._copyLabel)}"`;
+  const alts = (row._copyAlts || []).map(a =>
+    `<button class="chip chip-token" type="button" data-action="copy-alt"
+             data-text="${esc(a.text)}" data-from="${esc(a.from)}"
+             title="${t('title.copy.alt', { loc: sentPosLabel(a.from) })}">${esc(a.text)} · ${a.n}×</button>`).join(' ');
+  const note = `<div class="row-copy-note text-sm text-muted">${t('hint.copy.from', { loc: sentPosLabel(row._copyFrom) })}</div>`
+             + (alts ? `<div class="row-copy-alts">${alts}</div>` : '');
+  return { attrs, note };
+}
+
 /* @const ROW_EDITORS, the whole of what differs between the row collections.
    `build` and `fields` are the two halves nothing else can supply: one writes a
    row, the other reads one back. Everything else is a string or a predicate. */
@@ -1011,6 +1035,7 @@ const ROW_EDITORS = {
     fields: row => ({
       label: row.querySelector('.translit-label')?.value.trim() || '',
       text:  row.querySelector('.translit-text')?.value.trim()  || '',
+      ..._copyMarks(row),
     }),
     keep: v => !!(v.label || v.text),
   },
@@ -1030,6 +1055,7 @@ const ROW_EDITORS = {
       text:      row.querySelector('.translation-text')?.value.trim() || '',
       source_id: row.querySelector('.trans-src-chip')?.dataset.srcId || null,
       date:      row.querySelector('.translation-date')?.value.trim() || null,
+      ..._copyMarks(row),
     }),
     normalise: v => ({ ...v, source_id: v.source_id || null, date: v.date || null }),
     keep: v => !!v.text,
@@ -1249,11 +1275,13 @@ function renderCommentsView(comments) { return listViewHtml('comment', comments)
 function _translitRowHtml(row) {
   const label = row?.label || '';
   const text  = row?.text  || '';
-  return `<div class="translit-row row-ed row-ed--inline">
+  const cp    = _copyAttrs(row);
+  return `<div class="translit-row row-ed row-ed--inline"${cp.attrs}>
     <input class="translit-label ac-input" data-ac-pool="translit_label" type="text" ${LING_ATTRS} dir="ltr" value="${esc(label)}" placeholder="${t('placeholder.row.translit_system')}">
     <input class="translit-text" type="text" ${LING_ATTRS} dir="auto" value="${esc(text)}" placeholder="${t('placeholder.row.translit_text')}">
     <button class="row-x" type="button"
             data-action="translit-remove" title="${t('title.row.translit.remove')}">${icon('x')}</button>
+    ${cp.note}
   </div>`;
 }
 
@@ -1627,7 +1655,8 @@ function _translationRowHtml(row) {
   const src   = srcId ? sourceById(srcId) : null;
   const srcLabel = src ? esc(src.name) : (srcId ? esc(srcId) : '');
   const hasSource = !!srcId;
-  return `<div class="translation-row row-ed row-ed--stacked">
+  const cp    = _copyAttrs(row);
+  return `<div class="translation-row row-ed row-ed--stacked"${cp.attrs}>
     <textarea ${LING_ATTRS} class="translation-text" dir="auto" placeholder="${t('placeholder.row.translation')}">${esc(text)}</textarea>
     <div class="translation-meta">
       <div class="trans-src-wrap" id="${uid}">
@@ -1643,6 +1672,7 @@ function _translationRowHtml(row) {
       <button class="row-x" type="button"
               data-action="translation-remove" title="${t('title.row.translation.remove')}">${icon('x')}</button>
     </div>
+    ${cp.note}
   </div>`;
 }
 

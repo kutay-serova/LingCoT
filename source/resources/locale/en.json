@@ -1127,6 +1127,7 @@
   "warn.xlate.not_set": "No language set on this document — add it in the Document edit view before translating.",
   "warn.xlate.unrecognised": "“{lang}” isn’t a language LingCoT recognises, so translation is unavailable. Annotation is unaffected.",
   "hint.lemma.will_create_sibling": "Saving will create a SECOND lemma with this citation form, alongside “{form}”",
+  "hint.copy.from": "From {loc}, same text. Edit or clear before saving.",
   "btn.lemma.link_instead": "No — link to “{form}” after all",
   "label.dict.filter_any": "Any type",
   "btn.dict.filter_type": "Type: {what}",
@@ -1145,6 +1146,11 @@
   "btn.pk.use_existing": "No — use the entry already here",
   "label.editor.link_clash": "linked entry says {fields}",
   "title.editor.link_clash": "This morpheme is linked to a dictionary entry that says something else. Either it is a different word, or the link is wrong.",
+  "title.copy.alt": "Use the translation from {loc} instead",
   "btn.editor.unlink": "unlink",
-  "note.link.clash": "“{form}” is linked to the entry “{entry}”, which says {fields}"
+  "loc.sect": "§{n}",
+  "loc.sent": "P{p} S{s}",
+  "note.link.clash": "“{form}” is linked to the entry “{entry}”, which says {fields}",
+  "prov.copied_from": "copied from {loc}",
+  "prov.gone": "{id} (no longer in the corpus)"
 }

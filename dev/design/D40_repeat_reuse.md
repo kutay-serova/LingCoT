@@ -86,7 +86,11 @@ dictionary parse and POS chips, the D61 lemma chips, machine translation.
 - `transliterations` the same way, per label: a label empty here and present on
   a matching sentence is pre-filled with that sentence's text for that label.
 - Several distinct values among the matches: the commonest is pre-filled, the
-  others shown as chips under the row.
+  others shown as chips under the row. Each matching sentence contributes its
+  first translation (built: copying every translation would pre-fill rows to
+  prune). A tie goes to the first in corpus order.
+- Add form: the pre-fill is redone 250 ms after typing stops, and only replaces
+  rows that are empty or still exactly as pre-filled.
 - Stamping on Save, through `assignList`'s content reconciliation:
   unchanged text → copy moment (§4); edited text → the save's own moment
   (human); cleared → nothing written.

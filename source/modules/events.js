@@ -349,6 +349,9 @@ function bindEvents() {
   const saWords = S.view === 'sentence-add' ? document.getElementById(fieldId('sentence', 'words')) : null;
   if (saText && saWords) {
     saText.addEventListener('input', () => {
+      // D40 stage B: pre-fill from a sentence with the same text, debounced
+      clearTimeout(_addPrefillTimer);
+      _addPrefillTimer = setTimeout(() => refreshAddPrefill(saText.value), 250);
       if (!saWords.dataset.manualEdit) {
         const trimmed = saText.value.trim();
         // Leave the tokenization field empty for scripts without word-spaces
@@ -1677,6 +1680,10 @@ function initDelegatedListeners() {
        `gui_crud_test.js` and `word_edit_pos_test.js` click and what the
        stylesheet hangs on, so renaming them would have made a consolidation into
        a migration. The kind is read off the action instead. */
+    // D40 stage B: another translation from a sentence with the same text
+    const copyAlt = e.target.closest('[data-action="copy-alt"]');
+    if (copyAlt) { takeCopyAlt(copyAlt); return; }
+
     const rowBtn = e.target.closest('[data-action$="-add"], [data-action$="-remove"]');
     if (rowBtn) {
       const m = /^([a-z-]+)-(add|remove)$/.exec(rowBtn.dataset.action || '');
