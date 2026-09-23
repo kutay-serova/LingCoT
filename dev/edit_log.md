@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.14.412
+**Updated:** 2026-09-23 · **Version:** v3.14.415
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,108 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## D40 stage D: the word editor offers the same word's analyses from elsewhere in the corpus; B-211, B-212 (2026-09-23)
+**Version:** v3.14.415 · **Type:** feature · **Archives:** `dev/archive/changes/d40d-word-chips/` (v3.14.412)
+**Touched:** source/LingCoT.html · source/modules/events.js · source/resources/locale/en.json · dev/tests/word_chip_test.js (new) · dev/tests/suggest_mechanism_test.js · dev/tests/word_edit_pos_test.js · dev/PRACTICES.md · dev/design/D40_repeat_reuse.md · dev/new_version.py · dev/tests/doc_integrity_test.js · dev/tests/change_files_test.js · dev/BUGS.md · dev/tests/log_triage.js
+**Change:** `d40d-word-chips`
+
+**What changed.** The word editor gets a strip under the title: one chip per
+distinct analysis of the same folded form elsewhere in the corpus
+(transliterations, POS, gloss, parse, morpheme rows, lemma), commonest first,
+labelled *same word, P1 S2*, shown while it would fill something empty. A click
+fills only empty fields; morpheme rows by position; the lemma by the source's
+lemma id, so a homograph is not asked again. Under each filled field that other
+tokens answer differently, a *differs* note lists their values; a click
+replaces. Taken values carry `offerSrc` `corpus:<word id>`, which `_offerMoment`
+stamps as `_copyFieldProv` at the three stamp sites (the lemma's now reads its
+mark, as D61 intended). Typing clears the mark.
+
+**Found testing it, fixed here.** B-211: a homograph lemma pick was stored but
+the strip kept asking; `lemmaStripHtml` now takes the chosen id. B-212: the word
+view did not draw the word's transliterations. The take also repaints the
+morphology strip, which it had left stale. `--release` writes the version into
+BUGS.md rows fixed in `pending:<slug>`.
+
+**Why.** The 2026-09-22 session annotated `Hasan`, `dar` and `geçmek` twice each
+by hand; the POS strip offered only what the dictionary held. D40 decisions 2,
+7 and 8.
+
+**Guard.** `word_chip_test.js`, 39 checks, against a stand-in for the editor's
+fields: what is offered and in what order, what a take fills and leaves alone,
+the differs notes, the stamp, B-211 and B-212. Eight mutations, eight failures;
+one first escaped because the field stayed empty while marked. Two static
+guards follow the stamp sites to `_offerMoment`. `change_files_test` checks the
+`pending:` replacement; `doc_integrity_test` refuses a `pending:` slug with no
+open change and now holds change files to the 400-word cap. `log_triage`
+acknowledges the three stale-strip warnings.
+
+**Verification.** `./dev/tests/run_all.sh` — **96 passed, 0 failed, 0 disabled.** Stage D tried in the app 2026-09-23; the fixes not yet.
+
+---
+
+## D40 stage B: translation and transliteration offered from a sentence with the same text (2026-09-23)
+**Version:** v3.14.414 · **Type:** feature · **Archives:** `dev/archive/changes/d40b-prefill/` (v3.14.412)
+**Touched:** source/LingCoT.html · source/modules/participants.js · source/modules/events.js · source/resources/locale/en.json · dev/tests/sentence_prefill_test.js (new) · dev/PRACTICES.md · dev/design/D40_repeat_reuse.md · dev/DEV_PLAN.md
+**Change:** `d40b-prefill`
+
+**What changed.** The sentence edit and add forms show an offer strip under
+the translation and transliteration editors (`offerStripHtml`, as for POS and
+lemma): one chip per value in use on sentences with the same folded text
+(stage A), commonest first, labelled *same text, P1 S2*. Translation chips
+appear while the form has no translation; transliteration chips for labels it
+does not have. A click fills an empty row or adds one (`takeOffer`, act
+`copy-row`); the add form's strip follows the typed text. Saved unchanged, the
+value is stamped `_copyFieldProv(<sentence id>)`: derived, with a new optional
+`from` key that `_provKeyOf` includes and `provDisplayName` shows as *copied
+from P1 S2*. Edited, it is the annotator's. The rows' copy marks are stripped by
+`takeCopyMarks` before `applyForm`, so none reaches the file.
+
+**Why.** The 2026-09-22 session typed the same translation twice for p1 s2/s3.
+D40 decisions 2, 6 and 7. A first build pre-filled the field; tried in the app,
+that was easy to miss and unlike the other offers, so it was replaced before
+release.
+
+**Guard.** `sentence_prefill_test.js`, 41 checks, runs the save path from
+`readForm`'s output through `takeCopyMarks`, `applyForm` with the field table,
+`assignList` and `stampCopies`: what is offered and in what order, that the
+form draws the sentence as stored, the three outcomes of Save, and a moment
+without `from` keying exactly as before. Ten mutations across both builds, ten
+failures; the ranking one first escaped because the fixture's commonest value
+was also its first.
+
+**Verification.** `./dev/tests/run_all.sh` — **95 passed, 0 failed, 0 disabled.**
+
+---
+
+## D40 stage A: find the sentences with the same text (2026-09-23)
+**Version:** v3.14.413 · **Type:** feature · **Archives:** `dev/archive/changes/d40a-index/` (v3.14.412)
+**Touched:** source/LingCoT.html · dev/BUGS.md · dev/tests/sent_key_test.js (new) · dev/PRACTICES.md · dev/design/D40_repeat_reuse.md
+**Change:** `d40a-index`
+
+**What changed.** `sentKey(text)` folds a sentence to its runs of letters,
+digits and combining marks, each through `normForm`. `sentTextIndex()` maps
+that key to sentence ids across every document, and `sameTextSentences()`
+reads it, from a stored sentence or a bare text. Built lazily on `_dataGen` and
+a new `_foldGen`, which `refreshFoldContext` bumps; each sentence's key is
+memoised against its text. Nothing is stored and nothing on screen changes yet.
+B-210 filed.
+
+**Why.** Stages B and C look up sentences by this key. The plan had the index
+maintained by five save paths; a lazy cache has one writer and cannot drift.
+D40 plan §3 A updated.
+
+**Guard.** `sent_key_test.js`, 23 checks: what folds (case, punctuation,
+spacing between tokens, Turkish i/ı) and what does not (a space inside a
+token); a sentence never matches itself; B-057's two identical sentences are
+two entries; the cache rebuilds on `_dataGen` and on `_foldGen` and not
+otherwise. Four mutations, four failures. The fold-change one first escaped: a
+lookup from one side passed against a stale index by coincidence, so the check
+asks from both sides.
+
+**Verification.** `./dev/tests/run_all.sh` — **94 passed, 0 failed, 0 disabled.**
 
 ---
 

@@ -1,5 +1,5 @@
 # dev/: plans, history, and the guard suite
-**Updated:** 2026-09-23 · **Version:** v3.14.412
+**Updated:** 2026-09-23 · **Version:** v3.14.415
 
 This directory is the development record. It is not needed to run LingCoT; see
 the top-level `README.md` and `setup.md` for that.
