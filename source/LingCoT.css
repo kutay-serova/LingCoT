@@ -3297,3 +3297,9 @@ details.prov-morpheme-inline {
 .copy-foot { margin-top: 14px; }
 .copy-note { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
 .copy-acts { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* "+" before buttons that create something. Drawn here so the label text is
+   the same string as the dialog title and the translator sees it once. */
+.add-mark::before, #ann-add-btn::before, #src-pick-add-new::before { content: "+"; margin-right: .3em; font-weight: 600; }
+/* An empty required box after a refused save. */
+.field-missing { outline: 2px solid var(--danger); outline-offset: 1px; }

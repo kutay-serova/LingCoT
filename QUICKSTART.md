@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-09-24 · **Version:** v3.15.1
+**Updated:** 2026-09-24 · **Version:** v3.15.2
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
@@ -49,7 +49,7 @@ Click **Save**. When LingCoT offers to **autosave**, say **yes**.
 
 ## 3 · Put your text in
 
-You are on the document view. Click **Add Section** — a section is a chapter, a
+You are on the document view. Click **New Section**: a section is a chapter, a
 story, one recording session; whatever division suits your material.
 
 Give it a title, then **paste your whole text into the Section text box.** Do not
@@ -100,7 +100,7 @@ same way, across paragraph and section boundaries, skipping punctuation.
 
 This is the part that repays itself, so it is worth doing early.
 
-Open a word that has morphemes. Beside each morpheme row is a **+ Add to Dictionary** button —
+Open a word that has morphemes. Beside each morpheme row is an **Add to Dictionary** button —
 it opens an editable entry rather than writing silently, so you can see and fix
 what gets stored. Add a couple of the parts you have just glossed: a stem, a
 suffix.
@@ -141,7 +141,7 @@ you say so.
 An **arc diagram** draws the result above the sentence, stacking arcs so crossing
 dependencies stay readable.
 
-**+ Add Selection** is the other half of this: pick two or more words and
+**Add Selection** is the other half of this: pick two or more words and
 record what connects them — determination, quantification, agreement — for
 annotation that is about a *relationship* rather than a property of one word.
 

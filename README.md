@@ -2,7 +2,7 @@
 
 **LingCoT is an open-source tool for annotating linguistic corpora.**
 
-**Updated:** 2026-09-24 · **Version:** v3.15.1
+**Updated:** 2026-09-24 · **Version:** v3.15.2
 
 > **Status: in development.** No stable release has been cut. The application is
 > in daily use on the author's own corpora and the data format is settled enough

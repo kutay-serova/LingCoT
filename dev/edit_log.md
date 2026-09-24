@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-24 · **Version:** v3.15.1
+**Updated:** 2026-09-24 · **Version:** v3.15.2
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,30 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## Fewer interface strings, shorter tooltips, hints and help (2026-09-24)
+**Version:** v3.15.2 · **Type:** chore · **Archives:** `dev/archive/changes/ui_strings_merge/` (v3.15.1)
+**Touched:** source/resources/locale/en.json · source/resources/locale/haw.json · source/LingCoT.html · source/LingCoT.css · source/modules/events.js · dev/tests/session_panel_test.js · QUICKSTART.md
+
+**What changed.** Distinct English UI strings 862 → 795 before the help-text pass; keys 1257 → 1219.
+- 29 lowercase copies of labels (`gap.name.*`, `gap.field.*`, `label.kind.*`, `copy.key.there`) removed. `tInline()` lowercases the label; a locale can still set the key. `label.editor.push_morph` (unused) removed.
+- The "+" on create buttons is drawn by CSS (`.add-mark`), so "Add Source" is one string for button and dialog title. ＋ and + unified.
+- "New Paragraph/Section/Sentence" for breadcrumb, header and the button that opens the form; the form's submit reads "Save".
+- Tooltips and help titles in Title Case; six "Remove …" tooltips read "Remove"; six "… not found" statuses read "Not found"; near-duplicates merged (Create Lemma, e.g. placeholders, Leipzig Glosses, Select Sources, Transliteration, file read/parse errors).
+- Paragraph and sentence counts read "Paragraphs: {n}"; the `_1` keys are gone.
+- Required-field alerts use the inline marker's wording, and the empty box is outlined (`markMissing`).
+- Five hints named buttons by their old labels; updated. QUICKSTART follows.
+- 34 tooltips shortened from the help-text review (551 → 381 words in `title.*`); the three HTML fallback titles follow.
+- 29 field hints shortened (725 → 417 words in `hint.*`). Four unused hint keys removed: `hint.editor.notes`, `hint.editor.sources`, `hint.editor.word_forms`, `hint.es.word_morpheme_list`.
+- 31 help texts rewritten in plain language (1,289 → 988 words in `help.*`), with out-of-date descriptions corrected: File menu, KWIC and Sentences tabs, space-separated word tokenization, no Dependency parse button, no Potential matches chips, no drag and drop. The help sidebar's HTML fallback text follows. `help.faq.open.p2` now says the companion dictionary opens with the corpus; `help.faq.open.p3` (swapping dictionaries) removed.
+
+**Why.** Less to translate before the Hawaiian pass. Nouns are not inserted into templates: Hawaiian ka/ke depends on the noun.
+
+**Guard.** `session_panel_test.js` accepts a field name from `_INLINE_LABEL`; `theme_audit_test.js` caught the class on two id-styled buttons.
+
+**Verification.** `./dev/tests/run_all.sh`: 104 passed. `gui_crud_test.js` 46 passed, `pseudo_locale_test.js` 6 passed. Document, section and New Section views checked in Chromium.
 
 ---
 

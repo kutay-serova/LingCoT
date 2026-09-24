@@ -108,7 +108,7 @@
   <span id="save-status-flash"></span>
   <div id="header-right">
     <!-- Corpus actions, hidden until a corpus is loaded -->
-    <button class="hdr-btn" id="searchtn" title="Search — concordance" data-i18n-title="title.nav.search"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-magnifying-glass"/></svg><span data-i18n="btn.nav.search">Search</span></button>
+    <button class="hdr-btn" id="searchtn" title="Search the corpus" data-i18n-title="title.nav.search"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-magnifying-glass"/></svg><span data-i18n="btn.nav.search">Search</span></button>
     <!-- D34: what is left to do, and what this session changed. Hidden until a
          corpus is loaded, on the same two lines that reveal Search. -->
     <button class="hdr-btn" id="gaps-btn" title="What is left to do" data-i18n-title="title.nav.gaps"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-list-bullets"/></svg><span data-i18n="btn.nav.gaps">Progress</span></button>
@@ -2199,7 +2199,7 @@ function _copySummary(plan) {
 function _copyKeyHtml() {
   return `<div class="copy-key"><span><span class="copy-new">${esc(t('copy.key.new'))}</span></span>
     <span><span class="copy-same">✓</span> ${esc(t('copy.key.same'))}</span>
-    <span><span class="copy-conflict"><span>${esc(t('copy.key.here'))}</span><span class="copy-ne">\u2260</span><s>${esc(t('copy.key.there'))}</s></span> ${esc(t('copy.key.conflict'))}</span></div>`;
+    <span><span class="copy-conflict"><span>${esc(t('copy.key.here'))}</span><span class="copy-ne">\u2260</span><s>${esc(tInline('copy.key.there'))}</s></span> ${esc(t('copy.key.conflict'))}</span></div>`;
 }
 
 // @fn _copyPanelTitle
@@ -6844,6 +6844,13 @@ function requiredMark() {
    cannot exist without a form. Prevented by construction, so it is deleted
    rather than wired up. */
 
+// @fn markMissing, outline an empty required box until something is typed in it
+function markMissing(el) {
+  if (!el) return;
+  el.classList.add('field-missing');
+  el.addEventListener('input', () => el.classList.remove('field-missing'), { once: true });
+}
+
 // @fn identityStop, show or clear one identity field's verdict
 function identityStop(elId, show) {
   const host = document.getElementById(elId + '-req');
@@ -6871,6 +6878,7 @@ function requireIdentity(level) {
      the fallback here rather than the rule: one surface, not eight. */
   if (!document.getElementById(elementIdFor(level, first.f) + '-req'))
     alert(t(first.f.emptyMsg || 'hint.identity.required'));
+  markMissing(first.el);
   first.el.focus();
   return false;
 }
@@ -7122,7 +7130,7 @@ function tagDrawerHtml(inputId, cur, pool, action, fold, field) {
             data-chip="${escAttr(unk.near)}"
             title="${escAttr(t('title.tag.use_instead', { tag: unk.near }))}"
             >${esc(t('btn.tag.use_instead', { tag: unk.near }))}</button>` : '')
-      }<button class="chip chip-choice chip-adopt" type="button"
+      }<button class="add-mark chip chip-choice chip-adopt" type="button"
             data-action="tag-add" data-chip-target="${escAttr(inputId)}"
             data-chip="${escAttr(unk.value)}" data-tag-field="${escAttr(field)}"
             title="${escAttr(t('title.tag.adopt'))}"
@@ -7998,7 +8006,7 @@ const _GAP_NAV = { sentence: 'sentence', word: 'word', morpheme: 'word' };
    queue counts `morpheme` and neither should need its own spelling of "how do I
    say this in English". A missing key renders as the key, which is visible. */
 function _gapName(kind, n) {
-  return t(`gap.name.${kind}${n === 1 ? '.one' : ''}`);
+  return tInline(`gap.name.${kind}${n === 1 ? '.one' : ''}`);
 }
 
 /* @fn gapRows, the counter's answer in the shape the queue needs.
@@ -8048,7 +8056,7 @@ function gapRows() {
    back to the label, lowercased, so a newly counted field reads awkwardly rather
    than not at all — and `session_panel_test` fails until it is named. */
 function _gapFieldName(key) {
-  const k = `gap.field.${key}`, s = t(k);
+  const k = `gap.field.${key}`, s = tInline(k);
   return s === k ? t(labelKeyOf('word', key) || key).toLowerCase() : s;
 }
 
@@ -9844,7 +9852,7 @@ function renderDocument() {
     </div>
     ${secBlocks || `<p class="text-muted text-italic">${t('status.empty.sections')}</p>`}
     <div class="add-row">
-      <button class="btn btn-outline" data-go="section-add">${t('btn.view.doc.add_section')}</button>
+      <button class="btn btn-outline add-mark" data-go="section-add">${t('btn.view.doc.add_section')}</button>
     </div>
     ${provFooter(d)}`;
 }
@@ -9956,11 +9964,11 @@ function renderSection() {
            ${renderAnnotatorsRollup(secRenderAnnIds)}
          </div>`
       : ''}
-    <p class="text-sm text-muted mb-5">${paras.length === 1 ? t('label.view.paragraph_count_1') : t('label.view.paragraph_count', { n: paras.length })}</p>
+    <p class="text-sm text-muted mb-5">${t('label.view.paragraph_count', { n: paras.length })}</p>
     ${pairsHtml || `<p class="text-muted text-italic">${t('status.empty.paragraphs')}</p>`}
     ${needSentinel ? `<div id="section-para-sentinel" data-si="${S.sectIdx}" data-para-next="${SECTION_PARA_BATCH}"></div>` : ''}
     <div class="add-row">
-      <button class="btn btn-outline" data-go="paragraph-add" data-si="${S.sectIdx}">${t('btn.view.section.add_para')}</button>
+      <button class="btn btn-outline add-mark" data-go="paragraph-add" data-si="${S.sectIdx}">${t('btn.view.section.add_para')}</button>
     </div>
     ${provFooter(sec)}`;
 }
@@ -10036,13 +10044,13 @@ function renderParagraph() {
            ${renderAnnotatorsRollup(paraAnnIds)}
          </div>`
       : ''}
-    <p class="text-sm text-muted mb-5">${sents.length === 1 ? t('label.view.sentence_count_1') : t('label.view.sentence_count', { n: sents.length })}</p>
+    <p class="text-sm text-muted mb-5">${t('label.view.sentence_count', { n: sents.length })}</p>
     ${cards}
     ${translitHtml}
     ${translationsHtml}
     ${commentsHtml}
     <div class="add-row">
-      <button class="btn btn-outline" data-go="sentence-add" data-si="${S.sectIdx}" data-pi="${S.paraIdx}">${t('btn.view.para.add_sentence')}</button>
+      <button class="btn btn-outline add-mark" data-go="sentence-add" data-si="${S.sectIdx}" data-pi="${S.paraIdx}">${t('btn.view.para.add_sentence')}</button>
     </div>
     ${provFooter(p)}`;
 }
@@ -10487,7 +10495,7 @@ function _ambCardHtml(cands, wordId, sentId) {
     <div class="amb-list">${head.map(e => _ambCandRowHtml(e, wordId, sentId)).join('')}</div>
     ${restHtml}
     <div class="amb-foot">
-      <button type="button" class="amb-new" data-action="dict-new-same-form"
+      <button type="button" class="amb-new add-mark" data-action="dict-new-same-form"
         data-wid="${escAttr(wordId)}" data-sid="${escAttr(sentId)}">${t('btn.amb.new_same_form')}</button>
       <span class="amb-note">${t('hint.amb.choosing')}</span>
     </div>
@@ -10619,7 +10627,7 @@ function renderWord() {
         <div class="morph-col-gloss"${provTipAttr(m, 'gloss')}>${esc(m.gloss || '—')}</div>
         ${hasEntry
           ? `<div class="morph-col-link" title="${escAttr(t('title.editor.morph_go_dict'))}">${t('btn.editor.morph_go_dict')}</div>`
-          : `<div class="morph-col-link" style="color:var(--dict-accent);cursor:pointer" ${addAttrs}
+          : `<div class="morph-col-link add-mark" style="color:var(--dict-accent);cursor:pointer" ${addAttrs}
                   title="${escAttr(t('title.editor.morph_add_dict'))}">${t('btn.editor.morph_add_dict')}</div>`}
       </div>`;
       cols.push(col);
@@ -10685,7 +10693,7 @@ function renderWord() {
          title="${escAttr(t('title.view.word.edit_entry'))}"
          data-go="dict" data-dform="${escAttr(_editForm)}"${_editIdAttr}
          data-wid="${escAttr(word.id)}" data-sid="${escAttr(S.sentId)}">${icon('note-pencil')} ${t('btn.dict.edit_entry')}</button>`
-    : `<button class="edit-btn" style="color:var(--dict-accent);border-color:var(--dict-accent)"
+    : `<button class="edit-btn add-mark" style="color:var(--dict-accent);border-color:var(--dict-accent)"
          title="${escAttr(t('title.view.word.add_lexicon'))}"
          data-action="annotate-to-dict"
          data-wid="${escAttr(word.id)}" data-sid="${escAttr(S.sentId)}">${t('btn.view.sent.add_lexicon')}</button>`;
@@ -11279,7 +11287,7 @@ function renderField(level, f, obj) {
                    value="${escAttr(orig)}" data-original="${escAttr(orig)}"
                    placeholder="${escAttr(ph)}"
                    autocomplete="off" autocorrect="off" spellcheck="false">
-            <button class="edit-btn" type="button"
+            <button class="edit-btn add-mark" type="button"
                     style="white-space:nowrap;color:var(--dict-accent);border-color:var(--dict-accent);flex-shrink:0"
                     data-action="ql-toggle" data-ql-target="${id}-ql-panel"
                     data-ql-source="${id}">${t('btn.editor.lemma.new')}</button>
@@ -12738,7 +12746,7 @@ function pkStateHtml(r) {
      creating the first entry for a form, and the panel should not say the
      softer one. */
   if (r.new_anyway)
-    return `<span class="pk-state is-new">${t('label.pk.new_sibling')}</span>`;
+    return `<span class="pk-state is-new add-mark">${t('label.pk.new_sibling')}</span>`;
   /* B-196: "already in the dictionary" is a claim that this form and that entry
      are the same lexeme, and here they demonstrably are not — so the panel says
      what disagrees instead of asserting the identity. `stop`, not a warning: the
@@ -14227,7 +14235,7 @@ function saveSection(si) {
     const oldSentByFlatIdx = new Map(sentPairs.map(([o, n]) => [n, oldSentsFlat[o]]));
 
     const losingSents = sentDropped.map(i => oldSentsFlat[i]).filter(hasAnnotation);
-    if (!confirmAnnotationLoss(losingSents, t('label.kind.sentence'))) return;
+    if (!confirmAnnotationLoss(losingSents, tInline('label.kind.sentence'))) return;
     if (losingSents.length)
       logEvent('warn', 'annotated sentences discarded by section re-parse', losingSents.length);
 
@@ -14382,7 +14390,7 @@ function saveParagraph(si, pi) {
       alignTokens(oldSents, newTexts, sn => sn.text);
     const oldByNewIdx = new Map(sPairs.map(([o, n]) => [n, oldSents[o]]));
     const losingS = sDropped.map(i => oldSents[i]).filter(hasAnnotation);
-    if (!confirmAnnotationLoss(losingS, t('label.kind.sentence'))) return;
+    if (!confirmAnnotationLoss(losingS, tInline('label.kind.sentence'))) return;
     if (losingS.length)
       logEvent('warn', 'annotated sentences discarded by paragraph re-parse', losingS.length);
 
@@ -14476,7 +14484,7 @@ function saveSentence(sentId) {
        those heads point at were being dropped without a word. Bare tokens carry
        no annotation, so ordinary editing never sees this prompt. */
     const losing = unmatchedOld.map(i => oldWords[i]).filter(hasAnnotation);
-    if (!confirmAnnotationLoss(losing, t('label.kind.word'))) return;
+    if (!confirmAnnotationLoss(losing, tInline('label.kind.word'))) return;
 
     sent.words = newForms.map((form, i) => {
       const oi = oldByNew.get(i);
@@ -16417,6 +16425,47 @@ function t(key, vars) {
   return s;
 }
 
+/* Words placed inside a sentence ("3 sentences need a gloss") reuse the UI
+   label, lowercased, so a translator translates the noun once. A locale whose
+   nouns keep their capital (German) or change form sets the key itself, and
+   that wins. Keys not listed here are ordinary strings. */
+const _INLINE_LABEL = {
+  'gap.name.sentence.one': 'bc.sentence',            'gap.name.sentence': 'btn.sb.tab.sent',
+  'gap.name.section.one': 'bc.section',              'gap.name.section': 'label.editor.sections',
+  'gap.name.word.one': 'btn.sb.level.word',          'gap.name.word': 'label.reader.words',
+  'gap.name.morpheme.one': 'btn.sb.level.morpheme',  'gap.name.morpheme': 'label.dict.morphemes',
+  'gap.name.paragraph.one': 'help.view.paragraph.title',
+  'gap.name.document.one': 'help.view.document.title',
+  'gap.name.lemma.one': 'label.editor.lemma',
+  'gap.name.dict_entry.one': 'help.view.dict.title', 'gap.name.dict_entry': 'label.lemma.entries',
+  'gap.field.comments': 'placeholder.row.comment',
+  'gap.field.deps': 'label.editor.dep_parse',
+  'gap.field.head': 'label.dep.head',
+  'gap.field.morphological_parse': 'label.editor.morph_parse',
+  'gap.field.part_of_speech': 'label.editor.part_of_speech',
+  'gap.field.source_ids': 'copy.source',
+  'gap.field.translation_language': 'label.editor.translation_language',
+  'gap.field.type': 'label.editor.type',
+  'gap.field.words': 'label.editor.word_tokenization',
+  'gap.field.gloss': 'label.editor.gloss',
+  'gap.field.lemma_id': 'label.editor.lemma',
+  'gap.field.translations': 'label.editor.translation',
+  'gap.field.transliterations': 'label.editor.transliteration',
+  'gap.field.language': 'label.editor.language',
+  'label.kind.sentence': 'bc.sentence',
+  'label.kind.word': 'btn.sb.level.word',
+  'copy.key.there': 'copy.source',
+};
+
+// @fn tInline, a label used inside a sentence (see _INLINE_LABEL)
+function tInline(key, vars) {
+  if (_LOCALE[key] != null) return t(key, vars);
+  const src = _INLINE_LABEL[key];
+  if (!src) return t(key, vars);
+  try { return t(src, vars).toLocaleLowerCase(uiLocaleCode()); }
+  catch (_) { return t(src, vars).toLowerCase(); }
+}
+
 /* ── Resource-string localization (D27 P3) ────────────────────────────────────
    The bundled resource JSONs (selection_relations, selection_templates,
    pos_tags, dep_relations, type_choices, leipzig_glosses) carry English display
@@ -17350,8 +17399,8 @@ initDelegatedListeners();
     <!-- Action buttons -->
     <div class="sp-actions">
       <button class="btn btn-primary" id="sp-save-now"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-floppy-disk"/></svg><span data-i18n="btn.savepanel.save_now">Save now</span></button>
-      <button class="btn btn-ghost" id="sp-export-project" title="Write a copy of the whole project somewhere else, without changing where it saves" data-i18n-title="title.panel.save.export_project"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-export"/></svg><span data-i18n="btn.savepanel.export_project">Export…</span></button>
-      <button class="btn btn-ghost" id="sp-export-zip" title="Export the managed corpus folder as a .zip archive" data-i18n-title="title.panel.save.export_zip"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-file-zip"/></svg><span data-i18n="btn.savepanel.export_zip">Export as .zip</span></button>
+      <button class="btn btn-ghost" id="sp-export-project" title="Save a copy of the project elsewhere" data-i18n-title="title.panel.save.export_project"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-export"/></svg><span data-i18n="btn.savepanel.export_project">Export…</span></button>
+      <button class="btn btn-ghost" id="sp-export-zip" title="Export the corpus folder as a .zip file" data-i18n-title="title.panel.save.export_zip"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-file-zip"/></svg><span data-i18n="btn.savepanel.export_zip">Export as .zip</span></button>
     </div>
   </div>
 </div>
@@ -17425,23 +17474,22 @@ initDelegatedListeners();
     <div id="help-global-faq">
       <div class="help-faq">
         <button class="help-faq-btn" aria-expanded="false">
-          <svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-floppy-disk"/></svg><span data-i18n="help.faq.save.title">How to save?</span> <span class="faq-arrow"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-caret-right"/></svg></span>
+          <svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-floppy-disk"/></svg><span data-i18n="help.faq.save.title">Saving Your Work</span> <span class="faq-arrow"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-caret-right"/></svg></span>
         </button>
         <div class="help-faq-body faq-hidden">
-          <p data-i18n-html="help.faq.save.p1">LingCoT will offer to set up <strong>Autosave</strong> whenever you create or open a corpus. Click <em>Yes, autosave</em> and your changes will be written to disk automatically after each edit — no manual saves needed.</p>
-          <p data-i18n-html="help.faq.save.p2">You can also configure save paths at any time by clicking <em>Save</em> in the header to open <strong>Project Files</strong>.</p>
-          <p data-i18n-html="help.faq.save.p3">If your corpus is stored in a managed <code>corpora/</code> folder, <em>Export as .zip</em> bundles the corpus, dictionary, and participants files into a single archive for sharing or backup.</p>
+          <p data-i18n-html="help.faq.save.p1">When you create or open a corpus, LingCoT asks whether to turn on <strong>Autosave</strong>. With Autosave on, every change is saved as you work.</p>
+          <p data-i18n-html="help.faq.save.p2">To see or change where your files are saved, choose <em>Save</em> in the <em>File</em> menu.</p>
+          <p data-i18n-html="help.faq.save.p3"><em>Export as .zip</em> puts the corpus, dictionary and participant list into one file for backup or sharing. Your corpora are kept in <code>~/LingCoT-Data/corpora/</code>.</p>
         </div>
       </div>
       <div class="help-faq">
         <button class="help-faq-btn" aria-expanded="false">
-          <svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-folder-open"/></svg><span data-i18n="help.faq.open.title">How to open &amp; pair files?</span> <span class="faq-arrow"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-caret-right"/></svg></span>
+          <svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-folder-open"/></svg><span data-i18n="help.faq.open.title">Opening Files</span> <span class="faq-arrow"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-caret-right"/></svg></span>
         </button>
         <div class="help-faq-body faq-hidden">
-          <p data-i18n-html="help.faq.open.p1"><strong>Corpus:</strong> click <em>Open</em> in the header, or drag and drop a <code>.jsonl</code> corpus file onto the window.</p>
-          <p data-i18n-html="help.faq.open.p2"><strong>Dictionary:</strong> after loading a corpus, a banner will appear if no dictionary is loaded. Click <em>Load dictionary…</em> in the banner, or use the <em>Dictionary</em> button in the header. LingCoT remembers which dictionary you last used with each corpus and shows it as a suggestion next time.</p>
-          <p data-i18n-html="help.faq.open.p3"><strong>Replacing the dictionary:</strong> load a new dictionary at any time — your corpus is never affected. Useful for swapping between a general-purpose and a domain-specific dictionary.</p>
-          <p data-i18n-html="help.faq.open.p4">Both file types use newline-delimited JSON (<code>.jsonl</code>) — one document per line for corpora, one entry per line for dictionaries.</p>
+          <p data-i18n-html="help.faq.open.p1"><strong>A corpus:</strong> choose <em>Open</em> in the <em>File</em> menu.</p>
+          <p data-i18n-html="help.faq.open.p2"><strong>A dictionary:</strong> LingCoT opens the dictionary saved next to the corpus, <code>name_dictionary.jsonl</code>. If there is none, a banner offers <em>Load Dictionary</em>.</p>
+          <p data-i18n-html="help.faq.open.p4">Corpus and dictionary files end in <code>.jsonl</code>.</p>
         </div>
       </div>
     </div>
@@ -17455,7 +17503,7 @@ initDelegatedListeners();
     <button id="ann-close-btn" type="button" aria-label="Close" data-i18n-aria="aria.btn.close"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-x"/></svg></button>
   </div>
   <div id="ann-chips" role="listbox" aria-label="Annotators" data-i18n-aria="aria.panel.ann.list"></div>
-  <button id="ann-add-btn" type="button" data-i18n="btn.panel.ann.add">+ Add annotator</button>
+  <button id="ann-add-btn" type="button" data-i18n="btn.panel.ann.add">Add Annotator</button>
 </div>
 
 <!-- Add / Edit annotator modal -->
@@ -17509,7 +17557,7 @@ initDelegatedListeners();
     <button id="src-pick-close-btn" type="button" data-i18n-aria="aria.btn.close" aria-label="Close"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-x"/></svg></button>
   </div>
   <div id="src-pick-chips" role="listbox" data-i18n-aria="aria.panel.src.list" aria-label="Available sources"></div>
-  <button id="src-pick-add-new" type="button" data-action="src-add-new" data-i18n="btn.panel.src.add_new">+ New source…</button>
+  <button id="src-pick-add-new" type="button" data-action="src-add-new" data-i18n="btn.panel.src.add_new">New Source</button>
 </div>
 
 <!-- ── Add / Edit Source modal ──────────────────────────────────────────── -->

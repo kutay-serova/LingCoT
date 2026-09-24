@@ -246,7 +246,9 @@ console.log('\nrendered');
   for (const lvl of run('_GAP_LEVELS'))
     for (const key of run(`countedKeys('${lvl}')`)) {
       const k = `gap.field.${key}`;
-      if (ctx.__locale[k] === undefined) unnamed2.push(`${lvl}.${key} → ${k}`);
+      // its own string, or a label the app lowercases (_INLINE_LABEL)
+      if (ctx.__locale[k] === undefined && !run(`_INLINE_LABEL['${k}']`))
+        unnamed2.push(`${lvl}.${key} → ${k}`);
     }
   check(unnamed2.length === 0,
         'every counted field has a name for the sentence, not only a label for its box',
@@ -255,8 +257,9 @@ console.log('\nrendered');
      spelling rule, because "gloss" ends in an s and "part of speech" does not
      begin with a capital, so any pattern for "looks like a label" is wrong in
      both directions. */
-  const names = new Set(Object.keys(ctx.__locale)
-    .filter(k => k.startsWith('gap.field.')).map(k => ctx.__locale[k]));
+  const fieldKeys = new Set([...Object.keys(ctx.__locale), ...Object.keys(run('_INLINE_LABEL'))]
+    .filter(k => k.startsWith('gap.field.')));
+  const names = new Set([...fieldKeys].map(k => run(`tInline('${k}')`)));
   const drawn = [...html.matchAll(/needs? a ([^<]+)/g)].map(m => m[1].trim());
   const strays = drawn.filter(n => !names.has(n));
   check(drawn.length > 0 && strays.length === 0,

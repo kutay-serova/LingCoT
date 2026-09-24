@@ -1464,6 +1464,7 @@ function initDelegatedListeners() {
          which is where the rule now lives. */
       if (!lForm) {
         alert(t(fieldOf('lemma', 'form')?.emptyMsg || 'hint.identity.required'));
+        markMissing(document.getElementById(saveBtn.dataset.qlLform));
         document.getElementById(saveBtn.dataset.qlLform)?.focus();
         return;
       }
