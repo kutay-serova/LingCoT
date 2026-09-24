@@ -592,9 +592,12 @@ console.log('\nedit_log integrity');
         ? e.touched.split('·').map(x => x.trim().replace(/\s*\([^)]*\)\s*$/, '')).filter(Boolean) : [];
       if (!named.length) continue;
       gitCheckable++;
-      for (const f of named)
-        if (!changed.has(f) && !changed.has(renamed.get(f)))
+      for (const f of named) {
+        // A folder (`dev/tests/vendor/`) counts as touched if anything under it changed.
+        const inDir = f.endsWith('/') && [...changed].some(x => x.startsWith(f));
+        if (!inDir && !changed.has(f) && !changed.has(renamed.get(f)))
           missing.push(`         ${e.version} says it touched ${f}, and ${c.sha.slice(0, 8)} did not change it`);
+      }
     }
     if (gitCheckable) {
       GIT_TOUCHED_RAN = true;

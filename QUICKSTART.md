@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-09-23 · **Version:** v3.15.0
+**Updated:** 2026-09-24 · **Version:** v3.15.1
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
@@ -100,7 +100,7 @@ same way, across paragraph and section boundaries, skipping punctuation.
 
 This is the part that repays itself, so it is worth doing early.
 
-Open a word that has morphemes. Beside each morpheme row is a **+ dict** button —
+Open a word that has morphemes. Beside each morpheme row is a **+ Add to Dictionary** button —
 it opens an editable entry rather than writing silently, so you can see and fix
 what gets stored. Add a couple of the parts you have just glossed: a stem, a
 suffix.
@@ -113,7 +113,7 @@ matches a parse you already have fills in its gloss and transliteration.
 
 The more you enter, the less you type. The **Dictionary** badge at the top right
 opens the browser, where you can edit entries, merge two that turned out to be
-the same, and **Link unlinked tokens** to connect words you glossed before the
+the same, and **Link Unlinked Tokens** to connect words you glossed before the
 entry existed.
 
 ---
@@ -141,7 +141,7 @@ you say so.
 An **arc diagram** draws the result above the sentence, stacking arcs so crossing
 dependencies stay readable.
 
-**Add selection** is the other half of this: pick two or more words and
+**+ Add Selection** is the other half of this: pick two or more words and
 record what connects them — determination, quantification, agreement — for
 annotation that is about a *relationship* rather than a property of one word.
 
@@ -208,7 +208,7 @@ With autosave on, edits reach disk about half a second after you make them, and
 the top of the window flashes **✓ Autosaved**. **File → Save** opens **Project
 Files**, where autosave and file locations live.
 
-To reassure yourself: close LingCoT, open it again, choose **Open Corpus File**,
+To reassure yourself: close LingCoT, open it again, choose **Open a Corpus File**,
 and pick your corpus. Everything should be as you left it.
 
 ---
@@ -223,7 +223,7 @@ Switch to **Interlinear** to read word by word, with transliteration, parse and
 gloss under each word. Hovering a word shows where else it occurs: the words
 linked to the same dictionary entry, or with the same spelling if it has none.
 **Lemma** matches by lemma instead. Click a word for everything recorded about
-it; **Open in annotation view** goes back to the editor. Nothing in the reader
+it; **Open in Annotation View** goes back to the editor. Nothing in the reader
 can be changed.
 
 The interface language is under **File**. *ʻŌlelo Hawaiʻi* is listed but not

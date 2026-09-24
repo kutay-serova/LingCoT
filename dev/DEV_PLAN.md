@@ -1,5 +1,5 @@
 # LingCoT: Consolidated Dev Plan
-**Updated:** 2026-09-23 · **Version:** v3.15.0
+**Updated:** 2026-09-24 · **Version:** v3.15.1
 
 | § | What is in it |
 |---|---|

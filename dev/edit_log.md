@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.15.0
+**Updated:** 2026-09-24 · **Version:** v3.15.1
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -14,6 +14,25 @@ said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
 
+---
+
+## English interface wording normalized before translation (2026-09-24)
+**Version:** v3.15.1 · **Type:** chore · **Archives:** `dev/archive/changes/locale_wording_cleanup/` (v3.15.0)
+**Touched:** source/resources/locale/en.json · source/resources/locale/haw.json · QUICKSTART.md
+
+**What changed.** 194 of 1,257 strings in `en.json`; `haw.json` copied from it again (still a placeholder). Source: the wording review page (64 of 73 groups decided), then rules applied across the file:
+- 60 review edits applied. 25 held lowercase: `gap.name.*`, `gap.field.*`, `label.kind.*` are inserted into sentences ("3 words need a gloss"). 8 "Use for all" spillovers not applied: the dictionary card title, the copy-review key, a badge, two dialog titles.
+- Terms: "lexicon"/"dict" to "dictionary" (8), "POS"/"PoS" to "part of speech" (2).
+- Title Case for 98 short labels and buttons that start with a capital; lowercase fragments, statuses and tooltips unchanged.
+- 18: no trailing colon on short labels, no arrow on labels, no ellipsis on buttons or placeholders. 17: no full stop on short status lines.
+- QUICKSTART: five bold labels follow the new wording.
+- `doc_integrity_test.js` §8b: a **Touched:** folder (`dev/tests/vendor/`) counts as changed when anything under it did; v3.14.420 failed on it.
+
+**Left open.** Review groups g054 and g062; the `＋`/`+` prefix, quotation marks, em dashes and `(s)` plurals are not decided.
+
+**Guard.** `locale_style_test.js` (6): one name per concept, Title Case on 353 short labels, lowercase inserted words, no ellipsis or arrows on controls. Mutation: the pre-change `en.json` fails 5 of 6.
+
+**Verification.** `./dev/tests/run_all.sh` 104 passed; `gui_crud_test.js` 46 passed; `pseudo_locale_test.js` 6 passed; placeholders and HTML tags identical in every string before and after.
 ---
 
 ## Tester build v3.15.0: TESTERS.md, the reader in the quickstart, --release --minor (2026-09-24)
