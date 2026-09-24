@@ -9,6 +9,6 @@
 - `new_version.py --release --minor`: the last change takes X.Y+1.0, the others patch numbers, so this build is exactly v3.15.0.
 - DEV_PLAN gate 2: D41 and the picker done, 2 items open (the macOS clean-machine install on v3.15.0, D46 answers from testers).
 
-**Guard.** `change_files_test.js` +2 (`--minor` in a temp repository: v3.14.5 then v3.15.0, build 3.15.0). `quickstart_labels_test.js` covers the new bold labels. §B-208's live-document list includes `TESTERS.md`.
+**Guard.** `change_files_test.js` +2 (`--minor` in a temp repository: v3.14.5 then v3.15.0, build 3.15.0). `quickstart_labels_test.js` covers the new bold labels. §B-208's live-document list includes `TESTERS.md`. §8a fails on a change file still titled `TITLE`: two were, and only `--release` noticed.
 
 **Verification.** `./dev/tests/run_all.sh` — 103 passed, 0 failed; `doc_integrity_test.js` 83 passed.

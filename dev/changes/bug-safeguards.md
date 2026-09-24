@@ -1,4 +1,4 @@
-## TITLE (2026-09-24)
+## Bugs recorded on branches cannot be lost unnoticed: report, id allocation, table check (2026-09-24)
 **Version:** pending · **Type:** feature · **Archives:** `dev/archive/changes/bug-safeguards/` (v3.14.419)
 **Touched:** dev/new_version.py · dev/tests/change_files_test.js · dev/tests/doc_integrity_test.js · dev/PRACTICES.md · dev/changes/README.md
 **Change:** `bug-safeguards` · **Order:** 10

@@ -471,6 +471,8 @@ console.log('\nedit_log integrity');
     for (const f of chFiles) {
       const slug = f.slice(0, -3), body = fs.readFileSync(path.join(chDir, f), 'utf8');
       if (!/^## .+/m.test(body)) bad.push(`         ${f} has no ## heading`);
+      // --release refuses these; fail here first, before anyone tries to release.
+      if (/^## TITLE\b/m.test(body)) bad.push(`         ${f} is still titled TITLE`);
       if (!/\*\*Version:\*\*\s*pending\b/.test(body)) bad.push(`         ${f} is not **Version:** pending`);
       const t = (/\*\*Type:\*\*\s*([a-z]+)/.exec(body) || [])[1];
       if (!['fix', 'feature', 'finding', 'decision', 'chore'].includes(t)) bad.push(`         ${f} has no valid **Type:**`);
