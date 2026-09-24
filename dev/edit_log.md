@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -14,6 +14,27 @@ said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
 
+---
+
+## B-218 to B-223: fixes from the scripted tester session; tester build macOS-only (2026-09-24)
+**Version:** v3.15.3 · **Type:** fix · **Archives:** `dev/archive/changes/tb_session_fixes/` (v3.15.2)
+**Touched:** source/LingCoT.html · source/modules/field_spec.js · source/LingCoT.pyw · source/resources/locale/en.json · source/resources/locale/haw.json · QUICKSTART.md · TESTERS.md · setup.md · README.md · dev/BUGS.md · dev/tests/printed_commands_test.js · dev/tests/annotation_gaps_test.js · dev/tests/journal_disk_test.js · dev/tests/linking_s1s3_test.js · dev/tests/normalize_test.js
+**Closed:** B-218, B-219, B-220, B-221, B-222, B-223 · **Opened:** B-224, B-225, B-226
+
+**What changed.** A fresh clone of v3.15.2 was installed in a clean Linux container and the real app was driven through QUICKSTART under a virtual display (new corpus, annotator, section, translation, word analysis, dictionary, Reader, interface language, search, Progress, reopen, reopen after a forced kill). Data survived both reopens.
+- B-218: the word gloss row declares `filledWhen: 'hasWordGloss'`, which reads `wordGloss`.
+- B-219: `reportLinkNotes` logs the number of notes; the text stays on the status line.
+- B-220: `append_abs` opens the journal 0600 and tightens an existing one.
+- B-221: NLLB commands in the app use `source/scripts/` and `source/setup.py`.
+- B-222: `saveNewCorpus` stamps the current `dict_key_version` before binding the fold.
+- B-223: autosave hint, source hint, annotator filter message and QUICKSTART name the controls on screen.
+- The tester build is macOS-only. TESTERS.md, README and setup.md say so and describe the Linux failure (B-224) and the Qt dialog text (B-225). B-226 (help button over the File menu) is recorded, not fixed.
+
+**Why.** Found in the session log review for the tester build; each is something a tester would meet in the first half hour.
+
+**Guard.** `annotation_gaps_test` (a morpheme-glossed word is glossed), `linking_s1s3_test` (a note reaches the screen, not the log), `journal_disk_test` (journal mode 0600, new and existing), `printed_commands_test` (now scans LingCoT.html), `normalize_test` (key version stamped before the fold binds). Each fails against the pre-fix code.
+
+**Verification.** `./dev/tests/run_all.sh`: 104 passed, 0 failed.
 ---
 
 ## Fewer interface strings, shorter tooltips, hints and help (2026-09-24)

@@ -51,6 +51,8 @@ const FILES = [
   'setup.command', 'setup.bat', 'LingCoT.command', 'LingCoT.bat',
   'setup_NLLB.command', 'setup_NLLB.bat',
   'dev/new_version.py', 'dev/tools/ship_disclosure.py',
+  /* B-221: the app shows NLLB commands in two places, to a user at the same root. */
+  'source/LingCoT.html',
 ].filter(f => fs.existsSync(path.join(ROOT, f)));
 
 /* Named, not counted. A `>= 10` floor let `setup.py` — which held 21 of the 67
@@ -60,7 +62,7 @@ const FILES = [
 const REQUIRED = ['source/build_env.py', 'source/setup.py',
                   'source/scripts/corpus_annotate.py', 'source/scripts/corpus_ingest.py',
                   'source/scripts/corpus_optimize.py', 'source/scripts/dict_export.py',
-                  'setup.command', 'LingCoT.command'];
+                  'setup.command', 'LingCoT.command', 'source/LingCoT.html'];
 const unscanned = REQUIRED.filter(f => !FILES.includes(f));
 check(unscanned.length === 0,
       `all ${REQUIRED.length} required file(s) are in the sweep (${FILES.length} scanned)`,

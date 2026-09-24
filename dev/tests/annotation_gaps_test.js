@@ -229,7 +229,7 @@ const rulesSrc = (() => {
 
 const NAMES = ['_navIsToken', '_navIndex', 'annotationGaps'];
 const HELPERS = ['joinParse', 'sentTransEl', 'sentTrans', '_foldSampleText', '_metaSampleText',
-                 '_fieldApplies', '_fieldVacuous', '_fieldFilledBy', 'depHasParse',
+                 '_fieldApplies', '_fieldVacuous', '_fieldFilledBy', 'depHasParse', 'wordGloss',
                  'trackedOverrides', 'trackedKeys'];
 
 function counterFor(docRec, alsoCount) {
@@ -422,6 +422,24 @@ console.log('\nexecuted against a document built to exercise every rule');
     rel.sections[0].paragraphs[0].sentences[0].words[0].dep_rel = 'nsubj';
     check(counterFor(rel, ON).annotationGaps().sentence.deps.missing === 1,
           'and so is a dep_rel with no head');
+  }
+
+  /* B-218: a gloss made through the morphemes is a gloss. Since B-186 the join
+     is composed on read and not stored, so the word's own field is empty for
+     exactly the words glossed the way the editor encourages. */
+  {
+    const viaM = JSON.parse(JSON.stringify(FIX));
+    const w3 = viaM.sections[0].paragraphs[0].sentences[0].words[2];
+    delete w3.gloss;
+    w3.morphemes[0].gloss = 'house'; w3.morphemes[1].gloss = 'PL';
+    const before = counterFor(FIX).annotationGaps().word.gloss.missing;
+    const after  = counterFor(viaM).annotationGaps().word.gloss.missing;
+    check(after === before,
+          'a word glossed only through its morphemes counts as glossed',
+          `         missing ${after}, expected ${before}`);
+    delete w3.morphemes[0].gloss; delete w3.morphemes[1].gloss;
+    check(counterFor(viaM).annotationGaps().word.gloss.missing === before + 1,
+          'and one with neither a gloss nor glossed morphemes still counts as missing');
   }
 
   /* Ids are opt-in — the expensive half, held only for what a panel shows. */

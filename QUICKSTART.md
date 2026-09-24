@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
@@ -33,7 +33,8 @@ Choose **New Corpus** on the home screen.
 
 ## 2 · Say who you are, and what the text is
 
-**Add yourself as an annotator first** — the button is right on the form.
+**Add yourself as an annotator first.** Click **Pick Annotator** on the form,
+then **Add Annotator**.
 LingCoT records who made every annotation and will not save an edit from
 nobody, so this is the one step that will stop you if you skip it.
 
@@ -45,7 +46,7 @@ Then fill in:
 - **Translation language** — the language *you* write translations in. Often
   English, but a Hawaiian project may well document into Hawaiian.
 
-Click **Save**. When LingCoT offers to **autosave**, say **yes**.
+Click **Create Corpus**. When LingCoT offers to **autosave**, say **yes**.
 
 ## 3 · Put your text in
 
@@ -79,7 +80,7 @@ back, so fill in what you know:
 
 - **Transliteration** — a romanization, or any other script you work in. Give
   the scheme a name if you use more than one.
-- **Part of speech** — a chip row, so it is one click.
+- **Part of speech** — type a tag, or open **All** to pick one from the list.
 - **Word Gloss** — what the whole word means. Type an **uppercase** sequence
   such as `NOM`, `PST` or `PL` and a panel of standard Leipzig abbreviations
   opens; click one to insert it. Leave it blank and it is composed from the
@@ -153,7 +154,7 @@ annotation that is about a *relationship* rather than a property of one word.
 
 Click **Search** in the header. Four controls decide what is searched:
 
-- **Field** — Text, Gloss, Transliteration, Translation, or Lemma
+- **Field** — Word Form, Gloss, Transliteration, Translation, or Lemma
 - **Level** — Word, Morpheme, or Sentence
 - **Scope** — within one sentence, or across a sentence boundary
 - **Transliteration label** — when you have more than one scheme
@@ -173,10 +174,10 @@ There is a **regex** toggle if you want one.
 token belonging to them — so searching `gitmek` finds `gidiyor` and `gitti`,
 by membership rather than by spelling.
 
-Read the hits three ways: **Concordance** (each hit centred in its context —
-sorting by the word to the right is how you see what a form keeps company with),
-**Frequency** (counts, by form and by section), and **Collocates** (what occurs
-nearby). Click any result to jump to that sentence.
+Read the hits in four tabs: **KWIC** (each hit centred in its context; sorting
+by the word to the right shows what a form keeps company with), **Sentences**
+(the whole sentence), **Frequency** (counts, by form and by section), and
+**Collocates** (what occurs nearby). Click any result to jump to that sentence.
 
 ## 9 · See what is left
 

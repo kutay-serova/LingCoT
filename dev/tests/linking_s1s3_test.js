@@ -843,5 +843,24 @@ console.log('\nD35 B6 — an orphan is collected, never swept\n');
   check(h.S.lemmas.length === before + 1, 'declining the confirm keeps the record');
 }
 
+/* B-219: the notes quote forms and lemmas, so the log gets their number only.
+   The logging policy forbids annotation content in logs; the status line, which
+   the annotator sees, still carries the text. */
+console.log('\nB-219 — link notes reach the screen, not the log\n');
+{
+  const logged = [], flashed = [];
+  const c = { t: (k, v) => `Created new lemma “${v.form}”.`, esc: s => s, icon: () => '',
+              logEvent: (...a) => logged.push(a.join(' ')), flashSaveStatus: s => flashed.push(s) };
+  vm.createContext(c);
+  vm.runInContext('let _linkNotes = [];', c);
+  for (const fn of ['linkNote', 'drainLinkNotes', 'reportLinkNotes'])
+    vm.runInContext(fnSrc('LingCoT.html', fn), c, { filename: fn + '.js' });
+  vm.runInContext("linkNote('note.link.lemma_created', { form: 'üzüm' }); reportLinkNotes();", c);
+  check(flashed.some(s => s.includes('üzüm')), 'the status line shows the note');
+  check(logged.length === 1 && !logged.some(s => s.includes('üzüm')),
+        'the log records that a note was shown, without the form it names',
+        `         logged: ${JSON.stringify(logged)}`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

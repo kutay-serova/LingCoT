@@ -278,7 +278,12 @@ class Api:
             parent = os.path.dirname(os.path.abspath(abs_path))
             if parent:
                 os.makedirs(parent, exist_ok=True)
-            with open(abs_path, 'a', encoding='utf-8') as f:
+            # B-220: owner-only, like the corpus files write_abs creates through
+            # mkstemp. The journal holds the same annotation content.
+            fd = os.open(abs_path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+            if os.name == 'posix':
+                os.fchmod(fd, 0o600)
+            with os.fdopen(fd, 'a', encoding='utf-8') as f:
                 f.write(content)
                 f.flush()
                 os.fsync(f.fileno())

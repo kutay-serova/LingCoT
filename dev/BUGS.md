@@ -1,12 +1,12 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **210 fixed**  |  **1 withdrawn** (B-096)
+**9 open** · 0 S1 · 1 S2 · 8 S3  |  **216 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -14,8 +14,8 @@ is how a consistency script found it at v3.14.397.*
 | Sev | Count | What it means | Open |
 |---|---|---|---|
 | **S1** | 0 | blocks use, or loses data silently | none |
-| **S2** | 0 | visible and wrong, but workable | none |
-| **S3** | 6 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181 |
+| **S2** | 1 | visible and wrong, but workable | B-224 |
+| **S3** | 8 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181, B-225, B-226 |
 
 Counts are checked by `doc_integrity_test.js`, so they cannot drift from the
 entries below. Update them in the same commit that opens or closes a bug.
@@ -31,6 +31,8 @@ below already is.*
 | export and output | B-028 | a decision, not a patch |
 | vocabularies and stored data | B-029, B-035, B-136 | nothing — three separate small decisions |
 | tooling | B-170, B-181 | B-170 wants a vacuity floor; B-181 is `new_version.py --add` |
+| Linux | B-224, B-225 | a decision on Linux support; the tester build is macOS-only |
+| layout | B-226 | nothing |
 
 **Eight themes emptied**, and two are worth remembering for how they closed
 rather than that they did: *an edit that does not take* — B-175, B-176, B-178 and
@@ -112,6 +114,38 @@ thirteen that once reported success while checking nothing, are in
 ---
 
 ## Open
+
+### B-226 · S3 · The help button sits on top of the open File menu
+
+**Found 2026-09-24**, in the scripted session on v3.15.2 (Linux, Qt). With the File
+menu open, the round **?** button at the top right is drawn over the menu's right
+edge, beside **Light** and the language picker. B-039 fixed the same thing for
+menus and modal backdrops at v3.14.95; the File menu was rebuilt since. Not yet
+seen on macOS.
+
+### B-225 · S3 · Linux (Qt): pop-up messages show `\n` and quotation marks
+
+**Found 2026-09-24**, in the same session. pywebview's Qt backend shows the text
+of `alert()` and `confirm()` JSON-escaped: "Nothing to link.\n\n0 token(s)…" in
+quotation marks, with the line breaks as literal `\n`. macOS uses WebKit's own
+dialogs and is not affected. Waits on B-224.
+
+### B-224 · S2 · Linux: setup succeeds, then the app does not open
+
+**Found 2026-09-24**, installing v3.15.2 from a fresh clone in a clean Linux
+container. `setup.command` completes and the health check passes, but
+`LingCoT.pyw` stops with "You must have either QT or GTK with Python extensions
+installed in order to use pywebview". Setup installs pywebview and no window
+toolkit, and no Linux instructions mention one.
+
+What made it run on Ubuntu 24.04: `.venv/bin/pip install "pywebview[qt]"` (about
+530 MB) and the system library `libxcb-cursor0`. The other route is GTK through
+the system's `python3-gi`, which the venv cannot see unless it is built with
+system site packages.
+
+**Decision, v3.15.3:** the tester build is macOS-only (TESTERS.md, README,
+setup.md). The fix is a choice between installing Qt on Linux and documenting
+GTK, and is left open.
 
 ### B-181 · S3 · `new_version.py --add` archives a file that has already been edited
 
@@ -268,6 +302,12 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-223** | S3 | v3.15.3 | **Control names that no longer matched the screen**: the autosave prompt said "change this later from the Save button" (Save is in the File menu), the source hint named "Add Source" where the form shows "Pick Sources", the annotator filter said "click + Add", and QUICKSTART named "Save", "Concordance" and "Text" for **Create Corpus**, **KWIC** and **Word Form**. |
+| **B-222** | S3 | v3.15.3 | **Every new corpus logged "key version changed … run dict_dedupe.js".** `saveNewCorpus` binds the fold before anything is keyed, and the binding warned about any document with no `dict_key_version`, which a new one never had. |
+| **B-221** | S3 | v3.15.3 | **The app showed NLLB commands that fail from the project root**: `scripts/corpus_annotate.py` and `setup.py`, both under `source/`, in the Translation Unavailable window and in Translation Settings. B-207's shape, in the one file `printed_commands_test` did not scan. |
+| **B-220** | S2 | v3.15.3 | **The journal was created readable by everyone** (0644), while the corpus, dictionary and participant files are 0600 through `mkstemp`. It holds the same annotation content. |
+| **B-219** | S2 | v3.15.3 | **Link notes were logged verbatim**, so the log carried forms and lemmas ("Created new lemma üzüm"), against the rule that logs never hold annotation content. |
+| **B-218** | S2 | v3.15.3 | **Progress counted every word glossed through its morphemes as missing a gloss.** Since B-186 that gloss is composed on read, not stored, and the counter read the stored field, so "words need a gloss" did not fall as the annotator glossed. |
 | **B-217** | S2 | v3.14.428 | **Log pruning sorted by file name, and the name carries local time.** Logs written under another clock sorted wrong: a session started at 19:17 local, with 20 logs named 22:50 to 23:06 (UTC) present, deleted its own log at startup. A DST change or travel west does the same. Found when a test session left no log. |
 | **B-216** | S2 | v3.14.428 | **Guards that import the app wrote session logs into the repo's `logs/`**, about 40 in a day, and pruning then removed every real session log. `workspace_test.js` and `locale_parity_test.js` (tb-settings, tb-i18n). |
 | **B-215** | S1 | v3.14.423 | **The Search view threw on every visit** from v3.14.388 on. The Search-A → Search rename left the old branch first in `render()`'s cache-key ternary, naming five variables deleted with Search-A. `render_smoke_test.js` called the renderers directly, bypassing that code. Found by the tb-strings pseudo-locale sweep. |

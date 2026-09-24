@@ -1,6 +1,6 @@
 # LingCoT: Setup & Running
 
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 ---
 
@@ -30,6 +30,15 @@ bash setup.command
 ```
 double-click setup.bat
 ```
+
+**Linux:** not supported in the current tester build (B-224). Setup completes, but
+the app does not open: pywebview needs Qt or GTK, and setup installs neither.
+What made it run on Ubuntu 24.04:
+```bash
+.venv/bin/pip install "pywebview[qt]"     # about 530 MB
+sudo apt install libxcb-cursor0
+```
+With Qt, messages in pop-up dialogs show `\n` and quotation marks (B-225).
 
 Setup installs the **minimal tier**: pywebview (desktop app), ingestion libraries (TXT/EPUB), and online translation via Google Translate. Offline NLLB translation and PDF export are separate tiers, see below.
 

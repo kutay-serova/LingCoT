@@ -1,6 +1,6 @@
 # samples/: corpora that ship with the application
 
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 **Everything in this folder is public.** It is inside the Git repository, under
 the MIT licence. Nothing here may contain real fieldwork, and no participants

@@ -173,6 +173,18 @@ console.log('\nthe key is versioned, and the app agrees with the module\n');
             '         without it the corpus is keyed under whatever the last one left behind,\n' +
             '         and dict_key_version is never stamped (B-098)');
     }
+
+    /* B-222: a corpus created in the app has nothing keyed under an older rule.
+       refreshFoldContext warns about any document whose version is missing, so
+       creation must stamp the current version before binding, or every new
+       corpus starts its log with "key version changed, run dict_dedupe.js". */
+    const i = bare.indexOf('function saveNewCorpus(');
+    const body = bare.slice(i, bare.indexOf('\nfunction ', i + 10));
+    const stamp = body.search(/metadata\.dict_key_version\s*=\s*DICT_KEY_VERSION/);
+    const bind  = body.indexOf('refreshFoldContext(');
+    check(i > -1 && stamp > -1 && bind > -1 && stamp < bind,
+          'saveNewCorpus() stamps the current key version before binding the fold',
+          '         otherwise a brand-new corpus logs a key-version warning (B-222)');
   }
 }
 

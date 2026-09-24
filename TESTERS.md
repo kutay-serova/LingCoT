@@ -1,14 +1,14 @@
 # LingCoT tester build
 
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 This build is for testing. It is complete enough to annotate a real text from
 start to finish; what it needs now is people other than its author doing that.
 
 ## Getting started
 
-1. Install: [setup.md](setup.md). macOS and Linux. Windows is not supported in
-   this build.
+1. Install: [setup.md](setup.md). **macOS only.** Linux and Windows are not
+   supported in this build; see Known issues.
 2. Work through [QUICKSTART.md](QUICKSTART.md) with a short text of your own,
    about half an hour.
 3. Report what you find (below).
@@ -30,6 +30,8 @@ start to finish; what it needs now is people other than its author doing that.
 | PDF dictionary export has no page numbers or running header (B-028) | |
 | The native name *словѣньскъ* resolves to Old Russian, never Old Church Slavonic; use the code `cu` (B-035) | |
 | Exports (PDF, LaTeX) are in English whatever the interface language | by decision, for now |
+| Linux: setup completes but the app does not open, because the window toolkit it needs (Qt or GTK) is not installed (B-224) | [setup.md](setup.md), Linux |
+| Linux: messages in pop-up dialogs show `\n` and quotation marks (B-225) | |
 
 ## Reporting
 

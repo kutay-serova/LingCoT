@@ -255,5 +255,39 @@ console.log('\nB-199 — an exit that cannot finish must not start\n');
         '         it is silent by design; the fix is to never leave it pathless');
 }
 
+/* B-220: the journal holds the same annotation content as the corpus, so it gets
+   the same owner-only mode. write_abs gets 0600 from mkstemp; append_abs opened
+   the file with the process umask and left it readable by everyone. Executed
+   through the host's own method, on a new file and on one that already exists. */
+console.log('\nB-220 — the journal is owner-only\n');
+if (process.platform === 'win32') {
+  check(true, 'skipped on Windows, which has no mode bits');
+} else {
+  const { execFileSync } = require('child_process');
+  const os = require('os');
+  const SRC = path.join(__dirname, '..', '..', 'source');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lingcot_journal_'));
+  const fresh = path.join(dir, 'a.journal.jsonl'), old = path.join(dir, 'b.journal.jsonl');
+  fs.writeFileSync(old, ''); fs.chmodSync(old, 0o644);
+  const probe = `
+import importlib.util as ilu, sys, types
+from importlib.machinery import SourceFileLoader
+sys.modules['webview'] = types.SimpleNamespace(OPEN_DIALOG=0, SAVE_DIALOG=1, FileDialog=types.SimpleNamespace(OPEN=0, SAVE=1))
+sys.path.insert(0, ${JSON.stringify(SRC)})
+spec = ilu.spec_from_loader('app', SourceFileLoader('app', ${JSON.stringify(path.join(SRC, 'LingCoT.pyw'))}))
+m = ilu.module_from_spec(spec); spec.loader.exec_module(m)
+api = m.Api()
+api.append_abs(${JSON.stringify(fresh)}, '{"op":"put"}\\n')
+api.append_abs(${JSON.stringify(old)}, '{"op":"put"}\\n')
+`;
+  let err = '';
+  try { execFileSync('python3', ['-c', probe], { encoding: 'utf8', env: { ...process.env, LINGCOT_WORKSPACE: dir } }); }
+  catch (e) { err = String(e.stderr || e.message).trim().split('\n').slice(-2).join(' '); }
+  const mode = f => fs.existsSync(f) ? (fs.statSync(f).mode & 0o777).toString(8) : 'missing';
+  check(!err && mode(fresh) === '600', `a new journal is created 0600 (got ${mode(fresh)})`, err && `         ${err}`);
+  check(!err && mode(old) === '600', `an existing, looser journal is tightened on the next append (got ${mode(old)})`);
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {}
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

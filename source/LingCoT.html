@@ -4456,7 +4456,8 @@ function drainLinkNotes() { const n = _linkNotes; _linkNotes = []; return n; }
 function reportLinkNotes() {
   const notes = drainLinkNotes();
   if (!notes.length) return;
-  for (const n of notes) logEvent('info', 'link', n);
+  // B-219: the notes quote forms and lemmas, which are annotation content.
+  logEvent('info', 'link', `notes: ${notes.length}`);
   if (typeof flashSaveStatus === 'function')
     flashSaveStatus(`${icon('book')} ${esc(notes.join(' · '))}`);
 }
@@ -7781,6 +7782,11 @@ const _GAP_RULES = {
      editor's own fold. Read rather than restated — a root stores `head === null`,
      so `'head' in w` is the test, and a truthiness check would miss every root. */
   hasDepParse: rec => depHasParse(rec),
+
+  /* B-218: since B-186 a gloss equal to the morpheme join is composed on read
+     and not stored, so the stored field alone called every word glossed
+     through its morphemes missing. `wordGloss` is what every surface shows. */
+  hasWordGloss: rec => !isEmptyValue(wordGloss(rec)),
 
   /* "The object language is not written in the metalanguage's script."
      UNKNOWN COUNTS AS APPLIES: an undetectable script (no translations yet, a
@@ -14035,6 +14041,8 @@ function saveNewCorpus() {
      path forgets — the drift form_render_test proves absent in the MARKUP,
      absent in the assignment too. */
   applyForm('document', newDoc, v, prov());
+  // B-222: nothing was keyed under an older rule, so there is nothing to warn about.
+  newDoc.metadata.dict_key_version = DICT_KEY_VERSION;
   S.docs.push(newDoc);
   S.docIdx = S.docs.length - 1;
   /* B-097: bind the fold rules for the language just chosen. applyCorpus does
@@ -16858,21 +16866,21 @@ function showXlateFailModal() {
     title = t('modal.xlate_fail.title.nllb');
     body  = `<p>${t('modal.xlate_fail.body.nllb.p1')}</p>
       <p><strong>${t('modal.xlate_fail.body.nllb.p2')}</strong></p>
-      <div class="nllb-modal-code">.venv/bin/python3 scripts/corpus_annotate.py --serve</div>
+      <div class="nllb-modal-code">.venv/bin/python3 source/scripts/corpus_annotate.py --serve</div>
       <p>${t('modal.xlate_fail.body.nllb.p3')}</p>
       <p><strong>${t('modal.xlate_fail.body.nllb.p4')}</strong></p>
-      <div class="nllb-modal-code">.venv/bin/python3 setup.py --nllb</div>
+      <div class="nllb-modal-code">.venv/bin/python3 source/setup.py --nllb</div>
       <p class="text-sm text-muted mt-1">${t('modal.xlate_fail.body.nllb.p5')}</p>`;
   } else {
     // 'auto', both backends were tried and both failed
     title = t('modal.xlate_fail.title.auto');
     body  = `<p>${t('modal.xlate_fail.body.auto.p1')}</p>
       <p><strong>${t('modal.xlate_fail.body.auto.p2')}</strong></p>
-      <div class="nllb-modal-code">.venv/bin/python3 scripts/corpus_annotate.py --serve</div>
+      <div class="nllb-modal-code">.venv/bin/python3 source/scripts/corpus_annotate.py --serve</div>
       <p>${t('modal.xlate_fail.body.auto.p3')}</p>
       <p><strong>${t('modal.xlate_fail.body.auto.p4')}</strong></p>
-      <div class="nllb-modal-code">.venv/bin/python3 setup.py --nllb
-.venv/bin/python3 scripts/corpus_annotate.py --serve</div>${_diag}`;
+      <div class="nllb-modal-code">.venv/bin/python3 source/setup.py --nllb
+.venv/bin/python3 source/scripts/corpus_annotate.py --serve</div>${_diag}`;
   }
 
   modal.innerHTML = `
@@ -17129,13 +17137,13 @@ function showXlateSettingsModal() {
           <p class="text-sm text-muted mb-2">${t('modal.xlate_settings.nllb.framing')}</p>
           <div class="xlate-cmd-row">
             <span class="xlate-cmd-label">${t('label.xlate.cmd.download')}</span>
-            <code class="xlate-cmd-code">.venv/bin/python3 setup.py --nllb</code>
-            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 setup.py --nllb" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_download'))}">${icon('copy')}</button>
+            <code class="xlate-cmd-code">.venv/bin/python3 source/setup.py --nllb</code>
+            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 source/setup.py --nllb" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_download'))}">${icon('copy')}</button>
           </div>
           <div class="xlate-cmd-row">
             <span class="xlate-cmd-label">${t('label.xlate.cmd.serve')}</span>
-            <code class="xlate-cmd-code">.venv/bin/python3 scripts/corpus_annotate.py --serve</code>
-            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 scripts/corpus_annotate.py --serve" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_serve'))}">${icon('copy')}</button>
+            <code class="xlate-cmd-code">.venv/bin/python3 source/scripts/corpus_annotate.py --serve</code>
+            <button class="btn btn-sm xlate-copy-cmd" data-cmd=".venv/bin/python3 source/scripts/corpus_annotate.py --serve" title="${escAttr(t('title.xlate.copy_cmd'))}" aria-label="${escAttr(t('aria.xlate.copy_serve'))}">${icon('copy')}</button>
           </div>
           <div class="xlate-url-row">
             <label class="xlate-cmd-label" for="xlate-nllb-url">${t('label.nllb.server_url')}</label>
@@ -17413,7 +17421,7 @@ initDelegatedListeners();
   </div>
   <div class="ncs-body">
     <p id="ncs-message"></p>
-    <p class="ncs-hint" data-i18n-html="modal.autosave.hint">You can change this later from the <strong>Save</strong> button.</p>
+    <p class="ncs-hint" data-i18n-html="modal.autosave.hint">You can change this later: <strong>File</strong>, then <strong>Save</strong>.</p>
     <div class="sp-actions">
       <button class="btn btn-primary" id="ncs-save-btn" data-i18n="btn.savepanel.autosave_yes">Yes, autosave</button>
       <button class="btn btn-ghost" id="ncs-skip-btn" data-i18n="btn.savepanel.autosave_no">Not now</button>

@@ -2,7 +2,7 @@
 
 **LingCoT is an open-source tool for annotating linguistic corpora.**
 
-**Updated:** 2026-09-24 · **Version:** v3.15.2
+**Updated:** 2026-09-24 · **Version:** v3.15.3
 
 > **Status: in development.** No stable release has been cut. The application is
 > in daily use on the author's own corpora and the data format is settled enough
@@ -43,8 +43,10 @@ unavailable, in fieldwork situations especially. This is a tool for
 documentation, analysis, and helping academic and community-oriented linguistic
 work and research.
 
-LingCoT runs on Windows, macOS and Linux. It only requires Python 3.9 or later;
-setup installs everything else for you.
+LingCoT is written for Windows, macOS and Linux. It only requires Python 3.9 or
+later; setup installs everything else for you. **The current tester build is
+macOS-only**: on Linux the app does not open without Qt or GTK (B-224), and
+Windows has not been tested.
 
 ---
 
@@ -158,6 +160,9 @@ bash setup.command
 ```
 
 ### Linux
+
+Not supported in the current tester build: the app does not open without Qt or
+GTK (B-224). See [setup.md](setup.md) for what made it run.
 
 Open a terminal in the LingCoT folder and run:
 ```bash

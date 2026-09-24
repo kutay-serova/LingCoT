@@ -252,7 +252,7 @@ const FIELD_SPEC = {
     { key: 'part_of_speech',      tier: 'core',     control: 'tag', tags: 'POS_CHOICES',  fold: 'upper', domId: 'ew-pos',
       label: 'label.editor.part_of_speech' },
     { key: 'gloss',               tier: 'core',     control: 'text',     domId: 'ew-gloss',
-      label: 'label.editor.gloss' },
+      filledWhen: 'hasWordGloss', label: 'label.editor.gloss' },   // B-218
     /* `manual` for the same reason sentence.words is: the control hands back a
        typed citation form and the field holds a lemma id. Resolving one to the
        other creates records, which is a save handler's job, not a writer's. */
