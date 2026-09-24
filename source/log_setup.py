@@ -34,6 +34,7 @@
 # =============================================================================
 
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -51,28 +52,39 @@ _DATE_FORMAT  = "%Y-%m-%d %H:%M:%S"
 
 # @fn _get_logs_dir
 def _get_logs_dir(project_root: Path) -> Path:
-    """Return the logs/ directory path, creating it if it does not exist."""
-    logs_dir = project_root / LOGS_DIR_NAME
-    logs_dir.mkdir(exist_ok=True)
+    """Return the logs/ directory path, creating it if it does not exist.
+
+    LINGCOT_LOG_DIR overrides it. The test suite sets it, so runs that import
+    the app do not write into, or prune, the real logs/ (B-216)."""
+    override = os.environ.get("LINGCOT_LOG_DIR")
+    logs_dir = Path(override) if override else project_root / LOGS_DIR_NAME
+    logs_dir.mkdir(parents=True, exist_ok=True)
     return logs_dir
 
 
 # @fn _prune_old_session_logs
-def _prune_old_session_logs(logs_dir: Path, prefix: str) -> None:
+def _prune_old_session_logs(logs_dir: Path, prefix: str, keep: Path = None) -> None:
     """
     Delete the oldest session log files for `prefix` if there are more than
-    MAX_SESSION_LOGS.  Files are matched by glob '{prefix}_*.log' and sorted
-    lexicographically, since the timestamp is part of the name this puts them
-    in chronological order, so the oldest (smallest) names are deleted first.
+    MAX_SESSION_LOGS. Files are matched by glob '{prefix}_*.log'; the oldest by
+    modification time go first.
     """
+    # B-217: by modification time, not by name. The name carries local time,
+    # so a clock change or logs written in another time zone can make the
+    # newest file sort first. `keep` (this session's file) is never deleted.
     pattern = f"{prefix}_*.log"
-    files = sorted(logs_dir.glob(pattern))  # oldest first (timestamp in name)
-    while len(files) > MAX_SESSION_LOGS:
+    def _mtime(f):
+        try:
+            return f.stat().st_mtime
+        except OSError:
+            return 0
+    files = sorted((f for f in logs_dir.glob(pattern) if f != keep),
+                   key=lambda f: (_mtime(f), f.name))
+    while len(files) > MAX_SESSION_LOGS - (1 if keep else 0):
         try:
             files.pop(0).unlink(missing_ok=True)
         except OSError:
             break
-        files = sorted(logs_dir.glob(pattern))
 
 
 # @fn _make_logger
@@ -169,7 +181,7 @@ def setup_session_logger(project_root: Path, prefix: str) -> logging.Logger:
 
     logger = _make_logger(prefix, log_file, file_mode="w")
 
-    _prune_old_session_logs(logs_dir, prefix)
+    _prune_old_session_logs(logs_dir, prefix, keep=log_file)
 
     return logger
 

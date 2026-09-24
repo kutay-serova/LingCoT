@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**6 open** · 0 S1 · 0 S2 · 6 S3  |  **208 fixed**  |  **1 withdrawn** (B-096)
+**6 open** · 0 S1 · 0 S2 · 6 S3  |  **210 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -268,6 +268,8 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-217** | S2 | pending:b216-b217-logs | **Log pruning sorted by file name, and the name carries local time.** Logs written under another clock sorted wrong: a session started at 19:17 local, with 20 logs named 22:50 to 23:06 (UTC) present, deleted its own log at startup. A DST change or travel west does the same. Found when a test session left no log. |
+| **B-216** | S2 | pending:b216-b217-logs | **Guards that import the app wrote session logs into the repo's `logs/`**, about 40 in a day, and pruning then removed every real session log. `workspace_test.js` and `locale_parity_test.js` (tb-settings, tb-i18n). |
 | **B-215** | S1 | pending:tb-strings | **The Search view threw on every visit** from v3.14.388 on. The Search-A → Search rename left the old branch first in `render()`'s cache-key ternary, naming five variables deleted with Search-A. `render_smoke_test.js` called the renderers directly, bypassing that code. Found by the tb-strings pseudo-locale sweep. |
 | **B-210** | S3 | pending:tb-i18n | **The gloss legend called every transliteration "derived".** It tested the pre-v3.14.303 scalar `transliteration`, which words no longer carry, so a typed IPA line was labelled *Transliteration (derived)*. Found in a screenshot of `turkish_folk_songs_corpus` p1 s2. |
 | **B-214** | S3 | pending:tb-prep | **The B-213 edit dropped `hooks/prepare-commit-msg`'s executable bit**, and git skips a non-executable hook without a word, so commit `2c3f407` went out unstamped. Found by reading `git log`. |

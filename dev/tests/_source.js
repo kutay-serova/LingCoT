@@ -23,6 +23,11 @@ const ROOT = path.join(__dirname, '..', '..');
 const SRC  = path.join(ROOT, 'source');
 const DEV  = path.join(ROOT, 'dev');
 
+/* B-216: any Python a guard starts inherits this, so importing the app or a
+   script logs to a temp dir instead of writing into, and pruning, logs/. */
+if (!process.env.LINGCOT_LOG_DIR)
+  process.env.LINGCOT_LOG_DIR = path.join(require('os').tmpdir(), 'lingcot-test-logs');
+
 const _cache = new Map();
 
 /* @fn read, file contents relative to source/, memoised.

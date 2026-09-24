@@ -60,6 +60,10 @@ SLOW="nllb_diag_test.py gui_crud_test.js pseudo_locale_test.js"
 
 cd "$(dirname "$0")" || exit 1
 filter="${1:-}"
+
+# B-216: guards log to a temp dir, and the real logs/ must come out unchanged.
+export LINGCOT_LOG_DIR="${LINGCOT_LOG_DIR:-${TMPDIR:-/tmp}/lingcot-test-logs}"
+logs_before=$(ls ../../logs 2>/dev/null)   # names only; a running app may still be writing
 run_slow=0
 if [ "$filter" = "--slow" ]; then run_slow=1; filter=""; fi
 # An explicit filter naming a slow guard runs it: asking for it by name is asking.
@@ -81,6 +85,12 @@ for f in *_test.js log_triage.js *_test.py; do
     *) fail+=("$f");;
   esac
 done
+
+logs_after=$(ls ../../logs 2>/dev/null)
+if [ "$logs_before" != "$logs_after" ]; then
+  printf '\n\033[31mlogs/ changed during the run\033[0m: a guard wrote to the real logs folder (B-216)\n'
+  fail+=("logs/")
+fi
 
 printf '\n\033[1m%d passed, %d failed, %d disabled\033[0m\n' \
   "${#pass[@]}" "${#fail[@]}" "${#skip[@]}"

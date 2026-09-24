@@ -71,5 +71,17 @@ for (const want of ['hooks/pre-commit', 'hooks/prepare-commit-msg'])
   check(rows.some(r => r.file === want), `${want} is tracked`,
         '         it is part of what a clone needs; untracked, nobody gets it');
 
+/* The checkout too, for every file git records as executable. An editor that
+   rewrites a file on this mount can drop the bit; run_all.sh lost it at
+   b216-b217-logs and the suite refused to start. */
+console.log('\nevery file git records as executable is executable on disk\n');
+{
+  const all = execFileSync('git', ['--no-optional-locks', '-C', ROOT, 'ls-files', '-s'], { encoding: 'utf8' })
+    .trim().split('\n').map(l => /^100755\s+\S+\s+\d+\s+(.+)$/.exec(l)).filter(Boolean).map(m => m[1]);
+  const bad = all.filter(f => { try { return !(fs.statSync(path.join(ROOT, f)).mode & 0o111); } catch { return false; } });
+  check(all.length > 0 && !bad.length, `${all.length} executable file(s), all executable in the checkout`,
+        bad.map(f => `         chmod +x ${f}`).join('\n'));
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

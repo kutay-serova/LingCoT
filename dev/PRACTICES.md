@@ -106,9 +106,10 @@ table that did not before.
 
 ## 6. Guards
 
-**105 in `dev/tests/`. `run_all.sh` runs 102 by default — 102 pass, 0 disabled;
+**106 in `dev/tests/`. `run_all.sh` runs 103 by default — 103 pass, 0 disabled;
 `--slow` adds `nllb_diag_test.py`, `gui_crud_test.js` and `pseudo_locale_test.js`
-for 105.** Run `--slow`
+for 106.** Guards log to `LINGCOT_LOG_DIR` (a temp dir), never `logs/`; `run_all.sh`
+fails if `logs/` changed during the run. Run `--slow`
 before a release.
 
 **Two guards came out of gate 2 rather than out of the code.**

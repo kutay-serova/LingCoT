@@ -41,10 +41,15 @@ copy of `isDerived` here would test the copy.
 
 import ast
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
+# B-216: scripts run here log to a temp dir, never the repo's logs/.
+os.environ.setdefault("LINGCOT_LOG_DIR", os.path.join(tempfile.gettempdir(), "lingcot-test-logs"))
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
