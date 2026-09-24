@@ -1,6 +1,6 @@
 # LingCoT tester build
 
-**Updated:** 2026-09-24 · **Version:** v3.14.419
+**Updated:** 2026-09-23 · **Version:** v3.15.0
 
 This build is for testing. It is complete enough to annotate a real text from
 start to finish; what it needs now is people other than its author doing that.

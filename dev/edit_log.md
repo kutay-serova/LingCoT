@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-23 · **Version:** v3.14.419
+**Updated:** 2026-09-23 · **Version:** v3.15.0
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,202 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## Tester build v3.15.0: TESTERS.md, the reader in the quickstart, --release --minor (2026-09-24)
+**Version:** v3.15.0 · **Type:** feature · **Archives:** `dev/archive/changes/tb-release/` (v3.14.419)
+**Touched:** TESTERS.md (new) · QUICKSTART.md · README.md · dev/new_version.py · dev/tests/change_files_test.js · dev/tests/doc_integrity_test.js · dev/DEV_PLAN.md · dev/PRACTICES.md · dev/changes/README.md
+**Change:** `tb-release`
+
+**What changed.**
+- `TESTERS.md`, linked first from README Contents and from the quickstart: install and first session, what is new, known issues (B-028, B-035, English exports), and what a report needs (steps, expected and actual, the version line from the help sidebar, the newest `app_….log`). A live document: `new_version.py` stamps it, `doc_integrity_test.js` checks the stamp.
+- QUICKSTART §12, *Read it*: both reader modes and the language picker.
+- `new_version.py --release --minor`: the last change takes X.Y+1.0, the others patch numbers, so this build is exactly v3.15.0.
+- DEV_PLAN gate 2: D41 and the picker done, 2 items open (the macOS clean-machine install on v3.15.0, D46 answers from testers).
+
+**Guard.** `change_files_test.js` +2 (`--minor` in a temp repository: v3.14.5 then v3.15.0, build 3.15.0). `quickstart_labels_test.js` covers the new bold labels. §B-208's live-document list includes `TESTERS.md`. §8a fails on a change file still titled `TITLE`: two were, and only `--release` noticed.
+
+**Verification.** `./dev/tests/run_all.sh` — 103 passed, 0 failed; `doc_integrity_test.js` 83 passed.
+
+---
+
+## Bugs recorded on branches cannot be lost unnoticed: report, id allocation, table check (2026-09-24)
+**Version:** v3.14.429 · **Type:** feature · **Archives:** `dev/archive/changes/bug-safeguards/` (v3.14.419)
+**Touched:** dev/new_version.py · dev/tests/change_files_test.js · dev/tests/doc_integrity_test.js · dev/PRACTICES.md · dev/changes/README.md
+**Change:** `bug-safeguards`
+
+**What changed.**
+- `new_version.py --bug-report`: for each local and remote branch not merged into `main`, the bug ids its `BUGS.md` has and `main`'s does not. It also runs, silent when empty, at every start on `main` and at `--release`; `doc_integrity_test.js` prints it on every run.
+- `new_version.py --next-bug`: the next free B-nnn after reading `BUGS.md` on every branch.
+- `doc_integrity_test.js` §8a: every B-nnn a change file names must have a row in `BUGS.md`.
+- PRACTICES §1 Branches: four rules, including fixing a bug that is also in `main`'s code on `main` first.
+
+**Why.** A bug recorded on a branch reaches `main` only by the merge. An abandoned or deleted branch loses it, two branches can take the same id, and a bug named only in change notes is not in the table. B-215 showed the fourth case: in `main`'s code, fixed only on the branch.
+
+**Guard.** `change_files_test.js` +4 in a temp repository: the report names the branch and only the bug `main` lacks, `--next-bug` counts the branch's ids, the current branch does not report itself, a merged branch drops out. §8a's new check (mutation: an id with no row, added to a change file, fails it).
+
+**Verification.** `./dev/tests/run_all.sh` — 103 passed, 0 failed. `--bug-report` on this repository: no unmerged branch holds a bug main lacks; `--next-bug`: the id after the highest on any branch.
+
+---
+
+## B-216, B-217: tests no longer write to logs/, and pruning goes by age (2026-09-24)
+**Version:** v3.14.428 · **Type:** fix · **Archives:** `dev/archive/changes/b216-b217-logs/` (v3.14.419)
+**Touched:** source/log_setup.py · dev/tests/_source.js · dev/tests/run_all.sh · dev/tests/cli_prov_test.py · dev/tests/nllb_diag_test.py · dev/tests/hooks_executable_test.js · dev/tests/log_setup_test.js (new) · dev/BUGS.md · dev/PRACTICES.md
+**Change:** `b216-b217-logs`
+
+**What changed.**
+- `log_setup.py`: `LINGCOT_LOG_DIR` overrides the logs directory. Pruning sorts by modification time and never deletes the file the session just created.
+- `_source.js`, `cli_prov_test.py`, `nllb_diag_test.py` default `LINGCOT_LOG_DIR` to a temp dir; `run_all.sh` exports it and fails if the names in `logs/` changed during the run.
+- `hooks_executable_test.js` also checks every file git records as 100755 is executable in the checkout: editing `run_all.sh` on this mount dropped its bit and the suite would not start (the B-214 cause, again).
+
+**Why.** A tester session log was lost: B-216 filled `logs/` with 20 test logs named in UTC, then B-217 pruned the session's own log, named in local time, at startup. Earlier session logs were lost the same way; they are not recoverable.
+
+**Guard.** `log_setup_test.js` (8, executes `log_setup.py`): a local-clock session among 25 UTC-named logs keeps its own log and 20 remain, oldest by age removed (mutation: name sort fails 3). `run_all.sh`'s `logs/` check. `hooks_executable_test.js` +1 (mutation: `chmod -x run_all.sh` fails it).
+
+**Verification.** `./dev/tests/run_all.sh` — 103 passed, 0 failed; `nllb_diag_test.py` passed; `logs/` unchanged (104 files) across both.
+
+---
+
+## D41 Reader Mode A: interlinear reading, word highlight, read-only word popup (2026-09-23)
+**Version:** v3.14.427 · **Type:** feature · **Archives:** `dev/archive/changes/tb-reader-igt/` (v3.14.419)
+**Touched:** source/modules/reader.js · source/LingCoT.html · source/LingCoT.css · source/modules/events.js · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/reader_igt_test.js (new) · dev/tests/reader_cols_test.js · dev/tests/pseudo_locale_test.js · dev/PRACTICES.md
+**Change:** `tb-reader-igt`
+
+**What changed.**
+- Reader toolbar: **Columns / Interlinear**. Interlinear draws each sentence as wrapping word columns (form, transliteration, parse, word gloss) with the first translation below. **Show:** switches each of the four tiers. Same batching and section entry as Columns.
+- Word highlight, as decided: same spelling (`normForm`) by default; a word with a `dict_id` matches that `dict_id` only; **Highlight: Lemma** matches `lemma_id`, and a word without one falls back to the default. Punctuation is not highlighted.
+- Word click opens a read-only popup: the rule that matched and the count in view, transliterations, parse, word gloss, POS, lemma, dictionary entry, morphemes, dependency relation and head, and **Open in annotation view**.
+- `readerCacheKey()` carries mode, tiers and highlight rule into `render()`'s key.
+- 15 keys; the view's help describes Interlinear.
+
+**Guard.** `reader_igt_test.js` (21): the rule in all five cases (mutation: dict_id ahead of lemma fails it), tiers, cache key, popup read-only, wiring. `pseudo_locale_test.js` now also draws Interlinear and the word popup.
+
+**Verification.** `./dev/tests/run_all.sh` — 102 passed, 0 failed. `gui_crud_test.js` 46 passed; `pseudo_locale_test.js` 6 passed. In Chromium on `samples/turkish-test`: 108 words, 33 with a `dict_id`, 56 with a `lemma_id`; hovering one "Tilki" highlights 8 (same entry) of 13 same-spelling tokens, 9 with Lemma.
+
+---
+
+## D41 Reader Mode B: the document as text against translation, read-only (2026-09-23)
+**Version:** v3.14.426 · **Type:** feature · **Archives:** `dev/archive/changes/tb-reader-cols/` (v3.14.419)
+**Touched:** source/modules/reader.js (new) · source/LingCoT.html · source/LingCoT.css · source/modules/events.js · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/reader_cols_test.js (new) · dev/PRACTICES.md
+**Change:** `tb-reader-cols`
+
+**What changed.**
+- View `reader` (`modules/reader.js`). The open document in reading order: section headings, then one row per paragraph, text left and first translation right. Sentences are `.s-span` with `data-sid`, so the existing pair highlight on hover works as is.
+- Batches of 30 paragraphs, the rest loaded by a sentinel, as in the section view.
+- Entry: **Read** on the document view (opens at the top) and on the section view (opens at that section; an empty section falls through to the next heading). Breadcrumb: Document › Reader.
+- A sentence click, or Enter on it, opens a read-only popup: location, text, every transliteration and translation, comments, word count, and **Open in annotation view**. Esc, outside click, or any navigation closes it.
+- `_readerMode` ('cols' now, 'igt' in tb-reader-igt) is in the render cache key.
+- 12 keys, including the view's help. Three `Section ${n}` / 'Section' / 'Paragraph' literals in the section and breadcrumb code now read `label.view.section_n` / `bc.section`.
+
+**Guard.** `reader_cols_test.js` (22): pairing, batching, every sentence reached, no editing control on the page or in the popup, wiring. `pseudo_locale_test.js` covers the new view.
+
+**Verification.** `./dev/tests/run_all.sh` — 101 passed, 0 failed. `gui_crud_test.js` 46 passed; `pseudo_locale_test.js` 6 passed. Checked in Chromium on `samples/turkish-test`: hover pairing, popup open/Esc/link, section entry.
+
+---
+
+## Pseudo-locale check of every view, in the slow run (2026-09-23)
+**Version:** v3.14.425 · **Type:** chore · **Archives:** `dev/archive/changes/pseudo-locale/` (v3.14.419)
+**Touched:** dev/tests/pseudo_locale_test.js (new) · dev/tests/run_all.sh · dev/PRACTICES.md
+**Change:** `pseudo-locale`
+
+**What changed.** `pseudo_locale_test.js` builds a pseudo-locale in memory (every `en.json` text run prefixed `§`), switches the app to it in Chromium, and draws the 22 views, both header menus and the autosave dialog on `samples/turkish-test`. Visible text and title/placeholder/aria-label values without the mark fail, unless they are string values from the fixture or the bundled resources (whole words, case-insensitive; a "[...]" preview may end mid-value) or on its short exempt list. In `SLOW`: it needs Chromium.
+
+**Why.** `i18n_literal_test.js` reads code patterns; the tb-strings run of this check found 23 strings it could not see.
+
+**Guard.** Mutations: two strings put back as literals (a table header, a view title) fail it. Blind spot: a single word that is also a data value.
+
+**Verification.** `./dev/tests/run_all.sh` — 100 passed, 0 failed. `pseudo_locale_test.js` 6 passed in Chromium, 8 s.
+
+---
+
+## Machine translation defaults to English, not the interface language (2026-09-23)
+**Version:** v3.14.424 · **Type:** decision · **Archives:** `dev/archive/changes/xlate-target-en/` (v3.14.419)
+**Touched:** source/LingCoT.html · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/xlate_settings_test.js
+**Change:** `xlate-target-en`
+
+**The decision.** With no `translation_language` on the document, `translationTarget()` returns English. The interface language is no longer a fallback. The CLI already resolved this way (`corpus_translation_language(...) or 'en'`). The field placeholder says "default: English".
+
+**Alternatives considered, and why not.** Interface language first (B-072, v3.14.217): with a language picker, switching the UI to `haw` would change what machine translation writes into a corpus, and `haw.json` is an English placeholder. Setting `translation_language` on the sample corpora only: covers the samples, not a tester's own corpus.
+
+**What this binds.** The translation target depends on corpus metadata only. `xlate_settings_test.js` asserts English for `tr` and `haw` locales with nothing declared (mutation: the old fallback fails 2 checks).
+
+---
+
+## Interface strings all in the locale file; B-215 Search view fixed (2026-09-23)
+**Version:** v3.14.423 · **Type:** feature · **Archives:** `dev/archive/changes/tb-strings/` (v3.14.419)
+**Touched:** source/LingCoT.html · source/LingCoT.pyw · source/modules/participants.js · source/modules/search.js · source/modules/events.js · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/i18n_allow.json · dev/tests/i18n_literal_test.js · dev/tests/render_smoke_test.js · dev/tests/search_routing_test.js · dev/BUGS.md · dev/audits/AUDIT_INDEX.md
+**Change:** `tb-strings`
+
+**What changed.**
+- Every pending finding of `I18N_AUDIT_2026-09-24.md` (S1–S7, R1, R3–R13, H1) now reads from the locale; `i18n_allow.json` has no pending entries. R6 split into `confirm.dict.replace` / `_1`. The host window title is the product name only.
+- A pseudo-locale run (every value prefixed, every view rendered in Chromium, untagged visible text listed) found 23 more in 6 places: participant table headers and detail rows, the lexicon card labels, paragraph/sentence counts, the unknown-annotator fallback, and the help version line, which was painted before the strings loaded and showed its key. All moved; the version line is repainted by `applyLocale`.
+- 46 keys added to `en.json` and `haw.json` (1,230). Existing `option.src_type.*` and `option.pub_restrict.*` keys are now used by `srcTypeLabel` / `srcRestrictLabel`.
+- The morpheme-example cache is keyed on the locale as well as `_dataGen`.
+- B-215: the dead Search-A branch removed from the cache key.
+- Remaining English by design: product, licence and service names, host error details, field ids in the Progress panel.
+
+**Guard.** `i18n_literal_test.js` now also flags Capitalized labels passed to helpers (14 hits on the pre-fix code, 0 false). `render_smoke_test.js` renders every view through `render()` (fails on the pre-fix file with the B-215 ReferenceError).
+
+**Verification.** `./dev/tests/run_all.sh` — 100 passed, 0 failed. `gui_crud_test.js` 46 passed. Pseudo-locale run over all 22 views: only corpus data, names and field ids left untagged.
+
+---
+
+## Interface language picker, English fallback, haw.json placeholder; B-210 (2026-09-23)
+**Version:** v3.14.422 · **Type:** feature · **Archives:** `dev/archive/changes/tb-i18n/` (v3.14.419)
+**Touched:** source/LingCoT.html · source/LingCoT.pyw · source/LingCoT.css · source/resources/locale/en.json · source/resources/locale/haw.json (new) · dev/tests/locale_parity_test.js (new) · dev/tests/locale_key_test.js · dev/tests/translit_model_test.js · dev/tests/_gui.js · dev/tests/i18n_allow.json · dev/BUGS.md · dev/DEV_PLAN.md · dev/PRACTICES.md
+**Change:** `tb-i18n`
+
+**What changed.**
+- `t()` and `tRes()` fall back to English (`_LOCALE_EN`, always loaded) before the raw key.
+- `loadLocale` split: settings, then `applyLocale(lang)`, which reloads the strings, re-runs the `data-i18n*` sweeps, sets `<html lang>`, and repaints. An unreadable locale file falls back to English.
+- Host `list_locales()`: every `resources/locale/<code>.json` whose `_meta.locale` is `<code>`.
+- Picker: File menu, under the theme toggle. Saves `ui_locale` and applies without restart. The render cache key includes the locale.
+- `haw.json`: copy of `en.json`, `_meta` `locale: "haw"`, `language: "ʻŌlelo Hawaiʻi"`.
+- 4 keys: the picker label and aria text, and the legend's transliteration labels (R2 of the I18N audit).
+- B-210: the legend asks `wordHasStoredTranslit()`, which reads `transliterations[]`.
+
+**Guard.** `locale_parity_test.js` (16; mutations: English fallback removed, a key removed from `haw.json`). `translit_model_test.js` +4 for B-210. `locale_key_test.js` passes `_LOCALE_EN`.
+
+**Verification.** `./dev/tests/run_all.sh` — 100 passed, 0 failed. `gui_crud_test.js` 46 passed.
+
+---
+
+## Settings and adopted tags move out of the app folder into the workspace (2026-09-23)
+**Version:** v3.14.421 · **Type:** feature · **Archives:** `dev/archive/changes/tb-settings/` (v3.14.419)
+**Touched:** source/LingCoT.pyw · source/workspace.py · source/LingCoT.html · source/resources/locale/settings.default.json (new) · .gitignore · dev/tests/user_settings_test.js (new) · dev/tests/workspace_test.js · dev/tests/tag_control_test.js · dev/tests/_gui.js · dev/PRACTICES.md
+**Change:** `tb-settings`
+
+**What changed.**
+- Host: `write_file` removed; `read_user_file` / `write_user_file` read and write `workspace.USER_FILES` only (`settings.json`, `vocabulary/pos_tags.json`, `vocabulary/type_choices.json`). A missing file reads as null. Writes are atomic.
+- `settings.json` is copied once from `source/resources/locale/` if only the old copy exists; that path is now in `.gitignore`. The repo default is `settings.default.json`.
+- Page: `_settings` = defaults overlaid by the workspace file; `saveSettings()` writes it, and is a no-op until `loadLocale` has read it. Tags adopted in the tag drawer go to `vocabulary/`, merged over the shipped lists at load.
+- Adopted tags already committed to the shipped lists stay there; nothing is migrated for vocabulary.
+
+**Why.** Every theme toggle and every adopted tag changed a tracked file, and an update would overwrite a tester's choices.
+
+**Guard.** `user_settings_test.js` (8; mutations: removing the pre-load guard, reversing the overlay order). `workspace_test.js` +8, executing the host methods with webview stubbed. `tag_control_test.js` +1.
+
+**Verification.** `./dev/tests/run_all.sh` — 99 passed, 0 failed.
+
+---
+
+## Tester build prep: interface-text guard, B-213 hook fix, export language deferred (2026-09-23)
+**Version:** v3.14.420 · **Type:** chore · **Archives:** `dev/archive/changes/tb-prep/` (v3.14.419)
+**Touched:** hooks/prepare-commit-msg · dev/tests/change_files_test.js · dev/DEV_PLAN.md · dev/BUGS.md · dev/PRACTICES.md · dev/tests/i18n_literal_test.js (new) · dev/tests/i18n_allow.json (new) · dev/tests/vendor/ (new)
+**Change:** `tb-prep`
+
+**What changed.**
+- `i18n_literal_test.js`: the I18N audit's scanner as a guard. Every user-visible literal outside `en.json` must be in `i18n_allow.json`, as `exempt` (11: names, licences, host error details) or `pending` under its audit id (51). New literals fail; stale entries fail.
+- acorn 8.18.0 and acorn-walk 8.3.5 vendored in `dev/tests/vendor/` (MIT, 262 KB, guards only). parse5 not taken; the static shell uses a small tokenizer.
+- The guard found S7: `modal.autosave.hint` holds `<strong>` under `data-i18n`, which sets `textContent`. Added to step 3.
+- B-213: `prepare-commit-msg` skipped any subject naming a version; only a leading stamp counts now.
+- B-214: the B-213 edit left the hook non-executable, so the first `tb-prep` commit carried no label. Mode restored; amended into that commit.
+- DEV_PLAN §3: export language stays English, deferred with a trigger.
+
+**Guard.** `i18n_literal_test.js` (3 checks; mutations: a changed literal and a localized one each fail it). `change_files_test.js` +2 for B-213, +4 for B-214 (each hook executable on disk and in the index).
+
+**Verification.** `./dev/tests/run_all.sh` — 98 passed, 0 failed.
 
 ---
 
