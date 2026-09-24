@@ -2,7 +2,7 @@
 
 **LingCoT is an open-source tool for annotating linguistic corpora.**
 
-**Updated:** 2026-09-24 · **Version:** v3.15.3
+**Updated:** 2026-09-24 · **Version:** v3.15.4
 
 > **Status: in development.** No stable release has been cut. The application is
 > in daily use on the author's own corpora and the data format is settled enough
@@ -108,16 +108,28 @@ README is the reference you come back to; the quickstart is the way in.
 
 ## Downloading LingCoT
 
-### Option A: Clone the repository (recommended)
+### Option A: Download a release (recommended)
+
+Open the [latest release](https://github.com/kutay-serova/LingCoT/releases/latest)
+and download **LingCoT-*version*-macOS.zip** under *Assets*. Unzip it anywhere,
+for example in Documents. The folder it creates is the application folder; your
+own work is kept elsewhere ([where your data lives](#where-your-data-lives)).
+
+The current release is a macOS tester build: see [TESTERS.md](TESTERS.md).
+
+### Option B: Clone the repository
+
+For development, or to update with `git pull`:
 
 ```bash
 git clone https://github.com/kutay-serova/LingCoT.git
 cd LingCoT
 ```
 
-### Option B: Download a release
-
-Go to the [Releases page](https://github.com/kutay-serova/LingCoT/releases) and download the latest `.zip` for your platform. Extract it to a folder of your choice.
+This gives the newest development version. For a particular release, clone its
+tag, e.g. `git clone --branch v3.15.4 https://github.com/kutay-serova/LingCoT.git`.
+On a Mac without developer tools, the first `git` command offers to install
+Apple's Command Line Tools; that is needed once.
 
 ---
 

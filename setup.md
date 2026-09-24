@@ -1,6 +1,6 @@
 # LingCoT: Setup & Running
 
-**Updated:** 2026-09-24 · **Version:** v3.15.3
+**Updated:** 2026-09-24 · **Version:** v3.15.4
 
 ---
 
@@ -20,11 +20,19 @@ Run once. Creates `.venv/` in the project folder and installs all dependencies (
 ```
 double-click setup.command
 ```
-If macOS refuses to open it: right-click → Open → Open, or in Terminal:
+If macOS says it cannot check the file for malicious software, which is usual
+for a downloaded zip:
+
+- macOS 14 and earlier: right-click `setup.command` → **Open** → **Open**.
+- macOS 15 and later: try to open it once, then go to **System Settings →
+  Privacy & Security** and click **Open Anyway**.
+
+Or skip the question by running it from Terminal:
 ```bash
-chmod +x setup.command LingCoT.command setup_NLLB.command
+cd ~/Documents/LingCoT-3.15.4      # the folder you unzipped
 bash setup.command
 ```
+The same applies to `LingCoT.command` the first time (`bash LingCoT.command`).
 
 **Windows:**
 ```

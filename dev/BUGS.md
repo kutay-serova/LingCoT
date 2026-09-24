@@ -1,12 +1,12 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-09-24 · **Version:** v3.15.3
+**Updated:** 2026-09-24 · **Version:** v3.15.4
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**9 open** · 0 S1 · 1 S2 · 8 S3  |  **216 fixed**  |  **1 withdrawn** (B-096)
+**9 open** · 0 S1 · 1 S2 · 8 S3  |  **217 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -302,6 +302,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-227** | S3 | v3.15.4 | **`setup_NLLB.command` was never executable in git** (100644 since its first commit), so double-clicking it failed in every clone and in the tag zip. The executable-bit guard only covered hooks and files already recorded 100755. |
 | **B-223** | S3 | v3.15.3 | **Control names that no longer matched the screen**: the autosave prompt said "change this later from the Save button" (Save is in the File menu), the source hint named "Add Source" where the form shows "Pick Sources", the annotator filter said "click + Add", and QUICKSTART named "Save", "Concordance" and "Text" for **Create Corpus**, **KWIC** and **Word Form**. |
 | **B-222** | S3 | v3.15.3 | **Every new corpus logged "key version changed … run dict_dedupe.js".** `saveNewCorpus` binds the fold before anything is keyed, and the binding warned about any document with no `dict_key_version`, which a new one never had. |
 | **B-221** | S3 | v3.15.3 | **The app showed NLLB commands that fail from the project root**: `scripts/corpus_annotate.py` and `setup.py`, both under `source/`, in the Translation Unavailable window and in Translation Settings. B-207's shape, in the one file `printed_commands_test` did not scan. |

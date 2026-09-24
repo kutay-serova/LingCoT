@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-24 · **Version:** v3.15.3
+**Updated:** 2026-09-24 · **Version:** v3.15.4
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -14,6 +14,24 @@ said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
 
+---
+
+## B-227: release page download; setup_NLLB.command executable (2026-09-24)
+**Version:** v3.15.4 · **Type:** fix · **Archives:** `dev/archive/changes/release_page/` (v3.15.3)
+**Touched:** README.md · TESTERS.md · setup.md · setup_NLLB.command · dev/tests/hooks_executable_test.js · dev/BUGS.md
+**Closed:** B-227
+
+**What changed.** Testers get the build from a GitHub release page with a zip asset, `LingCoT-3.15.4-macOS.zip`, made by `git archive` from the tag.
+- README: download from the latest release is Option A; cloning is Option B, with `--branch <tag>` for a particular release and the Command Line Tools prompt on a Mac. The link to an empty Releases page is gone.
+- TESTERS.md: a first step, "Get the build", linking the v3.15.4 release page.
+- setup.md: what to do when macOS blocks a downloaded `.command` (right-click Open on macOS 14 and earlier, Privacy & Security on 15 and later, or `bash setup.command` from Terminal).
+- B-227: `setup_NLLB.command` is recorded 100755.
+
+**Why.** The README pointed at a Releases page with nothing on it, cloning gave `main` rather than the tester build, and TESTERS.md never said how to get the build. Checking the tag zip found B-227.
+
+**Guard.** `hooks_executable_test.js`: every tracked `.command` and `.sh` file is recorded 100755. Fails on the v3.15.3 index.
+
+**Verification.** `./dev/tests/run_all.sh`: 103 passed; `hooks_executable_test.js` passes (6) once the mode change is staged and fails before it. The v3.15.3 tag zip unpacks with `setup.command` and `LingCoT.command` executable; `git archive` keeps the bits.
 ---
 
 ## B-218 to B-223: fixes from the scripted tester session; tester build macOS-only (2026-09-24)

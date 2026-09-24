@@ -1,17 +1,25 @@
 # LingCoT tester build
 
-**Updated:** 2026-09-24 · **Version:** v3.15.3
+**Updated:** 2026-09-24 · **Version:** v3.15.4
 
 This build is for testing. It is complete enough to annotate a real text from
 start to finish; what it needs now is people other than its author doing that.
 
 ## Getting started
 
-1. Install: [setup.md](setup.md). **macOS only.** Linux and Windows are not
-   supported in this build; see Known issues.
-2. Work through [QUICKSTART.md](QUICKSTART.md) with a short text of your own,
+**macOS only.** Linux and Windows are not supported in this build; see Known
+issues.
+
+1. **Get the build.** On the
+   [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.15.4),
+   download **LingCoT-3.15.4-macOS.zip** under *Assets* and unzip it, for
+   example into Documents.
+2. **Install.** Double-click `setup.command` in that folder. If macOS blocks it,
+   [setup.md](setup.md) says what to do (it differs between macOS versions).
+   Then double-click `LingCoT.command` to start.
+3. Work through [QUICKSTART.md](QUICKSTART.md) with a short text of your own,
    about half an hour.
-3. Report what you find (below).
+4. Report what you find (below).
 
 ## New in this build
 

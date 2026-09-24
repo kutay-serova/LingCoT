@@ -83,5 +83,19 @@ console.log('\nevery file git records as executable is executable on disk\n');
         bad.map(f => `         chmod +x ${f}`).join('\n'));
 }
 
+/* B-227: a script a user double-clicks must be executable in git, or it arrives
+   non-executable in every clone and every release zip. setup_NLLB.command was
+   100644 from its first commit, and nothing looked, because the sweeps above
+   only ask about hooks and about files already recorded 100755. */
+console.log('\nevery script a user runs is recorded executable\n');
+{
+  const rows2 = execFileSync('git', ['--no-optional-locks', '-C', ROOT, 'ls-files', '-s'], { encoding: 'utf8' })
+    .trim().split('\n').map(l => /^(\d{6})\s+\S+\s+\d+\s+(.+)$/.exec(l)).filter(Boolean)
+    .map(m => ({ mode: m[1], file: m[2] })).filter(r => /\.(command|sh)$/.test(r.file));
+  const bad2 = rows2.filter(r => r.mode !== '100755');
+  check(rows2.length >= 4 && !bad2.length, `${rows2.length} .command and .sh file(s), all recorded 100755`,
+        bad2.map(r => `         ${r.file} is ${r.mode}: git update-index --chmod=+x ${r.file}`).join('\n'));
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
