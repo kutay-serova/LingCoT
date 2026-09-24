@@ -28,6 +28,7 @@ BRANCHES (v3.14.412)
         python3 dev/new_version.py d40a-index source/LingCoT.html   # on a branch
         python3 dev/new_version.py --add dev/BUGS.md                # grows the current change
         python3 dev/new_version.py --release                        # at the stage boundary
+        python3 dev/new_version.py --release --minor                # the last change starts X.Y+1.0
         python3 dev/new_version.py --relabel                        # after merging main in
 
     --release numbers every change file in the order it was started, prepends
@@ -38,6 +39,14 @@ BRANCHES (v3.14.412)
 
     Slugs on a branch are the build label, so they are short: lower case,
     digits, - and _, at most 16 characters.
+
+BUGS ON BRANCHES (bug-safeguards)
+        python3 dev/new_version.py --next-bug      # next free B-nnn, every branch checked
+        python3 dev/new_version.py --bug-report    # bugs recorded on unmerged branches only
+    A bug recorded on a branch reaches main only by merging. --bug-report lists,
+    per unmerged branch, the ids its BUGS.md has and main's does not; it runs on
+    its own at every start on main and at --release. --next-bug reads BUGS.md on
+    every local and remote branch, so two branches cannot take the same id.
 
     `finding` and `decision` imply --docs-only. A review that finds NOTHING is
     still worth an entry: "we looked at X and it was clean" is information, and
@@ -98,6 +107,7 @@ LOG_HDR    = os.path.join(DEV, 'edit_log.md')
 RDM_ROOT   = os.path.join(ROOT, 'README.md')
 QUICKSTART = os.path.join(ROOT, 'QUICKSTART.md')
 SETUP_MD   = os.path.join(ROOT, 'setup.md')
+TESTERS_MD = os.path.join(ROOT, 'TESTERS.md')
 SAMPLES_RM = os.path.join(ROOT, 'samples', 'README.md')
 LOG = os.path.join(DEV, 'edit_log.md')
 VERSION_PY = os.path.join(ROOT, 'source', 'version.py')
@@ -165,7 +175,8 @@ def stamp_docs(old, new):
                        ('edit_log', LOG_HDR), ('RENAMES', RENAMES),
                        ('UNIFIED_AUDIT', UNIFIED), ('AUDIT_INDEX', AUDITINDEX),
                        ('README', RDM_ROOT), ('QUICKSTART', QUICKSTART),
-                       ('setup.md', SETUP_MD), ('samples/README', SAMPLES_RM)):
+                       ('setup.md', SETUP_MD), ('samples/README', SAMPLES_RM),
+                       ('TESTERS', TESTERS_MD)):
         if not os.path.exists(doc):
             continue
         text = open(doc, encoding='utf-8').read()
@@ -251,6 +262,67 @@ def start_change(slug, entry_type, examined, files, docs_only):
     return 0
 
 
+BUG_ID = re.compile(r'(?:\*\*|^### )B-(\d{3,})\b', re.M)
+
+
+def _git(*args):
+    r = subprocess.run(['git', '-C', ROOT, '--no-optional-locks', *args],
+                       capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def bug_ids(text):
+    """Ids with a row or a heading of their own in a BUGS.md text."""
+    return {int(m) for m in BUG_ID.findall(text or '')}
+
+
+def branch_refs():
+    """Local and remote branches, without origin/HEAD."""
+    out = _git('for-each-ref', '--format=%(refname:short)', 'refs/heads', 'refs/remotes') or ''
+    return [r for r in out.split() if not r.endswith('/HEAD') and '/' != r[-1:]]
+
+
+def main_ref():
+    refs = branch_refs()
+    return next((b for b in MAIN_BRANCHES if b in refs), None)
+
+
+def next_bug():
+    """Next free B-nnn across the working tree and every branch."""
+    ids = bug_ids(open(BUGS, encoding='utf-8').read() if os.path.exists(BUGS) else '')
+    for ref in branch_refs():
+        ids |= bug_ids(_git('show', f'{ref}:dev/BUGS.md'))
+    n = max(ids, default=0) + 1
+    print(f'B-{n:03d}')
+    return 0
+
+
+def unmerged_bug_report(quiet_if_none=False):
+    """Bug ids on branches not merged into main, and not in main's BUGS.md."""
+    main = main_ref()
+    if not main:
+        return []
+    main_ids = bug_ids(_git('show', f'{main}:dev/BUGS.md'))
+    here = git_branch()
+    lines = []
+    for ref in branch_refs():
+        name = ref.split('/', 1)[1] if '/' in ref else ref
+        if name in MAIN_BRANCHES or name == here or ref == here:
+            continue
+        if subprocess.run(['git', '-C', ROOT, 'merge-base', '--is-ancestor', ref, main],
+                          capture_output=True).returncode == 0:
+            continue   # merged
+        extra = sorted(bug_ids(_git('show', f'{ref}:dev/BUGS.md')) - main_ids)
+        if extra:
+            lines.append(f'  {ref}: ' + ', '.join(f'B-{i:03d}' for i in extra))
+    if lines:
+        print(f'Bugs recorded on branches not merged into {main}:')
+        print('\n'.join(lines))
+    elif not quiet_if_none:
+        print(f'No unmerged branch holds a bug {main} does not have.')
+    return lines
+
+
 def relabel():
     """Point the build label at the newest change file, e.g. after merging main."""
     frags = change_files()
@@ -274,8 +346,14 @@ def release():
     old = current_version()
     new = old
     released = []
-    for c in frags:
-        new = bump(new)
+    minor = '--minor' in sys.argv
+    for i, c in enumerate(frags):
+        if minor and i == len(frags) - 1:
+            # The build that goes out is the minor release: v3.14.428 -> v3.15.0.
+            major, mnr, _ = new.lstrip('v').split('.')
+            new = f'v{major}.{int(mnr) + 1}.0'
+        else:
+            new = bump(new)
         text = c['text'].replace('**Version:** pending', f'**Version:** {new}', 1)
         # The order only matters until the number is assigned.
         text = re.sub(r' · \*\*Order:\*\*\s*\d+', '', text, count=1)
@@ -318,7 +396,13 @@ def release():
 def main() -> int:
     argv = list(sys.argv[1:])
 
+    if '--next-bug' in argv:
+        return next_bug()
+    if '--bug-report' in argv:
+        unmerged_bug_report()
+        return 0
     if '--release' in argv:
+        unmerged_bug_report(quiet_if_none=True)
         return release()
     if '--relabel' in argv:
         return relabel()
@@ -445,6 +529,9 @@ def main() -> int:
                            (branch and branch not in MAIN_BRANCHES)):
         return start_change(slug, entry_type, examined,
                             [f for f in files if f != '--fragment'], docs_only)
+
+    # On main: say if an unmerged branch holds bugs main has not recorded.
+    unmerged_bug_report(quiet_if_none=True)
 
     old = current_version()
     new = bump(old)

@@ -85,6 +85,19 @@ try {
   git('add', '-A'); git('commit', '-q', '-m', 'index');
   check(subject() === '[d40a-index] — index', `the hook prefixes the label (${subject()})`);
 
+  // ── 2b. bug-safeguards: a bug recorded only on the branch ─────────────────
+  w('dev/BUGS.md', r('dev/BUGS.md') + '| **B-002** | S3 | pending:d40a-index | found on the branch |\n');
+  git('add', '-A'); git('commit', '-q', '-m', 'record B-002');
+  git('switch', '-q', 'main');
+  res = nv('--bug-report');
+  check(/feat: B-002/.test(res.stdout) && !/B-001/.test(res.stdout),
+        'from main, --bug-report names the branch and the bug main lacks', res.stdout + res.stderr);
+  res = nv('--next-bug');
+  check(res.stdout.trim() === 'B-003', `--next-bug on main counts the branch's ids (${res.stdout.trim()})`);
+  git('switch', '-q', 'feat');
+  res = nv('--bug-report');
+  check(/No unmerged branch/.test(res.stdout), 'the current branch does not report itself');
+
   // ── 3. a second change on the same branch ─────────────────────────────────
   res = nv('--type', 'feature', 'd40b-prefill', 'source/app.txt');
   check(/\*\*Order:\*\* 2/.test(r('dev/changes/d40b-prefill.md')), 'the second change is Order 2');
@@ -131,11 +144,26 @@ try {
 
   // ── 6. release on main is refused; main still mints at start ──────────────
   git('switch', '-q', 'main'); git('merge', '-q', '--ff-only', 'feat');
+  res = nv('--bug-report');
+  check(/No unmerged branch/.test(res.stdout), 'once merged, the branch is no longer reported');
   res = nv('--release');
   check(res.status !== 0, 'release is refused on main');
   res = nv('--type', 'chore', 'hotfix', 'source/app.txt');
   check(res.status === 0 && version() === '3.14.4' && !exists('dev/changes/hotfix.md'),
         'on main a change gets its number at once, as before');
+
+  // ── 7. --minor: the last change is the minor release ──────────────────────
+  git('add', '-A'); git('commit', '-q', '-m', 'hotfix');
+  git('switch', '-q', '-c', 'feat2');
+  nv('--type', 'chore', 'm1', 'source/app.txt');
+  nv('--type', 'chore', 'm2', 'source/app.txt');
+  for (const s of ['m1', 'm2'])
+    w(`dev/changes/${s}.md`, r(`dev/changes/${s}.md`).replace(/^## TITLE/, `## Stage ${s}`));
+  res = spawnSync('python3', [path.join(T, 'dev', 'new_version.py'), '--release', '--minor'], { cwd: T, encoding: 'utf8' });
+  const log2 = r('dev/edit_log.md');
+  check(res.status === 0 && /\*\*Version:\*\* v3\.14\.5 ·/.test(log2) && /\*\*Version:\*\* v3\.15\.0 ·/.test(log2),
+        'with --minor the first change is v3.14.5 and the last v3.15.0', res.stderr + res.stdout);
+  check(version() === '3.15.0', `and the build is ${version()}`);
 } finally {
   fs.rmSync(T, { recursive: true, force: true });
 }

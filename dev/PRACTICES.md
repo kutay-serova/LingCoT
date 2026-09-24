@@ -54,11 +54,16 @@ never edit the same lines until one of them is released.
 | **A change file is a batch, not a commit** | one per D40 stage, say. It becomes one version and one edit-log entry; its commits are found by `[<slug>]` (`doc_integrity_test.js` §8b) |
 | **Short slugs on a branch** | the slug is the build label in logs and bug reports: lower case, digits, `-`, `_`, at most 16 characters |
 | **Release at a stage boundary, after `run_all.sh`** | the checked-out branch is the build used for annotation; `main` must stay usable |
+| **A minor release: `--release --minor`** | the other changes take patch numbers and the last one takes X.Y+1.0, so the build that goes out is exactly v3.15.0; tag it after the merge |
 | **`git merge --ff-only`** | linear history; fails loudly if `main` moved |
 | **No squash merges** | a squash loses the `[<slug>]` commits §8b reads |
 | **`main` moved while the branch was open** | merge `main` into the branch, keep `main`'s side of `source/version.py`, then `new_version.py --relabel` |
 | **A fix that cannot wait for the release** | `new_version.py --main <slug> <files>` numbers it at once; merge `main` into the branch afterwards |
 | **Before releasing a stage that changes the file format**, open a corpus saved by the branch build in the `main` build | D40 §5's compatibility claim, checked on real data |
+| **A bug found on a branch gets its id from `new_version.py --next-bug`** | it reads `BUGS.md` on every local and remote branch, so two branches cannot both take B-218 |
+| **A bug that is also in `main`'s code is recorded and fixed on `main` first** (`--main`), then `main` is merged into the branch | B-215 was in `main` from v3.14.388 and was fixed only on `tester-build`; `main` stayed broken until the merge |
+| **Every B-nnn a change file names has a row in `BUGS.md`** | `doc_integrity_test.js` §8a; a bug mentioned only in change notes is not in the table |
+| **Before deleting a branch, `new_version.py --bug-report` does not list it** | the report runs at every start on `main`, at `--release` and in `doc_integrity_test.js`; a branch deleted with bugs on it takes them with it |
 
 Branch names: the feature id and a slug, e.g.
 `d40-annotation-offers`. Delete the branch locally and on `origin` once its last

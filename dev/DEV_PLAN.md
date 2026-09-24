@@ -103,7 +103,7 @@ true before each audience sees this*. Set v3.14.188.
 | Gate | Before | The question | Open |
 |---|---|---|---|
 | ~~[1](#gate-1--before-git-init)~~ | `git init` | can history start clean? | **✅ TAKEN v3.14.391–392** — 214 files, disclosed, signed off, and **B-206** found by the hook on the first commit |
-| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 7 |
+| [2](#gate-2--before-a-testers-build) | a testers' build | can a non-author annotate a text end to end? | 2 |
 | [3](#gate-3--before-the-first-stable-version) | the first stable version | is the data model settled enough that users' files keep opening? | 8 |
 | [4](#gate-4--can-wait-for-the-next-stable) | — | new capability and the cosmetic tail | 12 |
 
@@ -158,9 +158,8 @@ or hitting a wall?
 | — | **D46** the pipeline audit | belongs *inside* this gate: the order the work takes is only observable while someone is doing it. **Now gated only on the macOS install half** — the quickstart shipped at v3.14.395 and asks its readers the D46 question directly (*what order did you want to fill things in?*), so a tester's answer arrives with their other feedback rather than needing a separate sitting |
 | ◑ | a fresh-machine install | `setup.py` has never been run by anyone but its author. **Half taken v3.14.394**: the published repo was cloned onto a clean Linux machine and `build_env.py` run for real. It **succeeded** — venv built, all packages resolved, `~/LingCoT-Data/` created — and then every command it printed afterwards failed (**B-207**, 67 of them). What is still owed is the half this cannot reach: **macOS, by double-click, on a machine with no developer tooling.** `setup.command` opens a browser when python3 is absent, and the Gatekeeper refusal path in `setup.md` has never been walked by a stranger |
 | ✅ | an annotator quickstart | **`QUICKSTART.md`, v3.14.395**, linked from README Contents. Grew past "half a page" on purpose: it is a guided tour of every major feature in the order a first session meets them — corpus, ingest, gloss, dictionary and the offer strip, translation, dependency parse, search, Progress, export — because a tester who never reaches search cannot report on it. GUI only, **no terminal commands**: the audience is linguists, not developers, and the Section text box makes the whole path clickable. Guarded by `quickstart_labels_test.js` |
-
-| — | **D41** Reader Mode, both modes | added v3.14.419; the build's plan is below |
-| — | an interface language picker, with `haw.json` | added v3.14.419; the build's plan is below |
+| ✅ | **D41** Reader Mode, both modes | built in the tester build, `tb-reader-cols` and `tb-reader-igt`; released with v3.15.0 |
+| ✅ | an interface language picker, with `haw.json` | built in the tester build, `tb-i18n` and `tb-strings`; released with v3.15.0 |
 
 ##### The tester's build: v3.15.0
 
@@ -175,6 +174,12 @@ together with `new_version.py --release --minor`.
 | 4 | `tb-reader-cols` | D41 B, column view | a section reads as text against translation, read-only |
 | 5 | `tb-reader-igt` | D41 A, interlinear, with the highlight rule below | hover and popup behave as specified |
 | 6 | `tb-release` | release notes, tester instructions, `--minor` in `new_version.py` | v3.15.0 tagged; the macOS clean-machine install walked on this build |
+
+**Status.** Steps 1 to 6 built. Also in the build: `xlate-target-en`,
+`pseudo-locale`, `b216-b217-logs`, `bug-safeguards`. Released together as
+v3.14.420 to v3.14.429 and v3.15.0 (`tb-release`). Owed: the macOS clean-machine
+install on v3.15.0, and the D46 answers from testers. Tester entry point:
+`TESTERS.md`.
 
 **Decisions.** Both reader modes ship. The reader popup is read-only; editing
 stays in the annotation views. `haw.json` is a placeholder copy until
@@ -406,9 +411,9 @@ two-column layout, sentence-level hover-highlighting already works, and
 `SECTION_PARA_BATCH = 30` already lazy-loads. **A is the larger half**: per-word
 highlighting needs an identity rule (form, `dict_id` or lemma — D35 again) and
 the IGT renderer has only ever run one sentence at a time. **Read-only is the
-smaller promise and the one the name implies.** *Scheduled v3.14.419 for
-the tester's build (gate 2): both modes, popup read-only, identity rule decided
-there.* Any new view must reach
+smaller promise and the one the name implies.** *Built in the tester's
+build (gate 2, v3.15.0): both modes, popup read-only, identity rule as decided
+at tb-reader-igt.* Any new view must reach
 `_renderCacheKey`: tier toggles change the screen without changing nav state,
 which is the B-008 / B-011 / B-019 family.
 

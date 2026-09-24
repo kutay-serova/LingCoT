@@ -68,6 +68,8 @@ setup installs everything else for you.
 
 ## Contents
 
+**Testing a build?** Start with [TESTERS.md](TESTERS.md).
+
 **New here?** [QUICKSTART.md](QUICKSTART.md) is a guided first session — build a
 corpus from your own text and try each major feature in order. Half an hour. This
 README is the reference you come back to; the quickstart is the way in.

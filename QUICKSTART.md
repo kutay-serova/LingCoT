@@ -213,6 +213,22 @@ and pick your corpus. Everything should be as you left it.
 
 ---
 
+## 12 · Read it
+
+Open the document and click **Read**. The whole text appears without editors,
+text on the left and translation on the right. Hover a sentence to see its
+translation; click it for its details.
+
+Switch to **Interlinear** to read word by word, with transliteration, parse and
+gloss under each word. Hovering a word shows where else it occurs: the words
+linked to the same dictionary entry, or with the same spelling if it has none.
+**Lemma** matches by lemma instead. Click a word for everything recorded about
+it; **Open in annotation view** goes back to the editor. Nothing in the reader
+can be changed.
+
+The interface language is under **File**. *ʻŌlelo Hawaiʻi* is listed but not
+translated yet, so it shows English.
+
 ## What I would like to hear about
 
 This is a first tester's build. The most useful report is not only "it broke":
@@ -233,6 +249,7 @@ start again with a new corpus.
 
 ## Then what
 
+- [TESTERS.md](TESTERS.md): what is new in this build, known issues, and how to report
 - [README.md](README.md) — every view and field, in full
 - [setup.md](setup.md) — offline translation and PDF export, both optional
 - The `samples` folder inside the application folder holds two finished corpora,

@@ -499,10 +499,26 @@ console.log('\nedit_log integrity');
     const bugsTxt = fs.readFileSync(path.join(DEV, 'BUGS.md'), 'utf8');
     for (const m of bugsTxt.matchAll(/pending:([a-z0-9_-]+)/g))
       if (!chFiles.includes(`${m[1]}.md`)) bad.push(`         BUGS.md says fixed in pending:${m[1]}, and no such change is open`);
+    /* bug-safeguards: a bug a change file names must have a row in BUGS.md.
+       Otherwise it exists only in the change notes and is lost from the table. */
+    const known = new Set([...bugsTxt.matchAll(/(?:\*\*|^### )B-(\d{3,})\b/gm)].map(m => m[1]));
+    for (const f of chFiles)
+      for (const m of new Set([...fs.readFileSync(path.join(chDir, f), 'utf8').matchAll(/\bB-(\d{3,})\b/g)].map(x => x[1])))
+        if (!known.has(m)) bad.push(`         ${f} names B-${m}, which has no row in BUGS.md`);
     if (chFiles.length || /pending:/.test(bugsTxt))
       check(bad.length === 0, `${chFiles.length} open change file(s) are well-formed and archived`, bad.join('\n'));
     else
       console.log('  --   change files — none open (main, or a branch before its first change)');
+  }
+
+  /* ── 8a'. Bugs on unmerged branches — bug-safeguards ──────────────────────
+     Reported, not failed: a feature branch holding a new bug is normal. What
+     must not happen is not noticing it, so every run prints it. */
+  {
+    const r = require('child_process').spawnSync('python3', [path.join(DEV, 'new_version.py'), '--bug-report'],
+                                                  { encoding: 'utf8' });
+    if (r.status === 0 && /not merged/.test(r.stdout))
+      console.log(r.stdout.trim().split('\n').map(l => `  --   ${l.trim()}`).join('\n'));
   }
 
   /* ── 8b. The same property, asked of GIT — conflict ⑪, v3.14.393 ──────────
@@ -834,7 +850,8 @@ console.log('\nevery dev document says when it was written and against what\n');
 
     /* The four outside dev/, resolved by the same names the bumper uses. */
     const ROOTLIVE = { 'README': 'README.md', 'QUICKSTART': 'QUICKSTART.md',
-                       'setup.md': 'setup.md', 'samples/README': 'samples/README.md' };
+                       'setup.md': 'setup.md', 'samples/README': 'samples/README.md',
+                       'TESTERS': 'TESTERS.md' };
     for (const [label, rel] of Object.entries(ROOTLIVE)) {
       check(owned.includes(label), `new_version.py bumps ${rel}`,
             `         it is live and user-facing; unowned, it rots by the next version`);

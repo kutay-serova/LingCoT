@@ -16,5 +16,8 @@ On `main` this folder holds only this README.
 | add a file to it | `python3 dev/new_version.py --add dev/BUGS.md` |
 | after merging `main` into the branch | `python3 dev/new_version.py --relabel` |
 | at the stage boundary | `python3 dev/new_version.py --release` |
+| the last stage of a minor release | `python3 dev/new_version.py --release --minor`: the last change gets X.Y+1.0 |
+| the next bug id | `python3 dev/new_version.py --next-bug` |
+| bugs on unmerged branches | `python3 dev/new_version.py --bug-report` |
 
 Procedure and reasons: `dev/PRACTICES.md` §1, Branches.
