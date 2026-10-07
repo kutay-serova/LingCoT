@@ -479,7 +479,7 @@ function toggleHelp() {
      debounce fires     → saveTick(), APPENDS to the journal (D50 stage 3c)
      a compaction trigger → compact(), rewrites the base and empties the journal
      💾 Save btn        → openSavePanel(), modal: path + toggle + manual actions
-     toggle → on        → if _savePath set, enable; else chooseSavePath() first
+     toggle → on        → if _savePath set, enable; else chooseProjectPath() first
      new corpus created → promptNewCorpusAutosave(), creates corpora/NAME/ folder
      file loaded        → promptLoadedCorpusAutosave(), save back to source path
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -599,65 +599,44 @@ if (typeof window !== 'undefined') {
   });
 }
 
-/* ── Corpus↔dictionary pair memory (localStorage) ────────────────────────────
-   Stores which dictionary was last used with each corpus so that re-opening the
-   corpus can suggest the companion. Keys are corpus base filenames (no extension). */
-// @fn storePair
-function storePair(corpusBase, dictBase) {
-  try {
-    const pairs = JSON.parse(localStorage.getItem('lingcot_pairs') || '{}');
-    pairs[corpusBase] = dictBase;
-    localStorage.setItem('lingcot_pairs', JSON.stringify(pairs));
-  } catch (_) {}  // storage unavailable in some browser contexts, fail silently
+/* ── Switching projects ───────────────────────────────────────────────────────
+   Opening a project replaces the one on screen. Edits are journalled as they
+   happen, so a switch only needs confirming when something would actually be
+   lost: an open editor with changes, or edits made with no save path. */
+
+let _dataGenAtLoad = 0;   // _dataGen when the current project finished loading
+
+// @fn markProjectLoaded, baseline for unsavedWork() after a load or a save-as
+function markProjectLoaded() { _dataGenAtLoad = _dataGen; }
+
+// @fn editorHasChanges, an open *-edit view with an input differing from its stored value
+function editorHasChanges() {
+  if (!/-edit$/.test(S.view || '')) return false;
+  const host = document.getElementById('main') || document;
+  for (const el of host.querySelectorAll('input[data-original], textarea[data-original], select[data-original]'))
+    if ((el.value || '').trim() !== (el.dataset.original || '').trim()) return true;
+  return false;
 }
 
-// @fn getSavedCompanion
-function getSavedCompanion(corpusBase) {
-  try {
-    const pairs = JSON.parse(localStorage.getItem('lingcot_pairs') || '{}');
-    return pairs[corpusBase] || null;
-  } catch (_) { return null; }
+// @fn unsavedWork, what a project switch would lose: 'editor', 'no-path' or null
+function unsavedWork() {
+  if (editorHasChanges()) return 'editor';
+  if (!journalPath() && _dataGen > _dataGenAtLoad && (S.docs.length || S.dictionary.length))
+    return 'no-path';
+  return null;
 }
 
-/* ── Companion banner ─────────────────────────────────────────────────────────
-   Non-blocking prompt shown when a corpus is loaded without a dictionary.
-   Hides automatically when a dictionary is loaded or the user dismisses it. */
-// @fn showCompanionBanner
-function showCompanionBanner() {
-  if (S.dictionary.length) return;  // already have a dict
-  /* B-160: "is a dictionary file bound" and "does it hold entries" are different
-     questions, and this asked the second while saying the first. A project whose
-     dictionary is empty is bound — its path is armed and the next entry saves
-     there — so inviting the annotator to load one is an invitation to point the
-     project at a foreign file. Nothing is missing; nothing has been written yet. */
-  if (_dictSavePath) return;
-  const companion = getSavedCompanion(S._corpusFilename);
-  const msgEl = document.getElementById('companion-msg');
-  if (msgEl) {
-    msgEl.innerHTML = companion
-      /* B-149: `companion` is a PREFIX now, so the banner derives the filename
-         rather than the locale string appending `.jsonl` to whatever it got. */
-      ? t('companion.has_dict', { name: projectFile(companion, 'dictionary') })
-      : t('companion.no_dict');
-  }
-  document.getElementById('companion-banner')?.removeAttribute('hidden');
-}
-
-// @fn hideCompanionBanner
-function hideCompanionBanner() {
-  document.getElementById('companion-banner')?.setAttribute('hidden', '');
-}
-
-/* ── Shared dict-load trigger ─────────────────────────────────────────────────
-   Used by both the header "Dictionary" button and the companion banner "Load" button.
-   Shows a native OS file dialog via pywebview.api.open_dialog(). */
-// @fn triggerDictLoad
-async function triggerDictLoad() {
-  await _pwReady;
-  const result = await window.pywebview.api.open_dialog(
-    ['JSONL Files (*.jsonl;*.json)', 'All files (*.*)']
-  );
-  if (result && result[0]) await handlePath(result[0]);
+/* @fn confirmProjectSwitch, true when the open project may be replaced.
+   Pending journal records are written first, and the base is compacted when
+   autosave is on, so the project left behind is complete on disk. */
+async function confirmProjectSwitch() {
+  if (!S.docs.length && !S.dictionary.length) return true;
+  const why = unsavedWork();
+  if (why && !confirm(t(why === 'editor' ? 'confirm.project.switch_editor'
+                                         : 'confirm.project.switch_unsaved'))) return false;
+  await flushJournal();
+  if (_autoSave) await compact('project switch');
+  return true;
 }
 
 /* `writePath` lived here: a second serializer with no callers, which would have
@@ -921,61 +900,68 @@ async function exportProject() {
   return { written, path: projectSibling(target, 'corpus') };
 }
 
-/* Show a native save dialog and store the chosen path as the corpus save target.
+/* @fn chooseProjectPath, pick where the whole project lives.
+   One dialog names the corpus file; the dictionary and participants files follow
+   the project convention beside it. A dictionary-only session names its
+   dictionary instead. Refuses a location whose companion files belong to some
+   other project, since the next save would overwrite them.
    forAutosave=true arms autosave on success. */
-// @fn chooseSavePath
-async function chooseSavePath(forAutosave = false) {
+// @fn chooseProjectPath
+async function chooseProjectPath(forAutosave = false) {
   await _pwReady;
-  /* B-149: derived, not guessed. All three dialogs below ask projectFile() for
-     the same prefix, so the name offered for one file is one the opener will
-     derive the other three from. Before this each built its own, and every one
-     of them was wrong in one of the two states `S._corpusFilename` could hold. */
-  const suggested = (_savePath
-    ? _savePath.replace(/\\/g, '/').split('/').pop()
-    : projectFile(S._corpusFilename, 'corpus'));
+  const dictOnly = !S.docs.length && !!S.dictionary.length;
+  const role = dictOnly ? 'dictionary' : 'corpus';
+  const current = dictOnly ? _dictSavePath : _savePath;
+  const suggested = current
+    ? current.replace(/\\/g, '/').split('/').pop()
+    : projectFile(dictOnly ? (S._dictFilename || S._corpusFilename) : S._corpusFilename, role);
   const path = await window.pywebview.api.save_dialog(
-    suggested,
-    ['JSONL (*.jsonl)', 'All files (*.*)']
-  );
+    suggested, ['JSONL (*.jsonl)', 'All files (*.*)']);
   if (!path) return false;
-  _savePath = path;
+
+  const next = dictOnly
+    ? { dict: path, parts: projectSibling(path, 'participants') }
+    : { corpus: path, dict: projectSibling(path, 'dictionary'),
+        parts: projectSibling(path, 'participants') };
+  const ours = new Set([_savePath, _dictSavePath, _participantsPath].filter(Boolean));
+  for (const p of [next.dict, next.parts]) {
+    if (!p || p === path || ours.has(p)) continue;
+    if (await window.pywebview.api.path_exists(p)) {
+      alert(t('alert.file.project_files_exist', { name: p.replace(/\\/g, '/').split('/').pop() }));
+      return false;
+    }
+  }
+  if (!dictOnly) _savePath = next.corpus;
+  _dictSavePath     = next.dict;
+  _participantsPath = next.parts;
   if (forAutosave) _autoSave = true;
+  refreshSavePanelPaths();
   return true;
 }
 
-/* Show a native save dialog and store the chosen path as the dictionary save target. */
-// @fn chooseDictSavePath
-async function chooseDictSavePath() {
-  await _pwReady;
-  /* The dictionary's own prefix when one was loaded, otherwise the corpus's —
-     a dictionary built in the app belongs to the project on screen, and offering
-     the bare `dictionary.jsonl` made it a project of its own. */
-  const suggested = (_dictSavePath
-    ? _dictSavePath.replace(/\\/g, '/').split('/').pop()
-    : projectFile(S._dictFilename || S._corpusFilename, 'dictionary'));
-  const path = await window.pywebview.api.save_dialog(
-    suggested,
-    ['JSONL (*.jsonl)', 'All files (*.*)']
-  );
-  if (!path) return false;
-  _dictSavePath = path;
-  return true;
+/* @fn saveProjectAs, write the whole project to a new location and keep working
+   there. Pending records go to the old journal first, so the project left
+   behind is still consistent with its own journal. */
+async function saveProjectAs() {
+  await flushJournal();
+  const ok = await chooseProjectPath(true);
+  if (!ok) return null;
+  resetWriteLedger();
+  journalReset();
+  _journalBytes = 0;
+  const r = await compact('save as');
+  markProjectLoaded();
+  logEvent('info', 'project saved as', _savePath || _dictSavePath);
+  flashSaveStatus(`${icon(r && r.ok !== false ? 'check-circle' : 'warning')} ${saveOutcomeMessage(r)}`);
+  return r;
 }
 
-/* Show a native save dialog and store the chosen path as the participants save target. */
-// @fn chooseParticipantsSavePath
-async function chooseParticipantsSavePath() {
+// @fn revealProjectFile, show the project's main file in Finder / Explorer
+async function revealProjectFile() {
+  const p = _savePath || _dictSavePath || _participantsPath;
+  if (!p) { flashSaveStatus(`${icon('warning')} ${t('status.save_no_target')}`); return; }
   await _pwReady;
-  const suggested = (_participantsPath
-    ? _participantsPath.replace(/\\/g, '/').split('/').pop()
-    : projectFile(S._corpusFilename, 'participants'));
-  const path = await window.pywebview.api.save_dialog(
-    suggested,
-    ['JSONL (*.jsonl)', 'All files (*.*)']
-  );
-  if (!path) return false;
-  _participantsPath = path;
-  return true;
+  await window.pywebview.api.reveal_path(p);
 }
 
 /* Briefly show a status message next to the breadcrumb in the header. */
@@ -1029,10 +1015,11 @@ function flashSaveStatus(msg) {
 /* ── Save settings panel ── */
 
 /* Sync one path display element.
-   absPath, full absolute path (set when user picks via Change…); shown as filename only.
-   loadedPrefix, S._corpusFilename / S._dictFilename — a project PREFIX (B-149),
-   never a filename. `role` turns it into one, so this row and the dialog behind
-   its Change… button cannot name the same file two ways.
+   absPath, full absolute path of the bound file; shown as filename only.
+   loadedPrefix, S._corpusFilename / S._dictFilename, a project PREFIX (B-149),
+   never a filename. `role` turns it into one.
+   The rows are read-only: paths are set for the whole project at once by
+   chooseProjectPath (B-229).
    Priority: absolute path > derived name (muted, no save target yet) > placeholder. */
 // @fn _syncPanelPath
 function _syncPanelPath(id, absPath, loadedPrefix, role) {
@@ -1214,9 +1201,20 @@ async function promptNewCorpusAutosave(title) {
    corpusBase, the display name (filename without extension).
    dictPath, companion dict path from open_project; arms _dictSavePath on accept. */
 // @fn promptLoadedCorpusAutosave
-async function promptLoadedCorpusAutosave(absPath, corpusBase, dictPath = null) {
+async function promptLoadedCorpusAutosave(absPath, corpusBase, dictPath = null, dictOnly = false) {
   if (_autoSave) return;   // autosave already on, no need to prompt again
-  if (absPath) {
+  if (dictOnly) {
+    // Dictionary-only session: the dictionary path is already bound on load.
+    showAutosavePrompt(
+      t('modal.autosave.prompt.load_file', {name: corpusBase}),
+      () => {
+        _autoSave = true;
+        refreshSavePanelPaths();
+        flashSaveStatus(`${icon('check-circle')} ${t('status.autosave_on')}`);
+      },
+      () => { /* user skipped */ }
+    );
+  } else if (absPath) {
     // File came from a known path, offer to save back there
     showAutosavePrompt(
       t('modal.autosave.prompt.load_file', {name: corpusBase}),

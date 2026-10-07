@@ -359,9 +359,11 @@ console.log('\nwiring');
 
   check(/id="gaps-btn"/.test(html) && /id="gap-panel-box"/.test(html),
         'the header button and the panel are both in the shell');
-  check(/getElementById\('gaps-btn'\)\.classList\.add\('visible'\)/.test(html),
+  /* `toggle(..., hasCorpus)` on open, since a dictionary-only session has no corpus. */
+  const REVEAL = /getElementById\('gaps-btn'\)\.classList\.(add\('visible'\)|toggle\('visible', hasCorpus\))/g;
+  check(REVEAL.test(html),
         'and the button is revealed when a corpus loads');
-  check((html.match(/getElementById\('gaps-btn'\)\.classList\.add\('visible'\)/g) || []).length === 2,
+  check((html.match(REVEAL) || []).length === 2,
         'on BOTH paths that load one — open, and new corpus',
         '         one of the two reveal sites was missed');
 

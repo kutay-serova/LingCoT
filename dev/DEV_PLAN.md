@@ -537,7 +537,7 @@ trigger is a tester annotating (gate 2), not a code change.
 
 | | Resolved as |
 |---|---|
-| Dict Prompt modal + companion-banner removal | banner *kept* (i18n-migrated v3.14.7); `showDictPrompt()` never built |
+| Dict Prompt modal + companion-banner removal | banner removed with B-228 (pending:bundle-open); a dictionary file opens its project |
 | GUI icon choices | shipped `ph-book-open` for Corpus. Dictionary `📖` A/B swap still open |
 | POS/type constant duplication | `POS_CHOICES`/`TYPE_CHOICES` overridable from `resources/*.json` (v3.13.4) |
 | L2 schema-version gate | moot, `migrateDoc` removed |

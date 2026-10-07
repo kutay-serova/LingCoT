@@ -89,6 +89,11 @@ console.log('\nround trip: every name offered is a name the opener understands\n
   check(/_UNTITLED_PREFIX = '([a-z]+)'/.exec(read('LingCoT.pyw'))?.[1] === P.UNTITLED_PREFIX,
         `both halves fall back to '${P.UNTITLED_PREFIX}'`);
   check(P.projectPrefix('/a/b/chinese-test_corpus.jsonl') === 'chinese-test', 'a full path works too');
+  /* B-230: applyCorpus and applyDict hand over the name with .jsonl removed. */
+  for (const role of ['corpus', 'dictionary', 'participants'])
+    check(P.projectPrefix(`chinese-test_${role}`) === 'chinese-test',
+          `chinese-test_${role} without its extension is still prefix chinese-test (B-230)`,
+          `       got ${P.projectPrefix(`chinese-test_${role}`)}`);
   check(P.projectSibling('/a/b/x_corpus.jsonl', 'journal') === '/a/b/x.journal.jsonl',
         'a sibling keeps the folder',
         '       B-150: the journal was written beside the corpus and read from elsewhere');
@@ -111,11 +116,15 @@ console.log('\nnobody else spells it\n');
 
   /* And the readers that used to build a name ask for one now. */
   const evts = decomment(read('modules/events.js'));
-  for (const fn of ['chooseSavePath', 'chooseDictSavePath', 'chooseParticipantsSavePath']) {
-    const src = new RegExp(`function ${fn}[\\s\\S]*?\\n\\}`).exec(evts);
-    check(!!src && /projectFile\(/.test(src[0]), `${fn} asks projectFile()`,
-          '       each of these built its own name, and each was wrong in one of two states');
-  }
+  /* B-229: one chooser for the whole project; the companions are derived. */
+  const src = /function chooseProjectPath[\s\S]*?\n\}/.exec(evts);
+  check(!!src && /projectFile\(/.test(src[0]), 'chooseProjectPath asks projectFile()',
+        '       each per-file chooser built its own name, and each was wrong in one of two states');
+  check(!!src && /projectSibling\(path, 'dictionary'\)/.test(src[0])
+              && /projectSibling\(path, 'participants'\)/.test(src[0]),
+        'and derives the dictionary and participants paths from the one it was given');
+  check(!/function choose(Dict|Participants)SavePath\b/.test(evts),
+        'no per-file chooser is left to point one file elsewhere (B-229)');
 }
 
 /* ── B-160: a project's fourth file is bound even when it is empty ───────────
@@ -138,17 +147,20 @@ console.log('\nnobody else spells it\n');
         '       gated on `dictText`, a 0-byte companion leaves the project unbound');
 
   const bindIdx = body.indexOf('_dictSavePath = project.dictPath');
-  const textIdx = body.indexOf('if (project.dictText)');
+  const textIdx = body.indexOf('const dictData = project.dictText');
   check(bindIdx > -1 && textIdx > -1 && bindIdx < textIdx,
         'and armed BEFORE the content branch, not inside it');
-  check(!/if \(project\.dictText\)[\s\S]{0,400}_dictSavePath =/.test(body),
+  check(textIdx > -1 && !/_dictSavePath =/.test(body.slice(textIdx, textIdx + 600)),
         'with no second assignment inside that branch — one writer, one place');
 
-  const evts = read('modules/events.js');
-  const banner = evts.slice(evts.indexOf('function showCompanionBanner'));
-  check(/if \(_dictSavePath\) return;/.test(banner.slice(0, banner.indexOf('\n}'))),
-        'and the "no dictionary" banner asks whether one is BOUND, not whether it has entries',
-        '       a bound-but-empty dictionary invited the annotator to load a foreign file');
+  /* B-228: the dictionary is applied even when the file is empty, so the
+     previous project's entries cannot survive the switch bound to this file. */
+  check(/const dictData = project\.dictText \? \(parseJsonlText\(project\.dictText\) \|\| \[\]\) : \[\];/.test(body)
+        && !/if \(dictData && dictData\.length\)/.test(body),
+        'and the dictionary is applied whether or not it has entries (B-228)',
+        '       skipped when empty, the last project\'s entries stayed bound to this file');
+  check(!/showCompanionBanner|storePair|getSavedCompanion/.test(read('modules/events.js') + read('LingCoT.html')),
+        'no companion banner or pairing memory invites loading a foreign dictionary (B-228)');
 }
 
 /* ── B-184: the role can be read back out of a name ────────────────────────

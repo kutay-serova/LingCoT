@@ -163,14 +163,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
 #searchtn.visible,
 #gaps-btn.visible               { display: inline-flex; }
 
-/* ── Companion dictionary banner ─────────────────────────────────────────── */
-/* Non-blocking bar at the bottom of the screen, shown when a corpus is loaded
-   but no dictionary is present.  Dismisses on load or skip. */
-
 /* ── D60/L-035: the dictionary's offer ──────────────────────────────────────
-   The banner borrows the companion banner's shape deliberately: both say the
-   same kind of thing — something about this project is available and you may
-   want it — and a second visual language for that would be noise. */
+   Non-blocking bar at the bottom of the screen. */
 #offer-banner {
   position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
   background: var(--surface); border: 1px solid var(--border);
@@ -194,19 +188,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
 .offer-acts { display: flex; gap: 6px; margin-top: 6px; }
 .offer-foot { display: flex; gap: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
 
-#companion-banner {
-  position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: calc(var(--r) * 2); box-shadow: 0 4px 16px rgba(0,0,0,.2);
-  padding: 10px 16px; display: flex; align-items: center; gap: 12px;
-  font-size: 0.82rem; white-space: nowrap; z-index: 90;
-  animation: banner-in .2s ease;
-}
-#companion-banner[hidden] { display: none; }
 @keyframes banner-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-#companion-msg { color: var(--text-dim); }
-#companion-msg strong { color: var(--text); font-weight: 600; }
-#companion-btns { display: flex; gap: 6px; }
 
 /* ── Autosave status flash ───────────────────────────────────────────────── */
 #save-status-flash {

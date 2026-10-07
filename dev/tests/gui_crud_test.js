@@ -124,32 +124,21 @@ async function addSection(H, title, text) {
 }
 
 /* @fn armAndSave, put the three files on disk through the save panel.
-   Export Corpus FIRST: with no path set it runs chooseSavePath(true), which is
-   the only thing in the app that sets _autoSave, and compact() returns without
-   writing when that is false. Setting the paths first writes nothing at all. */
+   Save Now with no path set asks for ONE location and derives the other two
+   (B-229: the per-file Change buttons are gone), then arms autosave and writes. */
 async function armAndSave(H, prefix) {
   const { page } = H;
-  H.api.saveAs = {};                     // built below from what the app offers
-  const open = async () => { await page.evaluate(() => {
-      document.getElementById('file-btn').click();
-      document.getElementById('file-save-item').click(); });
-    await page.waitForTimeout(200); };
   /* Whatever the app suggests, the annotator types the convention-conforming
-     name; the three files have to share a prefix or open_project cannot pair
-     them. That rename is a real thing a user does in the dialog. */
+     name. That rename is a real thing a user does in the dialog. */
   H.api.saveAs = new Proxy({}, { get: (_, n) => {
     if (typeof n !== 'string') return undefined;
     if (n.includes('participants')) return `${prefix}_participants.jsonl`;
     if (n.includes('dictionary'))   return `${prefix}_dictionary.jsonl`;
     return `${prefix}_corpus.jsonl`;
   }, has: () => true });
-  await open();
-  await page.evaluate(() => document.getElementById('sp-save-now')?.click());
-  await page.waitForTimeout(500);
-  await open();
-  await page.evaluate(() => document.getElementById('sp-change-participants-file')?.click());
-  await page.waitForTimeout(200);
-  await page.evaluate(() => document.getElementById('sp-change-dict-file')?.click());
+  await page.evaluate(() => {
+    document.getElementById('file-btn').click();
+    document.getElementById('file-save-item').click(); });
   await page.waitForTimeout(200);
   await page.evaluate(() => document.getElementById('sp-save-now')?.click());
   await page.waitForTimeout(900);
@@ -647,12 +636,112 @@ async function scenarioF() {
   await H.close();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   G. ONE PROJECT AT A TIME (B-228, B-229). A dictionary file opens its own
+      project, a lone dictionary opens on its own, and nothing from the project
+      that was open before reaches the next one's files.
+   ═════════════════════════════════════════════════════════════════════════ */
+async function scenarioG() {
+  console.log('\n\x1b[1m── G. projects are opened whole ──\x1b[0m');
+  const dir = path.join(OUT, 'G');
+  const A = path.join(dir, 'ga_corpus.jsonl');
+  const H = await boot({ outDir: dir, corpusPath: A });
+  await startCorpus(H, { title: 'GUI Guard G' });
+  await addSection(H, 'Section Golf', 'Golf hotel. India juliett.');
+  await armAndSave(H, 'ga');
+  check(fs.existsSync(path.join(dir, 'ga_dictionary.jsonl')) && fs.existsSync(path.join(dir, 'ga_participants.jsonl')),
+        'G0  Save Now with no path binds all three files of the project at once (B-229)');
+  allErrors.push(...H.errors);
+  await H.close();
+
+  const entry = (id, form, gloss) => JSON.stringify({ record_type: 'dict_entry', id, form, gloss, type: 'word' }) + '\n';
+  fs.writeFileSync(path.join(dir, 'ga_dictionary.jsonl'), entry('dict_ga_1', 'golf', 'GA-ONLY'));
+  fs.copyFileSync(A, path.join(dir, 'gb_corpus.jsonl'));
+  /* Every project here has all three files, so no missing-file prompt stops the run. */
+  const gaP = path.join(dir, 'ga_participants.jsonl');
+  if (!fs.existsSync(gaP)) fs.writeFileSync(gaP, '');
+  fs.copyFileSync(gaP, path.join(dir, 'gb_participants.jsonl'));
+  fs.writeFileSync(path.join(dir, 'gb_dictionary.jsonl'), '');
+  fs.writeFileSync(path.join(dir, 'lex_dictionary.jsonl'), entry('dict_lex_1', 'lima', 'LEX-ONLY'));
+  fs.writeFileSync(path.join(dir, 'handnamed.jsonl'), entry('dict_hn_1', 'mike', 'HN-ONLY'));
+
+  const H2 = await boot({ outDir: path.join(dir, 'run'), corpusPath: A });
+  const { page } = H2;
+  const openFile = async p => {
+    H2.api.openPath = p;
+    await page.evaluate(() => openCorpusDialog());
+    await page.waitForTimeout(900);
+    if (await page.$('#ncs-box:not([hidden])')) {
+      await page.evaluate(() => document.getElementById('ncs-skip-btn')?.click());
+      await page.waitForTimeout(200);
+    }
+  };
+  const state = () => page.evaluate(() => ({
+    docs: S.docs.length, corpus: S._corpusFilename, dict: S.dictionary.map(e => e.gloss),
+    view: S.view, savePath: _savePath, dictPath: _dictSavePath }));
+
+  await openFile(A);
+  let st = await state();
+  eq(st.dict, ['GA-ONLY'], 'G1  a project opens with its own dictionary');
+
+  const confirmsBefore = H2.dialogs.filter(d => d.type === 'confirm').length;
+  await openFile(path.join(dir, 'gb_dictionary.jsonl'));
+  st = await state();
+  check(st.docs === 1 && st.corpus === 'gb',
+        'G2  picking a dictionary file opens the project it belongs to (B-228)', JSON.stringify(st));
+  eq(st.dict, [], 'G3  and the previous project\'s entries do not come with it (B-228)');
+  check(H2.dialogs.filter(d => d.type === 'confirm').length === confirmsBefore,
+        'G4  switching from a saved project does not ask');
+
+  await page.evaluate(() => compact('manual'));
+  await page.waitForTimeout(400);
+  check(!fs.readFileSync(path.join(dir, 'gb_dictionary.jsonl'), 'utf8').includes('GA-ONLY'),
+        'G5  saving the second project writes none of the first one\'s entries into its file (B-228)');
+
+  await openFile(path.join(dir, 'lex_dictionary.jsonl'));
+  st = await state();
+  check(st.docs === 0 && st.view === 'dict-browse' && !st.savePath
+          && /lex_dictionary\.jsonl$/.test(st.dictPath || ''),
+        'G6  a dictionary with no corpus beside it opens as a dictionary-only session', JSON.stringify(st));
+  eq(st.dict, ['LEX-ONLY'], 'G7  holding only its own entries');
+
+  await openFile(path.join(dir, 'handnamed.jsonl'));
+  st = await state();
+  check(st.docs === 0 && /handnamed\.jsonl$/.test(st.dictPath || ''),
+        'G8  so does a dictionary named by hand, bound to the file that was picked', JSON.stringify(st));
+
+  /* Unsaved: an open editor with a change asks before anything is replaced. */
+  await openFile(A);
+  const ref = (await tokenRefs(page))[0];
+  await page.evaluate(o => go('word-edit', { wordId: o.wid, sentId: o.sid, sectIdx: o.si, paraIdx: o.pi }), ref);
+  await page.waitForTimeout(150);
+  await page.fill('#ew-gloss', 'NOT-SAVED');
+  H2.ctl.confirmAnswer = false;
+  const before = H2.dialogs.filter(d => d.type === 'confirm').length;
+  await openFile(path.join(dir, 'gb_corpus.jsonl'));
+  st = await state();
+  check(H2.dialogs.filter(d => d.type === 'confirm').length === before + 1 && st.corpus === 'ga',
+        'G9  with an editor holding changes, switching asks, and No keeps the project open', JSON.stringify(st));
+  H2.ctl.confirmAnswer = true;
+
+  const revealed = H2.writes.filter(w => w[0] === 'reveal_path').length;
+  await page.evaluate(() => document.getElementById('sp-reveal')?.click());
+  await page.waitForTimeout(150);
+  check(H2.writes.filter(w => w[0] === 'reveal_path').length === revealed + 1,
+        'G10 Show in Finder reaches the bridge');
+  check(await page.evaluate(() => !document.querySelector('.sp-change')),
+        'G11 the save panel has no per-file Change button (B-229)');
+
+  allErrors.push(...H2.errors);
+  await H2.close();
+}
+
 /* ── run ───────────────────────────────────────────────────────────────────── */
 (async () => {
   const t0 = Date.now();
   console.log(`\n  driving LingCoT v${appVersion()} from ${require('./_gui.js').SRC}`);
   console.log(`  workspace: ${OUT}`);
-  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF]) {
+  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG]) {
     try { await s(); }
     catch (err) {
       fail++; failures.push(s.name + ' threw');

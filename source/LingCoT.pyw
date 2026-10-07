@@ -310,6 +310,31 @@ class Api:
             _log.error(f"truncate_abs failed for {abs_path!r}: {exc}")
             raise
 
+    def path_exists(self, abs_path):
+        """True if a regular file exists at abs_path. Used before Save Project As
+        to refuse overwriting another project's companion files."""
+        try:
+            return os.path.isfile(abs_path)
+        except Exception:
+            return False
+
+    def reveal_path(self, abs_path):
+        """Show a file in the system file manager (Finder, Explorer, or the
+        containing folder on Linux)."""
+        try:
+            target = os.path.abspath(abs_path)
+            if sys.platform == 'darwin':
+                subprocess.Popen(['open', '-R', target])
+            elif sys.platform.startswith('win'):
+                subprocess.Popen(['explorer', '/select,', target])
+            else:
+                folder = target if os.path.isdir(target) else os.path.dirname(target)
+                subprocess.Popen(['xdg-open', folder])
+            return True
+        except Exception as exc:
+            _log.error(f"reveal_path failed for {abs_path!r}: {exc}")
+            return False
+
     # ── Native OS file dialogs ────────────────────────────────────────────────
 
     def open_dialog(self, file_types=None, directory=None):

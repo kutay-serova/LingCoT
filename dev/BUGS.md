@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**9 open** · 0 S1 · 1 S2 · 8 S3  |  **217 fixed**  |  **1 withdrawn** (B-096)
+**9 open** · 0 S1 · 1 S2 · 8 S3  |  **220 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -302,6 +302,9 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-230** | S3 | pending:bundle-open | **An opened project's prefix kept its role suffix** (`x_corpus` rather than `x`): the loaders strip `.jsonl` before asking for the prefix, so Export and Save suggested `x_corpus_corpus.jsonl`, and the PDF export was titled `x_corpus`. |
+| **B-229** | S2 | pending:bundle-open | **The save panel could point one file of a project at another project's file.** Each row had its own Change… dialog, so the dictionary or participants path could be set to an existing file elsewhere, which the next save overwrote. |
+| **B-228** | S2 | pending:bundle-open | **A dictionary file opened on its own was loaded into the project already open**, and could become its dictionary save target. Separately, switching to a project whose dictionary file was empty kept the previous project's entries in memory, bound to the new file. |
 | **B-227** | S3 | v3.15.4 | **`setup_NLLB.command` was never executable in git** (100644 since its first commit), so double-clicking it failed in every clone and in the tag zip. The executable-bit guard only covered hooks and files already recorded 100755. |
 | **B-223** | S3 | v3.15.3 | **Control names that no longer matched the screen**: the autosave prompt said "change this later from the Save button" (Save is in the File menu), the source hint named "Add Source" where the form shows "Pick Sources", the annotator filter said "click + Add", and QUICKSTART named "Save", "Concordance" and "Text" for **Create Corpus**, **KWIC** and **Word Form**. |
 | **B-222** | S3 | v3.15.3 | **Every new corpus logged "key version changed … run dict_dedupe.js".** `saveNewCorpus` binds the fold before anything is keyed, and the binding warned about any document with no `dict_key_version`, which a new one never had. |

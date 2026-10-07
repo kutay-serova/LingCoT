@@ -68,7 +68,14 @@ function projectPrefix(nameOrPath) {
     if (base.length > suffix.length && base.endsWith(suffix))
       return base.slice(0, -suffix.length);
   }
-  return base.replace(/\.jsonl?$/i, '');
+  /* B-230: the loaders pass the name with `.jsonl` already removed, so
+     `x_corpus` must give `x` too, not `x_corpus`. */
+  const stem = base.replace(/\.jsonl?$/i, '');
+  for (const role of Object.keys(PROJECT_ROLES)) {
+    const bare = PROJECT_ROLES[role].replace(/\.jsonl$/, '');
+    if (stem.length > bare.length && stem.endsWith(bare)) return stem.slice(0, -bare.length);
+  }
+  return stem;
 }
 
 /* @fn projectSibling, one project file's path given another's.

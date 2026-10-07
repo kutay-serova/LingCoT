@@ -64,6 +64,7 @@ function bootWith({ corpusText = CORPUS, journalText = JOURNAL, path = '/p/mytex
   ctx.pywebview = {
     api: {
       read_abs: async () => corpusText,
+      path_exists: async () => true,
       /* Boot asks for these and logs a stack when they are absent — noise that
          reads like a failure in a passing run. */
       get_workspace: async () => ({ workspace: '/w', corpora: '/w/corpora' }),
@@ -131,11 +132,14 @@ async function behavioural() {
        Executed through the real door, with `read_abs` recording what it was
        asked for, because the claim is that the loader ASKS for the corpus beside
        the file it was handed. */
-    for (const companion of ['/p/mytext.journal.jsonl', '/p/mytext_participants.jsonl']) {
+    /* B-228: a dictionary is a companion like the other two. */
+    for (const companion of ['/p/mytext.journal.jsonl', '/p/mytext_participants.jsonl',
+                             '/p/mytext_dictionary.jsonl']) {
       const { ctx, seen, run } = bootWith();
       const asked = [];
       const inner = ctx.pywebview.api.read_abs;
       ctx.pywebview.api.read_abs = async pth => { asked.push(pth); return inner(pth); };
+      ctx.pywebview.api.path_exists = async pth => { asked.push(pth); return true; };
       ctx.__p = companion;
       await run('handlePath(__p)');
       check(asked.includes('/p/mytext_corpus.jsonl'),
@@ -154,6 +158,7 @@ async function behavioural() {
     const { ctx, seen, run } = bootWith();
     ctx.pywebview.api.read_abs = async pth =>
       (/_corpus\.jsonl$/.test(pth) ? null : '');
+    ctx.pywebview.api.path_exists = async pth => !/_corpus\.jsonl$/.test(pth);
     ctx.__p = '/p/mytext.journal.jsonl';
     await run('handlePath(__p)');
     /* The harness's `t()` returns the key, so the KEY is what is asserted here

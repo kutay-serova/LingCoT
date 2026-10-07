@@ -8283,6 +8283,7 @@ function go(view, opts = {}) {
    (e.g. loaded a dictionary file before any corpus). */
 // @fn goCorpusReturn
 function goCorpusReturn() {
+  if (!S.docs.length) { go('dict-browse'); return; }   // dictionary-only session
   const cr = S.corpusReturn;
   if (!cr) {
     // No saved position, jump to the first section of the loaded corpus.
@@ -8512,16 +8513,14 @@ function applyCorpus(data, basename) {
   // a companion dictionary is already loaded; otherwise forms-only now + enriched
   // when the dictionary loads via applyDict).
   reconcileMorphemesFromParse();
+  const hasCorpus = S.docs.length > 0;    // false in a dictionary-only session
   document.getElementById('file-save-item').classList.add('visible');
   document.getElementById('file-corpus-sep').classList.add('visible');
-  document.getElementById('searchtn').classList.add('visible');
-  document.getElementById('gaps-btn').classList.add('visible');
-  document.getElementById('project-menu-wrap').classList.add('visible');
+  document.getElementById('searchtn').classList.toggle('visible', hasCorpus);
+  document.getElementById('gaps-btn').classList.toggle('visible', hasCorpus);
+  document.getElementById('project-menu-wrap').classList.toggle('visible', hasCorpus);
   refreshSavePanelPaths();
-  go('document');
-  // Prompt to load a companion dictionary if none is loaded.
-  // Small delay lets the document view render before the banner slides in.
-  if (!S.dictionary.length) setTimeout(showCompanionBanner, 400);
+  go(hasCorpus ? 'document' : 'dict-browse');
 }
 
 // @fn applyDict
@@ -8568,11 +8567,6 @@ function applyDict(data, basename) {
      a dictionary arriving later changes nothing structural. */
   offerDictFill();
   updateDictStatus();
-  // Persist the corpus↔dictionary pairing so future loads can suggest this companion.
-  // B-149: prefix to prefix. Old localStorage pairs were keyed on basenames and
-  // simply miss, which degrades to "no companion known" rather than a wrong one.
-  if (S._corpusFilename) storePair(S._corpusFilename, S._dictFilename);
-  hideCompanionBanner();     // dict is now loaded, banner no longer relevant
   refreshSavePanelPaths();
   // Bust the render cache. S.dictionary is not in the cache key, so without
   // this increment render() would return early and the morph-suggest panel
@@ -8634,7 +8628,7 @@ async function openCorpusDialog() {
 // @fn applyProjectBundle
 async function applyProjectBundle(project) {
   // Prompt for each missing companion file; abort on corpus-missing or user cancel
-  const proceed = await checkMissingFiles(project);
+  const proceed = project.dictOnly || await checkMissingFiles(project);
   if (!proceed) return;
 
   /* B-116: before the text is parsed, not after. The Python side measured each
@@ -8642,14 +8636,14 @@ async function applyProjectBundle(project) {
      the cost rather than follow the failure. */
   reportOversizeOnLoad(project.oversize);
 
-  const corpusData = parseJsonlText(project.corpusText);
+  const corpusData = project.dictOnly ? [] : parseJsonlText(project.corpusText);
   if (!corpusData) { alert(t('alert.file.parse_corpus_failed')); return; }
 
-  const basename = project.corpusPath.replace(/\\/g, '/').split('/').pop()
-                                      .replace(/\.json(l)?$/i, '');
-  if (S.docs.length > 0 &&
-      !confirm(t('confirm.corpus.replace')))
-    return;
+  const basename = (project.dictOnly ? project.dictPath : project.corpusPath)
+                     .replace(/\\/g, '/').split('/').pop().replace(/\.json(l)?$/i, '');
+  // Only asks when something would be lost (an open editor with changes, or
+  // edits with no save path); otherwise the switch is silent.
+  if (!(await confirmProjectSwitch())) return;
 
   // Apply corpus, resets _savePath, _dictSavePath, _participantsPath, and annotator state
   applyCorpus(corpusData, basename);
@@ -8681,13 +8675,13 @@ async function applyProjectBundle(project) {
      which is the ordinary state of a corpus somebody has started glossing before
      they start a lexicon. */
   if (project.dictPath) _dictSavePath = project.dictPath;
-  if (project.dictText) {
-    const dictData = parseJsonlText(project.dictText);
-    if (dictData && dictData.length) {
-      const dictBase = project.dictPath.replace(/\\/g, '/').split('/').pop()
-                                        .replace(/\.json(l)?$/i, '');
-      applyDict(dictData, dictBase);      // hides companion banner, refreshes panel
-    }
+  {
+    /* B-228: always applied, empty or not. Skipping an empty dictionary left the
+       previous project's entries in memory, bound to this project's file. */
+    const dictData = project.dictText ? (parseJsonlText(project.dictText) || []) : [];
+    const dictBase = (project.dictPath || basename).replace(/\\/g, '/').split('/').pop()
+                                                    .replace(/\.json(l)?$/i, '');
+    applyDict(dictData, dictBase);        // refreshes the save panel
   }
 
   /* D50: replay the journal LAST, after both stores are loaded, because one
@@ -8774,8 +8768,36 @@ async function applyProjectBundle(project) {
      the files that were actually found. */
   reportDangling(basename);
 
+  markProjectLoaded();
+  if (project.dictOnly) { _renderCacheKey = null; go('dict-browse'); }
+
   // Offer to arm autosave; pass dictPath so the prompt can arm it too if accepted
-  setTimeout(() => promptLoadedCorpusAutosave(project.corpusPath, basename, project.dictPath), 200);
+  setTimeout(() => promptLoadedCorpusAutosave(project.corpusPath, basename, project.dictPath,
+                                              !!project.dictOnly), 200);
+}
+
+/* @fn openDictionaryOnly, a dictionary with no corpus, as its own session.
+   Goes through applyProjectBundle like any project, so the switch check, the
+   journal replay and the save paths behave the same. Participants and journal
+   are the dictionary's own siblings; either may be absent. */
+async function openDictionaryOnly(absPath, text) {
+  const api = window.pywebview.api;
+  const opt = async p => ((await api.path_exists(p)) ? api.read_abs(p) : '');
+  if (text == null) text = await api.read_abs(absPath);
+  const project = {
+    dictOnly:         true,
+    corpusPath:       '',
+    corpusText:       '',
+    dictPath:         absPath,
+    dictText:         text,
+    participantsPath: projectSibling(absPath, 'participants'),
+    participantsText: await opt(projectSibling(absPath, 'participants')),
+    journalText:      await opt(projectSibling(absPath, 'journal')),
+    missing:          [],
+    oversize:         [],
+  };
+  logEvent('info', 'dictionary-only session', absPath);
+  await applyProjectBundle(project);
 }
 
 /* @fn loadProjectFromPath, THE way a file on disk becomes a loaded project.
@@ -8824,15 +8846,18 @@ async function loadProjectFromPath(absPath, _viaCompanion) {
      stops a second hop: the corpus's own role is `corpus`, so it cannot recurse,
      and the flag is there to say so rather than to rely on it. */
   const role = typeof projectRole === 'function' ? projectRole(absPath) : null;
-  if (!_viaCompanion && (role === 'journal' || role === 'participants')) {
+  /* B-228: a dictionary opens its project too. Picked on its own it used to be
+     loaded INTO whatever project was open, and could become that project's
+     dictionary save target. With no corpus beside it, it opens as a
+     dictionary-only session instead. */
+  if (!_viaCompanion && (role === 'journal' || role === 'participants' || role === 'dictionary')) {
     const corpusPath = projectSibling(absPath, 'corpus');
-    let corpusText = null;
-    try { corpusText = await window.pywebview.api.read_abs(corpusPath); } catch (e) { corpusText = null; }
-    if (corpusText) {
+    if (await window.pywebview.api.path_exists(corpusPath)) {
       logEvent('info', 'companion file opened its project',
                `${absPath} → ${corpusPath}`);
       return loadProjectFromPath(corpusPath, true);
     }
+    if (role === 'dictionary') return openDictionaryOnly(absPath);
     /* No corpus beside it: say which file was picked and which to open. The old
        message named neither. */
     alert(t('alert.file.companion_no_corpus',
@@ -8861,20 +8886,9 @@ async function loadProjectFromPath(absPath, _viaCompanion) {
     return;
   }
 
-  if (type === 'dictionary') {
-    if (S.dictionary.length > 0 &&
-        !confirm(S.dictionary.length === 1 ? t('confirm.dict.replace_1')
-                                           : t('confirm.dict.replace', { count: S.dictionary.length })))
-      return;
-    logEvent('info', 'dictionary opened', absPath);
-    applyDict(data, basename);
-    // If autosave is already armed, point the dict target at the loaded file
-    if (_autoSave && !_dictSavePath) {
-      _dictSavePath = absPath;
-      _syncPanelPath('sp-dict-path', _dictSavePath, S._dictFilename || S._corpusFilename, 'dictionary');
-    }
-    return;
-  }
+  /* A dictionary whose name carries no role suffix, so it has no project to
+     find: a dictionary-only session, never a merge into the open project. */
+  if (type === 'dictionary') return openDictionaryOnly(absPath, text);
 
   /* B-146: the detector can say `participants`, and "could not detect" is the
      wrong sentence for a file it recognised perfectly. */
@@ -9088,33 +9102,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('save-panel-close')?.addEventListener('click', closeSavePanel);
   document.getElementById('save-panel-backdrop')?.addEventListener('click', closeSavePanel);
 
-  /* "Change…" corpus, pick a new save location */
-  document.getElementById('sp-change-file')?.addEventListener('click', async () => {
-    const ok = await chooseSavePath(false);
-    if (ok) _syncPanelPath('sp-corpus-path', _savePath, S._corpusFilename, 'corpus');
-  });
-
-  /* "Change…" dict, pick a new save location for the dictionary */
-  document.getElementById('sp-change-dict-file')?.addEventListener('click', async () => {
-    const ok = await chooseDictSavePath();
-    if (ok) _syncPanelPath('sp-dict-path', _dictSavePath, S._dictFilename || S._corpusFilename, 'dictionary');
-  });
-
-  /* "Change…" participants, pick a new save location for the participants file */
-  document.getElementById('sp-change-participants-file')?.addEventListener('click', async () => {
-    const ok = await chooseParticipantsSavePath();
-    if (ok) _syncPanelPath('sp-participants-path', _participantsPath, S._corpusFilename, 'participants');
-  });
+  /* B-229: the path rows are read-only. A project moves as a whole. */
+  document.getElementById('sp-save-as')?.addEventListener('click', () => saveProjectAs());
+  document.getElementById('sp-reveal')?.addEventListener('click', () => revealProjectFile());
 
   /* Autosave toggle, corpus save path is required to enable. */
   document.getElementById('sp-autosave-toggle')?.addEventListener('change', async function() {
     const hintEl = document.getElementById('sp-hint');
     if (this.checked) {
-      if (!_savePath) {
+      if (!_savePath && !_dictSavePath) {
         // No save path yet, ask the user to choose one
-        const ok = await chooseSavePath(true);
+        const ok = await chooseProjectPath(true);
         if (!ok) { this.checked = false; return; }
-        _syncPanelPath('sp-corpus-path', _savePath, S._corpusFilename, 'corpus');
       }
       _autoSave = true;
       if (hintEl) hintEl.textContent = t('sp.hint.on');
@@ -9132,10 +9131,9 @@ document.addEventListener('DOMContentLoaded', () => {
      annotator has most reason to press it. It is a save, it says so, and it says
      what it did. The export is the button beside it. */
   document.getElementById('sp-save-now')?.addEventListener('click', async () => {
-    if (!_savePath) {
-      const ok = await chooseSavePath(true);
+    if (!_savePath && !_dictSavePath) {
+      const ok = await chooseProjectPath(true);
       if (!ok) return;
-      _syncPanelPath('sp-corpus-path', _savePath, S._corpusFilename, 'corpus');
       const toggleEl = document.getElementById('sp-autosave-toggle');
       const hintEl   = document.getElementById('sp-hint');
       if (toggleEl) toggleEl.checked = true;
@@ -9150,12 +9148,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('sp-export-project')?.addEventListener('click', () => exportProject());
 
   /* ── New-corpus save prompt ── */
-  /* ── Companion banner ── */
-  document.getElementById('companion-load')?.addEventListener('click', () => {
-    hideCompanionBanner();
-    triggerDictLoad();
-  });
-  document.getElementById('companion-skip')?.addEventListener('click', hideCompanionBanner);
 
   /* ── Annotator panel, permanent wiring ─────────────────────────────── */
   document.getElementById('ann-close-btn')?.addEventListener('click', closeAnnPanel);
@@ -17314,16 +17306,6 @@ initDelegatedListeners();
   </span>
 </footer>
 
-<!-- ── Companion dictionary banner ── -->
-<!-- Appears at the bottom of the screen after a corpus is loaded without a dictionary. -->
-<div id="companion-banner" hidden>
-  <span id="companion-msg" data-i18n="companion.no_dict">No dictionary loaded</span>
-  <div id="companion-btns">
-    <button class="btn btn-primary" id="companion-load" data-i18n="btn.companion.load">Load dictionary…</button>
-    <button class="btn btn-ghost" id="companion-skip" data-i18n="btn.companion.skip">Skip</button>
-  </div>
-</div>
-
 <!-- ── D60/L-035: what the dictionary could add, offered rather than written ── -->
 <div id="offer-banner" hidden>
   <span id="offer-msg" data-i18n="offer.banner">The dictionary can fill some morphemes</span>
@@ -17377,19 +17359,16 @@ initDelegatedListeners();
     <div class="sp-row">
       <span class="sp-label" data-i18n="sp.label.corpus">Corpus</span>
       <span id="sp-corpus-path" class="sp-path empty" data-i18n="sp.status.no_file">No file chosen</span>
-      <button class="hdr-btn sp-change" id="sp-change-file" data-i18n="btn.savepanel.change">Change…</button>
     </div>
     <!-- Dictionary file row -->
     <div class="sp-row" id="sp-dict-row">
       <span class="sp-label" data-i18n="sp.label.dictionary">Dictionary</span>
       <span id="sp-dict-path" class="sp-path empty" data-i18n="sp.status.no_file">No file chosen</span>
-      <button class="hdr-btn sp-change" id="sp-change-dict-file" data-i18n="btn.savepanel.change">Change…</button>
     </div>
     <!-- Participants file row (annotators + sources) -->
     <div class="sp-row" id="sp-participants-row">
       <span class="sp-label" data-i18n="sp.label.participants">Participants</span>
       <span id="sp-participants-path" class="sp-path empty" data-i18n="sp.status.no_file">No file chosen</span>
-      <button class="hdr-btn sp-change" id="sp-change-participants-file" data-i18n="btn.savepanel.change">Change…</button>
     </div>
     <hr class="sp-divider">
     <!-- Autosave toggle row -->
@@ -17407,6 +17386,8 @@ initDelegatedListeners();
     <!-- Action buttons -->
     <div class="sp-actions">
       <button class="btn btn-primary" id="sp-save-now"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-floppy-disk"/></svg><span data-i18n="btn.savepanel.save_now">Save now</span></button>
+      <button class="btn btn-ghost" id="sp-save-as" title="Save the whole project in a new location and keep working there" data-i18n-title="title.panel.save.save_as"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-floppy-disk"/></svg><span data-i18n="btn.savepanel.save_as">Save Project As</span></button>
+      <button class="btn btn-ghost" id="sp-reveal" title="Show the project files in Finder" data-i18n-title="title.panel.save.reveal"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-folder-open"/></svg><span data-i18n="btn.savepanel.reveal">Show in Finder</span></button>
       <button class="btn btn-ghost" id="sp-export-project" title="Save a copy of the project elsewhere" data-i18n-title="title.panel.save.export_project"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-export"/></svg><span data-i18n="btn.savepanel.export_project">Export…</span></button>
       <button class="btn btn-ghost" id="sp-export-zip" title="Export the corpus folder as a .zip file" data-i18n-title="title.panel.save.export_zip"><svg class="ph-icon" aria-hidden="true" viewBox="0 0 256 256"><use href="#ph-file-zip"/></svg><span data-i18n="btn.savepanel.export_zip">Export as .zip</span></button>
     </div>
