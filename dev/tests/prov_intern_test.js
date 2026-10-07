@@ -588,6 +588,7 @@ check(names.noIdNoName === 0,
     ['LingCoT.html', 'appendProv'], ['LingCoT.html', 'carryProv'],   // B-134
     ['LingCoT.html', 'mergeProvTrails'],                   // D52: two trails become one
     ['LingCoT.html', 'ensureMorphemesFromParse'],          // writes m.prov + history
+    ['LingCoT.html', 'buildMergedWord'],                   // post-test item 4: seeds m.prov + history
     ['LingCoT.html', 'objProv'], ['LingCoT.html', 'provHistory'],
     ['LingCoT.html', 'thinProv'], ['LingCoT.html', 'adoptProvEvents'],
     ['LingCoT.html', 'serializeRecords'], ['LingCoT.html', 'expandProv'],

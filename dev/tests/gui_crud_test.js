@@ -851,12 +851,56 @@ async function scenarioI() {
   await H.close();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   J. RE-TOKENIZATION KEEPS ANNOTATION. Post-test item 4: a merge turns the old
+      words into morphemes, a split turns morphemes back into words, and neither
+      asks, because nothing is lost.
+   ═════════════════════════════════════════════════════════════════════════ */
+async function scenarioJ() {
+  console.log('\n\x1b[1m── J. merge and split keep annotation ──\x1b[0m');
+  const dir = path.join(OUT, 'J');
+  const corpus = path.join(dir, 'j_corpus.jsonl');
+  const H = await boot({ outDir: dir, corpusPath: corpus });
+  const { page } = H;
+  await startCorpus(H, { title: 'GUI Guard J' });
+  await addSection(H, 'Section Juliett', 'Lima mike oscar.');
+  const refs = await tokenRefs(page);
+  await editWord(H, refs[0], p => p.fill('#ew-gloss', 'LIMA-G'));
+  await editWord(H, refs[1], p => p.fill('#ew-gloss', 'MIKE-G'));
+  const sent = (await sentRefs(page))[0];
+
+  const dialogsBefore = H.dialogs.length;
+  await editSentence(H, sent, p => p.fill('#f-sentence-words', 'Limamike oscar .'));
+  check(!H.dialogs.slice(dialogsBefore).some(d => d.type === 'confirm'),
+        'J1  merging two annotated words does not ask, nothing is lost');
+  const mergedW = await page.evaluate(() =>
+    S.docs[0].sections[0].paragraphs[0].sentences[0].words[0]);
+  eq(mergedW && mergedW.morphemes.map(m => [m.form, m.gloss]),
+     [['Lima', 'LIMA-G'], ['mike', 'MIKE-G']],
+     'J2  the merged word holds the old words as morphemes with their glosses');
+
+  await editSentence(H, { ...sent }, p => p.fill('#f-sentence-words', 'Lima mike oscar .'));
+  check(!H.dialogs.slice(dialogsBefore).some(d => d.type === 'confirm'),
+        'J3  splitting it again does not ask either');
+
+  await armAndSave(H, 'j');
+  const C = readCorpus(corpus);
+  const W = C && C.doc ? walkWords(C.doc).map(x => x.w) : [];
+  const lima = W.find(w => w.form === 'Lima'), mike = W.find(w => w.form === 'mike');
+  eq([gloss(lima), gloss(mike)], ['LIMA-G', 'MIKE-G'],
+     'J4  after merge and split the file has both glosses back on their words');
+  check(!!lima && lima.morphemes?.length === 1, 'J5  each split word has its one morpheme',
+        JSON.stringify(lima && lima.morphemes));
+  allErrors.push(...H.errors);
+  await H.close();
+}
+
 /* ── run ───────────────────────────────────────────────────────────────────── */
 (async () => {
   const t0 = Date.now();
   console.log(`\n  driving LingCoT v${appVersion()} from ${require('./_gui.js').SRC}`);
   console.log(`  workspace: ${OUT}`);
-  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG, scenarioH, scenarioI]) {
+  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG, scenarioH, scenarioI, scenarioJ]) {
     try { await s(); }
     catch (err) {
       fail++; failures.push(s.name + ' threw');

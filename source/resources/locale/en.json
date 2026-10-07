@@ -1012,6 +1012,7 @@
   "status.nllb.starting": "Loading model…",
   "status.no_translation": "[no translation]",
   "status.pg.filled": "Filled {n} segment(s); {ambiguous} need a choice, {none} are not in the dictionary",
+  "status.retok_carried": "Annotation kept: {merges} merged, {splits} split",
   "status.save_failed": "Save failed",
   "status.save_no_target": "Nothing to save — no file chosen yet",
   "status.save_nothing": "Nothing happened",

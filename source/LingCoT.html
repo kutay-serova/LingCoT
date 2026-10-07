@@ -3740,6 +3740,169 @@ function alignTokens(oldObjs, newForms, formOf) {
   };
 }
 
+/* ── Re-tokenization that keeps annotation (post-test item 4) ─────────────────
+   alignTokens pairs tokens whose form survives. Two edits change forms without
+   discarding the analysis: a merge (走 过 -> 走过) and a split (the reverse).
+   retokenizeCarryPlan finds both among the tokens alignTokens left unpaired.
+
+   Matching ignores case, apostrophes and hyphens, so `İstanbul 'da` merges into
+   `İstanbul'da`. Anything that does not match exactly (an orthographic compound,
+   or a split along surface forms that differ from underlying morpheme forms
+   such as `dA`) is left to the existing loss prompt. */
+// @fn _retokKey
+function _retokKey(f) {
+  const k = typeof normForm === 'function' ? normForm(f) : String(f || '').toLowerCase();
+  return k.replace(/['’ʼ\-‐]/g, '');
+}
+
+/* Returns { merges: [{ newIdx, oldIdxs }], splits: [{ oldIdx, newIdxs }] }.
+   A merge needs two or more consecutive unpaired old words whose joined forms
+   equal one unpaired new form. A split needs an unpaired old word with two or
+   more morphemes whose forms equal that many consecutive unpaired new forms. */
+// @fn retokenizeCarryPlan
+function retokenizeCarryPlan(oldWords, newForms, unmatchedOld, unmatchedNew) {
+  const freeO = new Set(unmatchedOld), freeN = new Set(unmatchedNew);
+  const merges = [], splits = [];
+
+  for (const j of unmatchedNew) {
+    if (!freeN.has(j)) continue;
+    const target = _retokKey(newForms[j]);
+    let found = null;
+    for (const i of unmatchedOld) {
+      if (!freeO.has(i)) continue;
+      let joined = '';
+      for (let k = i; k < oldWords.length && freeO.has(k); k++) {
+        joined += _retokKey(oldWords[k].form);
+        if (joined.length > target.length) break;
+        if (k > i && joined === target) { found = { newIdx: j, oldIdxs: range(i, k) }; break; }
+      }
+      if (found) break;
+    }
+    if (found) {
+      merges.push(found);
+      freeN.delete(j);
+      found.oldIdxs.forEach(i => freeO.delete(i));
+    }
+  }
+
+  for (const i of unmatchedOld) {
+    if (!freeO.has(i)) continue;
+    const ms = oldWords[i].morphemes || [];
+    if (ms.length < 2) continue;
+    const keys = ms.map(m => _retokKey(m.form));
+    for (const j of unmatchedNew) {
+      if (!freeN.has(j)) continue;
+      const run = range(j, j + keys.length - 1);
+      if (run.every((n, t) => freeN.has(n) && n < newForms.length && _retokKey(newForms[n]) === keys[t])) {
+        splits.push({ oldIdx: i, newIdxs: run });
+        freeO.delete(i);
+        run.forEach(n => freeN.delete(n));
+        break;
+      }
+    }
+  }
+  return { merges, splits };
+
+  function range(a, b) { const out = []; for (let x = a; x <= b; x++) out.push(x); return out; }
+}
+
+// @fn _carriedProv, stamp for a value moved by a merge or split
+function _carriedProv(fromId, kind) {
+  return { ..._derivedFieldProv(kind === 'split' ? 'carried (split)' : 'carried (merge)'), from: fromId };
+}
+
+/* One merged word from old words. Each old word contributes its morphemes, or
+   itself as one morpheme when it has none. Carried: gloss, transliterations,
+   part of speech, comments, stamped as carried so they read as unreviewed.
+   Not carried: type (left for the annotator), dictionary links and lemma, which
+   were decisions about the old words and are redone when the word is opened. */
+// @fn buildMergedWord
+function buildMergedWord(oldWords, form, wordId) {
+  const morphemes = [];
+  for (const w of oldWords) {
+    const moment = _carriedProv(w.id, 'merge');
+    const parts = (w.morphemes || []).length ? w.morphemes : [{
+      form: w.form, gloss: w.gloss || null,
+      transliterations: w.transliterations || [],
+      part_of_speech: w.part_of_speech || null, comments: w.comments || [],
+    }];
+    for (const p of parts) {
+      const m = {
+        id:               `${wordId}.m_${String(morphemes.length + 1).padStart(3, '0')}`,
+        form:             p.form,
+        transliterations: (p.transliterations || []).map(x => ({ ...x })),
+        gloss:            p.gloss || null,
+      };
+      const pos = p.part_of_speech || ((w.morphemes || []).length === 1 ? w.part_of_speech : null);
+      if (pos) m.part_of_speech = pos;
+      if ((p.comments || []).length) m.comments = p.comments.map(c => (c && typeof c === 'object') ? { ...c } : c);
+      m.prov = moment;
+      m.prov_history = [moment];
+      for (const key of ['gloss', 'transliterations', 'part_of_speech', 'comments'])
+        if (_fieldFilled(m, key)) stampField(m, key, moment);
+      morphemes.push(m);
+    }
+  }
+  return {
+    id: wordId, form, gloss: null,
+    morphological_parse: joinParse(morphemes),
+    morphemes,
+  };
+}
+
+/* New words from one old word's morphemes, one word per morpheme. Each morpheme
+   record moves intact (stamps, link and all) under its new word; the word's
+   part of speech is copied from it, stamped as carried. */
+// @fn buildSplitWords
+function buildSplitWords(oldWord, forms, wordIds) {
+  return oldWord.morphemes.map((m, t) => {
+    const id = wordIds[t];
+    const moved = { ...m, id: `${id}.m_001`, form: forms[t] };
+    const w = { id, form: forms[t], gloss: null, morphological_parse: null, morphemes: [moved] };
+    if (m.part_of_speech) {
+      w.part_of_speech = m.part_of_speech;
+      stampField(w, 'part_of_speech', _carriedProv(oldWord.id, 'split'));
+    }
+    return w;
+  });
+}
+
+/* Word-level work a split cannot carry: a typed word gloss, a word
+   transliteration, a lemma, comments. Asked about before splitting. */
+// @fn splitLoses
+function splitLoses(w) {
+  return !!(w.gloss || w.lemma_id || (w.comments || []).length
+            || (w.transliterations || []).some(x => x && x.text));
+}
+
+/* Dependency heads after a merge or split. `remap` maps an old local id to the
+   new word that replaces it. Heads pointing at a replaced word follow it; a
+   merged word keeps the first outward head of its parts; heads inside one
+   merged word are dropped. */
+// @fn retokenizeRemapHeads
+function retokenizeRemapHeads(sent, remap, merged) {
+  for (const w of (sent.words || [])) {
+    if (!('head' in w) || w.head === null) continue;
+    const to = remap.get(w.head);
+    if (to) w.head = depLocalId(to.id);
+  }
+  for (const { word, parts } of merged) {
+    const self = depLocalId(word.id);
+    const outward = parts.find(p => ('head' in p) && p.head !== null
+                                    && remap.get(p.head) !== word);
+    if (outward) {
+      const to = remap.get(outward.head);
+      word.head = to ? depLocalId(to.id) : outward.head;
+      if (outward.dep_rel) word.dep_rel = outward.dep_rel;
+    } else if (parts.some(p => ('head' in p) && p.head === null)) {
+      word.head = null;                      // the root stays the root
+      const root = parts.find(p => ('head' in p) && p.head === null);
+      if (root.dep_rel) word.dep_rel = root.dep_rel;
+    }
+    if (word.head === self) delete word.head;
+  }
+}
+
 /* B-083: two different questions were being asked through one predicate.
 
    "Will saving destroy something?" — B-057's question, asked before
@@ -14603,15 +14766,43 @@ function saveSentence(sentId) {
     /* B-057 L1: align rather than look up. Exact form first, then the folded key,
        so a case edit reconnects without a currently-correct match being given
        away to a fuzzy one. */
-    const { pairs, unmatchedOld } = alignTokens(oldWords, newForms);
+    const { pairs, unmatchedOld, unmatchedNew } = alignTokens(oldWords, newForms);
     const oldByNew = new Map(pairs.map(([o, n]) => [n, o]));
+    const newWordId = i => `${sentId}.w${String(i + 1).padStart(3, '0')}_${Math.random().toString(36).slice(2, 5)}`;
+
+    // Merges and splits keep their annotation (post-test item 4).
+    const carry = retokenizeCarryPlan(oldWords, newForms, unmatchedOld, unmatchedNew);
+    const carried = new Set([...carry.merges.flatMap(m => m.oldIdxs),
+                             ...carry.splits.map(sp => sp.oldIdx)]);
 
     /* B-057 L2: never discard annotation in silence. _depSweepHeads twenty lines
        below has alerted on orphaned dependency HEADS since v3.14.69; the words
        those heads point at were being dropped without a word. Bare tokens carry
-       no annotation, so ordinary editing never sees this prompt. */
-    const losing = unmatchedOld.map(i => oldWords[i]).filter(hasAnnotation);
+       no annotation, so ordinary editing never sees this prompt. A split word
+       with word-level work its parts cannot hold is asked about too. */
+    const losing = [
+      ...unmatchedOld.filter(i => !carried.has(i)).map(i => oldWords[i]).filter(hasAnnotation),
+      ...carry.splits.map(sp => oldWords[sp.oldIdx]).filter(splitLoses),
+    ];
     if (!confirmAnnotationLoss(losing, tInline('label.kind.word'))) return;
+
+    // New index -> replacement word, and old local id -> the word that replaces it.
+    const built = new Map(), remap = new Map(), merged = [];
+    for (const mg of carry.merges) {
+      const parts = mg.oldIdxs.map(i => oldWords[i]);
+      const word = buildMergedWord(parts, newForms[mg.newIdx], newWordId(mg.newIdx));
+      built.set(mg.newIdx, word);
+      parts.forEach(p => remap.set(depLocalId(p.id), word));
+      merged.push({ word, parts });
+    }
+    for (const sp of carry.splits) {
+      const old = oldWords[sp.oldIdx];
+      const words = buildSplitWords(old, sp.newIdxs.map(n => newForms[n]), sp.newIdxs.map(newWordId));
+      sp.newIdxs.forEach((n, t) => built.set(n, words[t]));
+      if ('head' in old) words[0].head = old.head;
+      if (old.dep_rel) words[0].dep_rel = old.dep_rel;
+      remap.set(depLocalId(old.id), words[0]);
+    }
 
     sent.words = newForms.map((form, i) => {
       const oi = oldByNew.get(i);
@@ -14620,15 +14811,23 @@ function saveSentence(sentId) {
         w.form = form;          // carry the edit onto the preserved object
         return w;
       }
+      if (built.has(i)) return built.get(i);
       // New word, create a bare object; glosses and transliterations are added via Word Edit
       return {
-        id:                  `${sentId}.w${String(i + 1).padStart(3, '0')}_${Math.random().toString(36).slice(2, 5)}`,
+        id:                  newWordId(i),
         form,
         gloss:               null,
         morphological_parse: null,
         morphemes:           [],
       };
     });
+    if (remap.size) retokenizeRemapHeads(sent, remap, merged);
+    if (carry.merges.length || carry.splits.length) {
+      logEvent('info', 'annotation carried by re-tokenization',
+               `${carry.merges.length} merge(s), ${carry.splits.length} split(s)`);
+      flashSaveStatus(`${icon('check-circle')} ${t('status.retok_carried',
+        { merges: carry.merges.length, splits: carry.splits.length })}`);
+    }
     if (losing.length)
       logEvent('warn', 'annotated words discarded by re-tokenization', losing.length);
   }
