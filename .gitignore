@@ -38,6 +38,10 @@ source/models/
 
 # ── Python environment ────────────────────────────────────────────────────────
 .venv/
+
+# Built on each Mac by setup.command (source/scripts/make_mac_app.sh), with that
+# machine's folder path written into it, so it never ships.
+LingCoT.app/
 __pycache__/
 *.py[cod]
 *.pyo

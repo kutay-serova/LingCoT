@@ -27,12 +27,9 @@ for a downloaded zip:
 - macOS 15 and later: try to open it once, then go to **System Settings →
   Privacy & Security** and click **Open Anyway**.
 
-Or skip the question by running it from Terminal:
-```bash
-cd ~/Documents/LingCoT-3.15.4      # the folder you unzipped
-bash setup.command
-```
-The same applies to `LingCoT.command` the first time (`bash LingCoT.command`).
+Only `setup.command` needs this. Setup clears the download flag on the rest of
+the folder and then creates `LingCoT.app`, which macOS does not block because it
+was made on your Mac.
 
 **Windows:**
 ```
@@ -72,7 +69,8 @@ move them the next time you run it.
 
 ## Launching the app
 
-**macOS:** double-click `LingCoT.command`
+**macOS:** double-click `LingCoT.app` (no Terminal window). `LingCoT.command`
+also works and shows the app's output in Terminal.
 **Windows:** double-click `LingCoT.bat`
 
 The app opens as a native window. No browser needed.
@@ -167,7 +165,8 @@ python3 source/build_env.py --recreate
 | `setup.bat` | **Windows.** first-time setup (minimal tier) |
 | `setup_NLLB.command` | **macOS.** add offline NLLB translation |
 | `setup_NLLB.bat` | **Windows.** add offline NLLB translation |
-| `LingCoT.command` | **macOS.** launch the desktop app |
+| `LingCoT.app` | **macOS.** launch the desktop app; built by `setup.command` |
+| `LingCoT.command` | **macOS.** launch the desktop app with a Terminal window |
 | `LingCoT.bat` | **Windows.** launch the desktop app |
 | `pyproject.toml` | Dependency specification |
 | `uv.lock` | Locked dependency versions (used by build_env.py when uv is available) |
@@ -193,7 +192,12 @@ python3 source/build_env.py --recreate
 Run setup again. pywebview is now part of the standard minimal tier; it should be installed automatically.
 
 **`setup.command` won't open on macOS**
-Right-click → Open → Open. Or: `chmod +x setup.command && bash setup.command`.
+See [First-time setup](#first-time-setup): right-click → Open on macOS 14 and
+earlier, **Open Anyway** in Privacy & Security on macOS 15 and later.
+
+**`LingCoT.app` is missing or says the folder was not found**
+Run `setup.command` again. The app records where the LingCoT folder is, so it
+has to be rebuilt after the folder is moved.
 
 **App window is blank or shows an error**
 Check that `source/LingCoT.html` and `source/LingCoT.pyw` are both present. Launch from terminal to see error output:

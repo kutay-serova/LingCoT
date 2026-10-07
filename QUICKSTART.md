@@ -24,10 +24,8 @@ whatever you are looking at.
 
 ## 1 · Open LingCoT
 
-Double-click **`LingCoT.command`** (macOS) or **`LingCoT.bat`** (Windows).
-
-*macOS may refuse the first time. Right-click the file → **Open** → **Open** in
-the dialog that appears. Once only.*
+Double-click **`LingCoT.app`** (macOS) or **`LingCoT.bat`** (Windows).
+`LingCoT.app` is created by setup.
 
 Choose **New Corpus** on the home screen.
 

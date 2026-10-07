@@ -15,8 +15,9 @@ issues.
    download **LingCoT-3.15.4-macOS.zip** under *Assets* and unzip it, for
    example into Documents.
 2. **Install.** Double-click `setup.command` in that folder. If macOS blocks it,
-   [setup.md](setup.md) says what to do (it differs between macOS versions).
-   Then double-click `LingCoT.command` to start.
+   [setup.md](setup.md) says what to do (it differs between macOS versions);
+   it is the only file that needs this. Setup creates `LingCoT.app`: double-click
+   it to start. No Terminal window opens.
 3. Work through [QUICKSTART.md](QUICKSTART.md) with a short text of your own,
    about half an hour.
 4. Report what you find (below).

@@ -47,9 +47,24 @@ if [ $BUILD_STATUS -ne 0 ]; then
     exit 1
 fi
 
+# ── macOS: clear the download flag, build LingCoT.app ───────────────────────
+# A browser download marks every file in the zip, and macOS then blocks each
+# script until it is approved in System Settings. Clearing the mark here means
+# setup.command is the only file that needs that approval.
+# LingCoT.app starts the app without a Terminal window.
+LAUNCH_HINT="LingCoT.command"
+if [ "$(uname)" = "Darwin" ]; then
+    xattr -dr com.apple.quarantine . 2>/dev/null || true
+    if bash source/scripts/make_mac_app.sh "$PWD" >/dev/null; then
+        LAUNCH_HINT="LingCoT.app"
+    else
+        echo "Could not create LingCoT.app; LingCoT.command still works."
+    fi
+fi
+
 echo "============================================="
 echo " Setup complete!"
-echo " Double-click LingCoT.command to launch."
+echo " Double-click $LAUNCH_HINT to launch."
 echo ""
 echo " For offline NLLB translation, run"
 echo " setup_NLLB.command next."

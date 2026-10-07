@@ -162,14 +162,11 @@ Click **"More info"**, then **"Run anyway"**. This warning appears because the f
 1. Open the `LingCoT` folder.
 2. Double-click **`setup.command`**.
 
-**If macOS refuses to open the file:**
-Right-click `setup.command` → **Open** → **Open** in the dialog that appears. You only need to do this once; the file is remembered afterward.
+**If macOS refuses to open the file:** see [setup.md](setup.md); the steps
+differ between macOS versions. This is the only file that needs it: setup clears
+the download flag on the rest of the folder.
 
-Alternatively, open Terminal, navigate to the folder, and run:
-```bash
-chmod +x setup.command LingCoT.command
-bash setup.command
-```
+Setup ends by creating **`LingCoT.app`** in the folder.
 
 ### Linux
 
@@ -193,10 +190,12 @@ Double-click **`LingCoT.bat`**.
 
 ### macOS
 
-Double-click **`LingCoT.command`**.
+Double-click **`LingCoT.app`**. It opens the app without a Terminal window and
+can be dragged to the Dock or to Applications. If something prevents the app
+from starting, a dialog says so and points to the `logs/` folder.
 
-**If macOS shows a security warning on first launch:**
-Right-click → **Open** → **Open**. As with setup; this is a one-time step.
+`LingCoT.command` starts the same app with a Terminal window showing its output,
+which is useful when reporting a problem.
 
 ### Linux
 
@@ -911,7 +910,8 @@ The application folder. **Your corpora are not here.** see
 ```
 LingCoT/
 │
-├── LingCoT.command             macOS - launch the app
+├── LingCoT.app                 macOS - launch the app (built by setup, not shipped)
+├── LingCoT.command             macOS - launch the app with a Terminal window
 ├── LingCoT.bat                 Windows - launch the app
 ├── setup.command / setup.bat   First-time setup (creates .venv/, minimal tier)
 ├── setup_NLLB.command / setup_NLLB.bat    Add offline NLLB translation
@@ -954,6 +954,7 @@ LingCoT/
 │   │   ├── corpus_annotate.py      CLI: batch translation; also runs the NLLB server
 │   │   ├── corpus_optimize.py      CLI: benchmarks this machine for NLLB
 │   │   ├── dict_dedupe.js          CLI: reports dictionary key collisions
+│   │   ├── make_mac_app.sh         Builds LingCoT.app; run by setup.command
 │   │   └── dict_export.py          Module, not a CLI. Imported by the app to
 │   │                                 render the dictionary PDF; running it does
 │   │                                 nothing
