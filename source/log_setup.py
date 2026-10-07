@@ -196,8 +196,9 @@ def setup_append_logger(project_root: Path, filename: str,
     All runs accumulate in the same file, useful for setup scripts that are
     run infrequently and where a full run history in one file is convenient.
 
-    A blank line + timestamp separator is written at the start of each
-    invocation so individual runs are clearly delineated.
+    A blank line + timestamp separator delineates each invocation. It is
+    written with the first record, so a run that logs nothing leaves no trace
+    (B-235: importing a module that sets this up used to add an empty header).
 
     Parameters
     ----------
@@ -212,12 +213,30 @@ def setup_append_logger(project_root: Path, filename: str,
     logs_dir = _get_logs_dir(project_root)
     log_file = logs_dir / filename
 
-    # Write a visual separator so each run is clearly delineated in the file.
     sep = f"\n{'='*72}\n  Session started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n{'='*72}\n"
-    try:
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(sep)
-    except OSError:
-        pass  # If we can't write the separator, continue anyway
+    logger = _make_logger(logger_name, log_file, file_mode="a")
+    for h in logger.handlers:
+        if isinstance(h, logging.FileHandler):
+            h.addFilter(_SeparatorOnFirstRecord(h, sep))
+    return logger
 
-    return _make_logger(logger_name, log_file, file_mode="a")
+
+class _SeparatorOnFirstRecord(logging.Filter):
+    """Writes the session separator to the handler's file just before its
+    first record, then does nothing. Never filters a record out."""
+
+    def __init__(self, handler: logging.FileHandler, sep: str):
+        super().__init__()
+        self._handler = handler
+        self._sep = sep
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if self._sep:
+            sep, self._sep = self._sep, None
+            try:
+                if self._handler.stream is None:
+                    self._handler.stream = self._handler._open()
+                self._handler.stream.write(sep)
+            except OSError:
+                pass  # a missing separator must not stop the record
+        return True

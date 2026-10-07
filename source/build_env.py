@@ -758,19 +758,26 @@ def main() -> int:
         ok(f"Removed  {VENV_DIR}/")
 
     # ── Already exists and not recreating: sync / tier-upgrade in place ────────
+    # B-234: this path returned 0 whatever the verification found, and logged no
+    # outcome, so setup reported success over missing packages.
     if VENV_DIR.exists() and not args.recreate:
         header(f"Venv already exists — syncing to tier: {args.tier}")
         if not sync_existing_venv(tier=args.tier, dev=args.dev):
+            _log.error(f"Sync of the existing venv failed for tier: {args.tier}")
             return 1
         print()
         header("Verifying installation")
-        if check_venv(tier=args.tier):
+        if not check_venv(tier=args.tier):
+            fail("Some packages are missing after the sync.  Check the errors above.")
+            _log.error(f"Verification failed after sync for tier: {args.tier}")
+            return 1
+        _log.info(f"build_env complete — tier: {args.tier} OK (existing venv synced)")
+        print()
+        print(_c(GREEN, "  Environment is on tier: " + args.tier))
+        if args.tier == TIER_NLLB:
             print()
-            print(_c(GREEN, "  Environment is on tier: " + args.tier))
-            if args.tier == TIER_NLLB:
-                print()
-                print("  Next step:  .venv/bin/python3 source/setup.py --nllb")
-                print("              (downloads + converts the NLLB-200 model)")
+            print("  Next step:  .venv/bin/python3 source/setup.py --nllb")
+            print("              (downloads + converts the NLLB-200 model)")
         return 0
 
     # ── Create fresh venv ───────────────────────────────────────────────────────

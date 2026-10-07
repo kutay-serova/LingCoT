@@ -66,6 +66,20 @@ console.log('\nLINGCOT_LOG_DIR moves the logs, and the suite sets it\n');
         'run_all.sh exports it and fails if logs/ changed');
 }
 
+console.log('\nthe append log gets a session header only when the session logs something (B-235)\n');
+{
+  const f = path.join(dir, 'b235.log');
+  const seps = () => fs.existsSync(f) ? (fs.readFileSync(f, 'utf8').match(/Session started/g) || []).length : 0;
+  py(`from pathlib import Path\nimport log_setup\nlog_setup.setup_append_logger(Path('.'), 'b235.log', 'b235a')`);
+  check(seps() === 0, 'a session that logs nothing leaves no header', `${seps()} header(s)`);
+  py(`from pathlib import Path\nimport log_setup\nl = log_setup.setup_append_logger(Path('.'), 'b235.log', 'b235b')\nl.info('first')\nl.info('second')`);
+  const txt = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+  check(seps() === 1 && txt.indexOf('Session started') < txt.indexOf('first'),
+        'a session that logs gets exactly one header, before its first line', txt);
+  py(`from pathlib import Path\nimport log_setup\nl = log_setup.setup_append_logger(Path('.'), 'b235.log', 'b235c')\nl.warning('third')`);
+  check(seps() === 2, 'the next session gets its own', `${seps()} header(s)`);
+}
+
 try { fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {}
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

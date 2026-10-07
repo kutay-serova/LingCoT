@@ -155,5 +155,37 @@ console.log('\nthe failure is visible when it does happen');
         'and carries an install hint the UI already knows how to render');
 }
 
+console.log('\nre-running setup over an existing venv reports a failed check (B-234)');
+{
+  // main() executed with the sync and the check stubbed; the workspace steps are
+  // stubbed too so nothing outside a temp directory is touched.
+  const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'lingcot_b234_'));
+  const run = checkOk => execFileSync('python3', ['-c', `
+import sys, importlib.util as ilu, pathlib
+sys.path.insert(0, ${JSON.stringify(path.join(ROOT, 'source'))})
+spec = ilu.spec_from_file_location('be', ${JSON.stringify(BE)})
+be = ilu.module_from_spec(spec)
+try: spec.loader.exec_module(be)
+except SystemExit: pass
+be.VENV_DIR = pathlib.Path(${JSON.stringify(tmp)})
+be._ensure_ws = lambda *a, **k: True
+be._migrate_ws = lambda *a, **k: 0
+be._migrate_home = lambda *a, **k: 0
+be.sync_existing_venv = lambda **k: True
+be.check_venv = lambda **k: ${checkOk ? 'True' : 'False'}
+sys.argv = ['build_env.py']
+print('RC=%s' % be.main())
+`], { encoding: 'utf8', env: { ...process.env, LINGCOT_LOG_DIR: tmp } });
+  const rc = out => (/RC=(\d+)/.exec(out) || [])[1];
+  let bad = null, good = null;
+  try { bad = rc(run(false)); good = rc(run(true)); } catch (e) { bad = 'threw: ' + (e.stderr || e.message); }
+  check(bad === '1', 'a failed verification after the sync returns 1, so setup.command stops', `got ${bad}`);
+  check(good === '0', 'a passing one returns 0', `got ${good}`);
+  const log = fs.existsSync(path.join(tmp, 'setup.log')) ? fs.readFileSync(path.join(tmp, 'setup.log'), 'utf8') : '';
+  check(/Verification failed after sync/.test(log) && /build_env complete .*existing venv synced/.test(log),
+        'and both outcomes are logged', log.slice(-400));
+  fs.rmSync(tmp, { recursive: true, force: true });
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
