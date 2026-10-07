@@ -9038,7 +9038,13 @@ document.addEventListener('DOMContentLoaded', () => {
      the flash is clickable, so the CSS gives pointer events back only to a
      warning — an ordinary outcome must not be dismissible, because it dismisses
      itself. */
-  document.getElementById('save-status-flash')?.addEventListener('click', function () {
+  document.getElementById('save-status-flash')?.addEventListener('click', function (e) {
+    const act = e.target.closest('[data-flash-action]');
+    if (act) {
+      this.classList.remove('visible', 'flash-action');
+      if (act.dataset.flashAction === 'autopush-undo') undoAutoPush();
+      return;
+    }
     if (this.classList.contains('flash-warn')) {
       this.classList.remove('visible', 'flash-warn');
       this.title = '';
@@ -13042,6 +13048,47 @@ function _pkCandidates(ticked) {
   return out.length ? out : null;
 }
 
+/* @fn defaultCandidates, what the panel would hand back with nothing changed.
+   The same selection as `_pkCandidates` without reading the panel's inputs, for
+   the push that skips the panel (`pickerNeeded`). */
+function defaultCandidates(rows) {
+  const out = [];
+  for (const r of rows || []) {
+    if (!r.on || !r.form) continue;
+    const c = { ...r };
+    for (const k of _ROW_ONLY) delete c[k];
+    out.push(c);
+  }
+  return out.length ? out : null;
+}
+
+/* @fn pickerNeeded, false when the panel has nothing to ask.
+   A word of one morpheme with one visible row, ticked, new to the dictionary and
+   clashing with nothing: the panel only ever confirmed it (Mandarin tester logs,
+   2026-09: 70 of 74 such saves spent under 2 s in it). The push still happens,
+   and is reported with an Undo. */
+function pickerNeeded(word, rows) {
+  if ((word.morphemes || []).length > 1) return true;
+  const draw = visibleRows(rows);
+  if (draw.length !== 1) return true;
+  const r = draw[0];
+  return !(r.on && !r.existing && !(r.clash || []).length && r.form);
+}
+
+let _autoPushUndo = null;   // { ids, wordId } of the last push that skipped the panel
+
+/* @fn undoAutoPush, remove the entries a panel-less push created */
+function undoAutoPush() {
+  const u = _autoPushUndo;
+  _autoPushUndo = null;
+  if (!u) return;
+  for (const id of u.ids) deleteDictEntry(id, { ask: false, stay: true });
+  logEvent('info', 'dictionary push undone', u.ids.join(' '));
+  _renderCacheKey = null;
+  render();
+  flashSaveStatus(`${icon('check-circle')} ${t('status.autopush_undone')}`);
+}
+
 
 /* @fn openAddDict, the one way into the add-to-dictionary panel.
    D51 stage 5, v3.14.270. Every route now goes through here: the push (from
@@ -14865,6 +14912,7 @@ function saveWord(wordId, sentId) {
      because the panel is asynchronous and the tail is not repeatable. */
   let _finished = false;
   let _pickerT0 = 0;                       // set when the add-to-dictionary panel opens
+  let _autoPushed = false;                 // the push skipped the panel (pickerNeeded)
   const _finishSave = (picked) => {
     if (_finished) return;                 // Escape and a button can both arrive
     _finished = true;
@@ -14884,6 +14932,10 @@ function saveWord(wordId, sentId) {
          the write. */
       _push = createEntries(picked);
       logEvent('info', `token pushed to dictionary (${_push.created.length} new entr${_push.created.length === 1 ? 'y' : 'ies'})`, wordId);
+      if (_autoPushed && _push.created.length) {
+        _autoPushUndo = { ids: _push.created.map(e => e.id), wordId };
+        logEvent('info', 'add-to-dictionary picker skipped', `${_push.created.length} new`);
+      }
     }
 
     /* D35 A3: link the token to its dictionary entry when the form is
@@ -14892,6 +14944,9 @@ function saveWord(wordId, sentId) {
 
     logEvent('info', 'word saved', wordId);
     reportLinkNotes();   // S3: say what the linking machinery actually did
+    if (_autoPushed && _autoPushUndo)
+      flashSaveStatus(`${icon('book')} ${esc(t('status.autopush', { form: word.form }))}`,
+                      { action: 'autopush-undo', label: t('btn.flash.undo') });
     /* D50: one action, two stores. The word is deep — autoLinkWord has just
        written dict_id onto its morphemes. The dictionary side is every entry the
        push created OR filled, not only the new ones, because a fill is a write. */
@@ -14911,6 +14966,12 @@ function saveWord(wordId, sentId) {
      the form's DOM, a third read path beside readForm and the word editor's own;
      the store stays the single source. */
   if (document.getElementById('ew-push-dict')?.checked) {
+    const _rows = candidateRows({ word });
+    if (!pickerNeeded(word, _rows)) {
+      _autoPushed = true;
+      _finishSave(defaultCandidates(_rows));
+      return;
+    }
     _pickerT0 = Date.now();
     openAddDictModal(candidateRows({ word }), _finishSave);
   } else _finishSave(null);
@@ -15587,7 +15648,7 @@ async function runDictExport() {
   }
 }
 
-function deleteDictEntry(entryId) {
+function deleteDictEntry(entryId, opts = {}) {
   const entry = S.dictById.get(entryId);
   if (!entry) return;
 
@@ -15606,7 +15667,8 @@ function deleteDictEntry(entryId) {
         lemmaWords: refs.lemmaWords.length,
         entries:    refs.entries.length })
     : t('confirm.entry.delete', { label });
-  if (!confirm(msg)) return;
+  // `ask: false` is the undo of an entry this session just made (undoAutoPush).
+  if (opts.ask !== false && !confirm(msg)) return;
   if (nRefs) {
     clearDictEntryRefs(entryId, refs);
     logEvent('info', `dictionary entry deleted, ${nRefs} reference(s) cleared`, entryId);
@@ -15657,6 +15719,7 @@ function deleteDictEntry(entryId) {
   reportLinkNotes();   // S3, and D35 B6's orphan count with it
   mutate(nRefs ? ['corpus', 'dict'] : 'dict',
          nRefs ? _repaired : { dict: [{ del: entryId }] });
+  if (opts.stay) return;
   const remaining = S.dictByForm.get(normForm(entry.form)) || [];
   if (remaining.length) {
     go('dict', { dictForm: entry.form, wordId: S.wordId, sentId: S.sentId,

@@ -204,6 +204,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
   color: var(--danger, #c0392b); font-weight: 600;
   pointer-events: auto; cursor: pointer;
 }
+/* A flash with an action button (Undo) takes clicks while it is shown. */
+#save-status-flash.flash-action.visible { pointer-events: auto; }
+#save-status-flash .flash-act {
+  margin-left: 6px; padding: 0 6px; font: inherit; font-weight: 600;
+  color: var(--accent); background: none; border: 1px solid var(--accent);
+  border-radius: var(--r); cursor: pointer;
+}
 /* L-038's history: collapsed, and small enough that the queue keeps the panel. */
 .oc-fold { margin-top: 8px; }
 .oc-list { max-height: 168px; overflow-y: auto; padding-top: 4px; }

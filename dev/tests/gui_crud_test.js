@@ -736,12 +736,57 @@ async function scenarioG() {
   await H2.close();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   H. THE PUSH WITHOUT A QUESTION (autopush). A one-morpheme word with one new
+      row is added to the dictionary without the panel, and Undo takes it back;
+      a word of two morphemes still gets the panel.
+   ═════════════════════════════════════════════════════════════════════════ */
+async function scenarioH() {
+  console.log('\n\x1b[1m── H. pushing a simple word skips the panel ──\x1b[0m');
+  const dir = path.join(OUT, 'H');
+  const H = await boot({ outDir: dir, corpusPath: path.join(dir, 'h_corpus.jsonl') });
+  const { page } = H;
+  await startCorpus(H, { title: 'GUI Guard H' });
+  await addSection(H, 'Section Hotel', 'Kilo lima.');
+  const refs = await tokenRefs(page);
+  const panelOpen = () => page.evaluate(() =>
+    !!document.getElementById('pk-overlay')?.classList.contains('open'));
+
+  await editWord(H, refs[0], async p => {
+    await p.fill('#ew-gloss', 'KILO-GLOSS');
+    await p.check('#ew-push-dict');
+  });
+  await page.waitForTimeout(250);
+  check(!(await panelOpen()), 'H1  a one-morpheme word with one new row is pushed without the panel');
+  const got = await page.evaluate(() => S.dictionary.map(e => e.form));
+  eq(got, ['Kilo'], 'H2  and the entry is in the dictionary');
+  const undo = await page.$('#save-status-flash [data-flash-action="autopush-undo"]');
+  check(!!undo, 'H3  the status line offers Undo');
+  if (undo) {
+    await undo.click();
+    await page.waitForTimeout(250);
+    const after = await page.evaluate(o => ({
+      n: S.dictionary.length, link: findWord(o.wid).word.dict_id || null }), refs[0]);
+    check(after.n === 0 && !after.link, 'H4  Undo removes the entry and the link to it', JSON.stringify(after));
+  }
+
+  await editWord(H, refs[1], async p => {
+    await p.fill('#ew-parse', 'li-ma');
+    await p.waitForTimeout(150);
+    await p.check('#ew-push-dict');
+  });
+  await page.waitForTimeout(250);
+  check(await panelOpen(), 'H5  a word of two morphemes still opens the panel');
+  allErrors.push(...H.errors);
+  await H.close();
+}
+
 /* ── run ───────────────────────────────────────────────────────────────────── */
 (async () => {
   const t0 = Date.now();
   console.log(`\n  driving LingCoT v${appVersion()} from ${require('./_gui.js').SRC}`);
   console.log(`  workspace: ${OUT}`);
-  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG]) {
+  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG, scenarioH]) {
     try { await s(); }
     catch (err) {
       fail++; failures.push(s.name + ' threw');

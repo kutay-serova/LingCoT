@@ -54,7 +54,8 @@ check(/function icon\(name\)\s*\{[^}]*#ph-\$\{name\}/.test(read('LingCoT.html'))
       '         flashSaveStatus derives severity from that string; if the sprite\n'
     + '         reference changes shape, every failure reads as a success');
 
-check(/function flashSaveStatus\(msg\)\s*\{\s*const warn = \/#ph-warning\/\.test/.test(js),
+/* `opts` carries an action button only (autopush's Undo), never severity. */
+check(/function flashSaveStatus\(msg(, opts = \{\})?\)\s*\{\s*const warn = \/#ph-warning\/\.test/.test(js),
       'flashSaveStatus derives `warn` from the message, not from a parameter',
       '         a second parameter is a second writer of one thing (PRACTICES §4)');
 
@@ -281,12 +282,14 @@ check(/const _outcomes = \[\]/.test(read('modules/events.js')),
 console.log('\n7 · dismissal is offered only where it is meant');
 
 const listener = htmlSrc.match(
-  /getElementById\('save-status-flash'\)\?\.addEventListener\('click',[\s\S]{0,300}?\n  \}\);/);
+  /getElementById\('save-status-flash'\)\?\.addEventListener\('click',[\s\S]{0,600}?\n  \}\);/);
 check(!!listener, 'the flash has a click listener');
 check(listener && /classList\.contains\('flash-warn'\)/.test(listener[0]),
       'it dismisses only a warning',
       '         an ordinary outcome must not be dismissible: it dismisses itself,\n'
     + '         and a click that sometimes does nothing teaches nothing');
+check(listener && /closest\('\[data-flash-action\]'\)/.test(listener[0]),
+      'and a flash that carries an action button runs that action');
 check(/#save-status-flash\.flash-warn\s*\{[^}]*pointer-events:\s*auto/.test(read('LingCoT.css')),
       'only a warning takes pointer events',
       '         otherwise the cursor promises a click that will not fire');

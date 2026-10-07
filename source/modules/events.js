@@ -993,7 +993,9 @@ const _outcomes = [];       // newest first; capped; never persisted
 // @fn outcomeHistory, what has been said this session
 function outcomeHistory() { return _outcomes; }
 
-function flashSaveStatus(msg) {
+/* `opts.action` adds one button (e.g. Undo); the message then stays 8 s and
+   takes clicks. The history keeps the message without the button. */
+function flashSaveStatus(msg, opts = {}) {
   const warn = /#ph-warning/.test(String(msg));
   _outcomes.unshift({ html: String(msg), warn, at: new Date() });
   if (_outcomes.length > OUTCOME_MAX) _outcomes.length = OUTCOME_MAX;
@@ -1003,13 +1005,17 @@ function flashSaveStatus(msg) {
 
   const el = document.getElementById('save-status-flash');
   if (!el) return;
-  el.innerHTML = msg;
+  el.innerHTML = msg + (opts.action
+    ? ` <button type="button" class="flash-act" data-flash-action="${escAttr(opts.action)}">${esc(opts.label || '')}</button>`
+    : '');
   el.classList.add('visible');
   el.classList.toggle('flash-warn', warn);
+  el.classList.toggle('flash-action', !!opts.action);
   el.title = warn ? (typeof t === 'function' ? t('title.flash.dismiss') : '') : '';
   clearTimeout(el._flashTimer);
   if (warn) return;                       // stays until replaced or dismissed
-  el._flashTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+  el._flashTimer = setTimeout(() => el.classList.remove('visible', 'flash-action'),
+                              opts.action ? 8000 : 2500);
 }
 
 /* ── Save settings panel ── */

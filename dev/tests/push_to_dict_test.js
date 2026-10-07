@@ -85,7 +85,8 @@ for (const fn of ['normForm', 'normMeta', 'lookupDict', 'dictResolution', 'resol
                   /* B-197: the same reader, asked of a morpheme row and its link. */
                   'findDictEntry', 'morphLinkClash',
                   '_wordSeeds', 'candidateRows', 'visibleRows', 'rememberPush',
-                  'resetPushMemory', 'tokenCandidates', 'createEntries']) {
+                  'resetPushMemory', 'tokenCandidates', 'createEntries',
+                  'pickerNeeded', 'defaultCandidates']) {
   vm.runInThisContext(sliceFn(fn), { filename: fn + '.js' });
 }
 /* Taken from the source rather than restated: the list of fields a candidate
@@ -712,6 +713,30 @@ test('B-148: the surviving row keeps what the annotator said on the merged one',
   const { created } = createEntries(tokenCandidates(w, [0]));
   eq(created.length, 1, 'one entry');
   eq(created[0].type, 'root', 'stored with the declared type');
+});
+
+/* Post-test (autopush): the panel is skipped only when it has nothing to ask. */
+test('a one-morpheme word with one new, ticked row skips the panel', () => {
+  resetDict(); resetPushMemory();
+  const w = { id: 'w1', form: '\u8d70', morphemes: [{ form: '\u8d70', gloss: 'walk' }] };
+  const rows = candidateRows({ word: w });
+  eq(pickerNeeded(w, rows), false, 'nothing to ask: no panel');
+  const c = defaultCandidates(rows);
+  assert(c && c.length >= 1 && c.every(x => x.on === undefined && x.existing === undefined),
+         'and the defaults are handed over as candidates, without row-only keys');
+  const { created } = createEntries(c);
+  eq(created.length, 1, 'which the writer turns into one entry');
+});
+
+test('and every other case still asks', () => {
+  resetDict(); resetPushMemory();
+  const multi = { id: 'w2', form: 'evde', morphemes: [{ form: 'ev' }, { form: '-de' }] };
+  eq(pickerNeeded(multi, candidateRows({ word: multi })), true, 'two morphemes: panel');
+  const arch = { id: 'w3', form: 'de', morphemes: [{ form: 'dA' }] };
+  eq(pickerNeeded(arch, candidateRows({ word: arch })), true, 'a morpheme that is not the word form: panel');
+  resetDict([_makeDictEntry('\u8d70', 'word', null, null)]);
+  const known = { id: 'w4', form: '\u8d70', morphemes: [{ form: '\u8d70' }] };
+  eq(pickerNeeded(known, candidateRows({ word: known })), true, 'an entry that already exists: panel');
 });
 
 test('and a word whose morpheme differs is two rows, still', () => {
