@@ -76,7 +76,7 @@ const ctx = vm.createContext({
 vm.runInContext(`var _sentTextIdx = { gen: -1, fold: -1, map: new Map() }; var _sentKeyMemo = new WeakMap();
                  var _provEventKey = new Map(); var _copyPanel = null; var _copyUndo = null;`, ctx);
 for (const fn of ['sentKey', '_sentKeyOf', 'sentTextIndex', 'sameTextSentences', '_lcsPairs', 'alignTokens',
-                  'depLocalId', '_navIsToken', 'padId', 'wordAnalysisOf', 'lemmaFormOf',
+                  'depLocalId', '_navIsToken', 'padId', 'wordAnalysisOf', 'translitRowsOf', 'monoMorpheme', 'lemmaFormOf',
                   '_copyCell', '_lemmaLabel', 'wordCopyPlan', 'sentenceCopyPlan', '_sentSignature', 'copyOffersFor',
                   'applyWordCopy', 'applySentenceCopy', 'undoSentenceCopy',
                   '_derivedFieldProv', '_copyFieldProv', '_provKeyOf', 'thinProv', 'internProv', 'stampField',

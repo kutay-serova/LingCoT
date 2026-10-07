@@ -1504,10 +1504,30 @@ function wordGloss(w, opts) {
   if (w.gloss) return w.gloss;
   return compact || null;
 }
-/* @fn wordHasStoredTranslit, a transliteration typed on the word itself, as
-   opposed to one wordTranslit() joins from the morphemes (B-210). */
+/* @fn monoMorpheme, the word's only morpheme when it has the word's own form.
+   mono-link: such a morpheme carries the word's transliteration, and the word
+   stores its own only when it differs. */
+function monoMorpheme(w) {
+  const ms = (w && w.morphemes) || [];
+  return ms.length === 1 && ms[0] && ms[0].form && w.form
+         && normForm(ms[0].form) === normForm(w.form) ? ms[0] : null;
+}
+
+/* @fn translitRowsOf, the word's transliteration rows: its own, or those of a
+   lone morpheme of the same form. The list readers (editor, chips, word view,
+   reader popup) go through here; `wordTranslit` gives the joined string. */
+function translitRowsOf(w) {
+  const own = (w && w.transliterations || []).filter(x => x && x.text);
+  if (own.length) return w.transliterations;
+  const m = monoMorpheme(w);
+  return m ? (m.transliterations || []) : [];
+}
+
+/* @fn wordHasStoredTranslit, a transliteration of the word itself, as opposed to
+   one wordTranslit() joins from several morphemes (B-210). A lone morpheme of
+   the same form counts as the word's own (mono-link). */
 function wordHasStoredTranslit(w) {
-  return (Array.isArray(w.transliterations) && w.transliterations.some(x => x && x.text)) || !!w.transliteration;
+  return translitRowsOf(w).some(x => x && x.text) || !!w.transliteration;
 }
 
 // @fn wordTranslit
@@ -4687,7 +4707,7 @@ let _ewAnalyses = [];      // the analyses the open word editor's chips index in
 function wordAnalysisOf(w) {
   const ms = w.morphemes || [];
   return {
-    translits: (w.transliterations || []).filter(x => x && x.text).map(x => ({ label: x.label || '', text: x.text })),
+    translits: translitRowsOf(w).filter(x => x && x.text).map(x => ({ label: x.label || '', text: x.text })),
     pos:    w.part_of_speech || '',
     gloss:  wordGloss(w) || '',
     stored: w.gloss || '',                     // a gloss typed on the word, not composed
@@ -8470,6 +8490,60 @@ function _migrateCorpusRecords(docs) {
   return { unjoined: _migrateDropDerivedWordGloss(docs) };
 }
 
+/* @fn _reconcileMonoMorphemes, one value per linked field on single-morpheme words.
+   mono-link links gloss, transliteration and part of speech between a word and
+   its only morpheme in the editor. Data written before that is brought into the
+   same shape on load: a gloss or transliteration on the word only moves to the
+   morpheme (the word reads it back), an equal word copy of a transliteration is
+   dropped, and a part of speech on one side only is copied to the other (both
+   are stored). Values that differ stay as they are and open unlinked. Stamps
+   move with their values. Needs the fold context (normForm). */
+function _reconcileMonoMorphemes(docs) {
+  const n = { glosses: 0, translits: 0, pos: 0 };
+  const key = l => (l || []).filter(x => x && x.text).map(x => `${x.label || ''}\u0001${x.text}`).join('\u0002');
+  // The stamp travels with the value: same moment, through the one writer.
+  const moveStamp = (from, to, f, keep) => {
+    const idx = from.field_prov && from.field_prov[f];
+    const moment = Number.isInteger(idx) ? S.provEvents[idx] : null;
+    if (!moment) return;
+    stampField(to, f, moment);
+    if (!keep) stampField(from, f, null);
+  };
+  for (const d of docs || []) for (const sec of d.sections || []) for (const p of sec.paragraphs || [])
+  for (const s of p.sentences || []) for (const w of s.words || []) {
+    const ms = w.morphemes || [];
+    if (ms.length !== 1 || !ms[0]) continue;
+    const m = ms[0];
+    if (w.gloss && !m.gloss) {
+      m.gloss = w.gloss; moveStamp(w, m, 'gloss'); w.gloss = null; n.glosses++;
+    }
+    if (monoMorpheme(w)) {
+      const wk = key(w.transliterations), mk = key(m.transliterations);
+      if (wk && !mk) {
+        m.transliterations = w.transliterations; moveStamp(w, m, 'transliterations');
+        w.transliterations = []; n.translits++;
+      } else if (wk && wk === mk) {
+        w.transliterations = [];
+        if (w.field_prov && w.field_prov.transliterations !== undefined) stampField(w, 'transliterations', null);
+        n.translits++;
+      }
+    }
+    if (w.part_of_speech && !m.part_of_speech) {
+      m.part_of_speech = w.part_of_speech; moveStamp(w, m, 'part_of_speech', true); n.pos++;
+    } else if (!w.part_of_speech && m.part_of_speech) {
+      w.part_of_speech = m.part_of_speech; moveStamp(m, w, 'part_of_speech', true); n.pos++;
+    }
+  }
+  return n;
+}
+
+// @fn _logMonoReconciled, said once per load, counts only
+function _logMonoReconciled(n, when) {
+  if (n.glosses || n.translits || n.pos)
+    logEvent('info', `single-morpheme fields reconciled${when ? ' ' + when : ''}`,
+             `${n.glosses} gloss(es), ${n.translits} transliteration(s), ${n.pos} part(s) of speech`);
+}
+
 // @fn applyCorpus
 function applyCorpus(data, basename) {
   /* Interning stage B. The event table is lifted out before anything else looks
@@ -8506,6 +8580,7 @@ function applyCorpus(data, basename) {
   _activeAnnotatorId   = '';
   _activeAnnotatorName = '';
   refreshFoldContext(false);   // B-043: bind the fold rules before any index is built
+  _logMonoReconciled(_reconcileMonoMorphemes(S.docs));   // mono-link; needs the fold
   if (_adopted.converted)
     logEvent('info', 'provenance interned', `${_adopted.converted} inline stamp(s) → ${S.provEvents.length} event(s)`);
   if (_adopted.unresolved) reportProvDamage(_adopted.unresolved, basename);
@@ -8738,6 +8813,7 @@ async function applyProjectBundle(project) {
        the newest one, which is why this is the whole sequence rather than the one
        line that prompted it. Idempotent, one walk. */
     const _migR = _migrateCorpusRecords(S.docs);
+    _logMonoReconciled(_reconcileMonoMorphemes(S.docs), 'after replay');
     if (_migR.unjoined) logEvent('info', 'derived word glosses dropped after replay',
                                  `${_migR.unjoined} from journalled record bodies (B-176)`);
     buildCorpusIndex();
@@ -10710,8 +10786,9 @@ function renderWord() {
   // S3: a one-line hint makes the Annotate-vs-Lexicon split explicit, shown only
   // in the state where both are offered (filled token with no dict entry yet).
   // B-212: the word's own transliterations, which this view did not draw.
-  const translitHtml = (word.transliterations || []).some(x => x && x.text)
-    ? `<div class="word-view-translit">${renderTransliterationsView(word.transliterations)}</div>` : '';
+  const _wtl = translitRowsOf(word);
+  const translitHtml = _wtl.some(x => x && x.text)
+    ? `<div class="word-view-translit">${renderTransliterationsView(_wtl)}</div>` : '';
   const actionHint  = (!_wordIsEmpty && !_hasDictEntry)
     ? `<div class="word-action-hint">${t('hint.view.word.annotate_vs_lexicon')}</div>` : '';
 
@@ -13384,8 +13461,8 @@ function renderWordEdit() {
             The legacy scalar `word.transliteration` is read here for display and
             never written back — `readTransliterationsEditor` returns the rows. */
         renderTransliterationsEditor('ew-translit',
-          (word.transliterations && word.transliterations.length)
-            ? word.transliterations
+          translitRowsOf(word).length
+            ? translitRowsOf(word)
             : (word.transliteration ? [{ label: '', text: word.transliteration }] : []))}
       <div id="ew-translit-differs"></div>
     </div>
@@ -14839,6 +14916,13 @@ function saveWord(wordId, sentId) {
             { comments: readCommentsEditor(elementIdFor('word', fieldOf('word', 'comments'))),
               transliterations: wTranslits },
             prov());
+  /* mono-link: a lone morpheme of the same form carries the transliteration, and
+     the word keeps a list of its own only when it differs (translitRowsOf
+     reads it back). */
+  const _mono = monoMorpheme(word);
+  if (_mono && _translitKey(word.transliterations)
+      && _translitKey(word.transliterations) === _translitKey(_mono.transliterations))
+    word.transliterations = [];
 
   // Object-level provenance stamp (last person to touch this word)
   applyProvToObj(word);

@@ -283,7 +283,7 @@ function readerWordPopHtml(el) {
   const { rule, sel } = readerHlRule(el);
   const n = document.querySelectorAll(sel).length;
   const row = (label, html) => html ? `<div class="rp-row"><div class="rp-lbl">${label}</div><div class="rp-val">${html}</div></div>` : '';
-  const tls = (w.transliterations || []).filter(x => x && x.text)
+  const tls = translitRowsOf(w).filter(x => x && x.text)
     .map(x => `<div>${x.label ? `<span class="rp-tag">${esc(x.label)}</span> ` : ''}${esc(x.text)}</div>`).join('');
   const entry = w.dict_id ? findDictEntry(w.dict_id) : null;
   const morphs = (w.morphemes || []).filter(m => m && (m.form || m.gloss))

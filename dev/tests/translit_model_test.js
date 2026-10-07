@@ -155,7 +155,8 @@ console.log('\n3 · one editor, at every level that declares one\n');
 console.log('\n4 · the legend says "derived" only when it is (B-210)\n');
 {
   const ctx = vm.createContext({});
-  vm.runInContext(fnSrc('LingCoT.html', 'wordHasStoredTranslit'), ctx);
+  for (const fn of ['normForm', 'monoMorpheme', 'translitRowsOf', 'wordHasStoredTranslit'])   // mono-link
+    vm.runInContext(fnSrc('LingCoT.html', fn), ctx);
   const has = w => vm.runInContext('wordHasStoredTranslit', ctx)(w);
   check(has({ transliterations: [{ label: 'IPA', text: "so'ɰuk" }] }), 'a typed transliteration is stored, not derived');
   check(!has({ transliterations: [], morphemes: [{ transliterations: [{ text: 'so' }] }] }),

@@ -781,12 +781,82 @@ async function scenarioH() {
   await H.close();
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   I. LINKED FIELDS ON A ONE-MORPHEME WORD (mono-link). Typing on one side
+      fills the other; editing the filled copy unlinks it; the file stores one
+      value where the model has one.
+   ═════════════════════════════════════════════════════════════════════════ */
+async function scenarioI() {
+  console.log('\n\x1b[1m── I. word and morpheme fields are linked ──\x1b[0m');
+  const dir = path.join(OUT, 'I');
+  const corpus = path.join(dir, 'i_corpus.jsonl');
+  const H = await boot({ outDir: dir, corpusPath: corpus });
+  const { page } = H;
+  await startCorpus(H, { title: 'GUI Guard I' });
+  await addSection(H, 'Section India', 'Mike november.');
+  const refs = await tokenRefs(page);
+  const val = sel => page.evaluate(q => document.querySelector(q)?.value ?? null, sel);
+  const addTranslit = async (container, text) => {
+    await page.evaluate(c => document.querySelector(`[data-action="translit-add"][data-container="${c}"]`)?.click(), container);
+    await page.waitForTimeout(80);
+    await page.fill(`#${container} .translit-row:last-child .translit-text`, text);
+  };
+
+  await page.evaluate(o => go('word-edit', { wordId: o.wid, sentId: o.sid, sectIdx: o.si, paraIdx: o.pi }), refs[0]);
+  await page.waitForTimeout(150);
+  await page.fill('#ew-gloss', 'MIKE-G');
+  eq(await val('#ew-mg-0'), 'MIKE-G', 'I1  typing the word gloss fills the morpheme gloss');
+  await page.fill('#ew-pos', 'NOUN');
+  eq(await val('#ew-mp-0'), 'NOUN', 'I2  and the part of speech');
+  await addTranslit('ew-translit', 'mayk');
+  eq(await val('#ew-mtr-0 .translit-text'), 'mayk', 'I3  and a transliteration row');
+  check(await page.evaluate(() => !!document.querySelector('#ew-mtr-0')?.closest('details')?.open),
+        'I4  with the morpheme\'s transliteration fold opened so the copy is seen');
+  check(await page.evaluate(() => document.getElementById('ew-mg-0').classList.contains('mono-copy')),
+        'I5  the copy is marked as a copy');
+
+  await page.fill('#ew-mg-0', 'OTHER');
+  await page.fill('#ew-gloss', 'MIKE-2');
+  eq(await val('#ew-mg-0'), 'OTHER', 'I6  editing the copy unlinks it: the word gloss no longer overwrites it');
+  await page.evaluate(() => document.getElementById('save-word').click());
+  await page.waitForTimeout(200);
+
+  await page.evaluate(o => go('word-edit', { wordId: o.wid, sentId: o.sid, sectIdx: o.si, paraIdx: o.pi }), refs[1]);
+  await page.waitForTimeout(150);
+  await page.fill('#ew-parse', 'nvmbr');
+  await page.waitForTimeout(150);
+  await addTranslit('ew-translit', 'novembr');
+  eq(await page.evaluate(() => document.querySelector('#ew-mtr-0 .translit-text')?.value || ''), '',
+     'I7  a morpheme of another form does not take the word\'s transliteration');
+  await page.fill('#ew-gloss', 'NOV-G');
+  eq(await val('#ew-mg-0'), 'NOV-G', 'I8  but its gloss is still linked');
+  await page.evaluate(() => document.getElementById('save-word').click());
+  await page.waitForTimeout(200);
+
+  await armAndSave(H, 'i');
+  const C = readCorpus(corpus);
+  const W = C && C.doc ? walkWords(C.doc).map(x => x.w) : [];
+  const mike = W.find(w => w.form === 'Mike'), nov = W.find(w => w.form === 'november');
+  check(!!mike && mike.morphemes?.[0]?.gloss === 'OTHER' && mike.gloss === 'MIKE-2',
+        'I9  the unlinked values are both stored', JSON.stringify(mike && { g: mike.gloss, mg: mike.morphemes?.[0]?.gloss }));
+  check(!!mike && (mike.morphemes?.[0]?.transliterations || [])[0]?.text === 'mayk'
+          && !(mike.transliterations || []).some(x => x && x.text),
+        'I10 the linked transliteration is stored once, on the morpheme',
+        JSON.stringify(mike && { w: mike.transliterations, m: mike.morphemes?.[0]?.transliterations }));
+  check(!!mike && mike.part_of_speech === 'NOUN' && mike.morphemes?.[0]?.part_of_speech === 'NOUN',
+        'I11 the part of speech is stored on both');
+  check(!!nov && (nov.transliterations || [])[0]?.text === 'novembr',
+        'I12 a word whose morpheme has another form keeps its own transliteration');
+  allErrors.push(...H.errors);
+  await H.close();
+}
+
 /* ── run ───────────────────────────────────────────────────────────────────── */
 (async () => {
   const t0 = Date.now();
   console.log(`\n  driving LingCoT v${appVersion()} from ${require('./_gui.js').SRC}`);
   console.log(`  workspace: ${OUT}`);
-  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG, scenarioH]) {
+  for (const s of [scenarioA, scenarioB, scenarioC, scenarioD, scenarioE, scenarioF, scenarioG, scenarioH, scenarioI]) {
     try { await s(); }
     catch (err) {
       fail++; failures.push(s.name + ' threw');

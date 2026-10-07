@@ -1154,6 +1154,8 @@
   "btn.pk.use_existing": "No — use the entry already here",
   "label.editor.link_clash": "linked entry says {fields}",
   "title.editor.link_clash": "The linked entry says something else. Either it is a different word, or the link is wrong.",
+  "title.editor.mono_copy": "Copied from the linked field. Editing it unlinks the two.",
+  "title.editor.mono_linked": "Linked: typing here also fills the matching word or morpheme field.",
   "btn.editor.unlink": "unlink",
   "copy.panel": "Copy annotation",
   "copy.banner_in": "Same text as {loc} · {n} words annotated there",

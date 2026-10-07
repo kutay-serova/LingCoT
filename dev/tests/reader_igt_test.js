@@ -45,7 +45,7 @@ const ctx = vm.createContext({
   sentTrans: s => s.translations?.[0]?.text || null, sentPosLabel: id => `@${id}`,
   normForm: f => String(f).toLocaleLowerCase('tr'),
   _navIsToken: w => /\p{L}/u.test(w.form || ''),
-  wordGloss: w => w.gloss || '', wordTranslit: w => (w.transliterations || [])[0]?.text || '',
+  wordGloss: w => w.gloss || '', wordTranslit: w => (w.transliterations || [])[0]?.text || '', translitRowsOf: w => w.transliterations || [],
   findWord: id => byWord.get(id) || null, findDictEntry: id => (id === 'd1' ? { gloss: 'mountain', meaning: 'a high hill' } : null),
   lemmaFormOf: id => (id === 'L1' ? 'dağ' : ''), depLocalId: id => id.split('.').pop(),
   CSS: { escape: s => String(s) },

@@ -78,7 +78,7 @@ const ctx = vm.createContext({
   prov: () => ({ annotator_id: 'ann_1', date: '2026-09-23', time: '10:00:00' }),
 });
 vm.runInContext("var _ewAnalyses = []; var OFFER_MARKS = { will: '=', new: '+', stop: '!', differs: '≠' };", ctx);
-for (const fn of ['_rankValues', 'wordAnalysisOf', 'wordAnalyses', '_ewFormState', '_analysisFills',
+for (const fn of ['_rankValues', 'wordAnalysisOf', 'translitRowsOf', 'monoMorpheme', 'wordAnalyses', '_ewFormState', '_analysisFills',
                   '_wordOfferMeta', 'refreshWordOffers', '_ewSet', 'takeWordAnalysis', 'offerStripHtml',
                   '_offerMoment', '_copyFieldProv', '_derivedFieldProv']) {
   const src = fnSrc('LingCoT.html', fn);
@@ -176,7 +176,9 @@ console.log('\n6 · found testing stage D: B-211 and B-212\n');
   const rf = fnSrc('LingCoT.html', 'refreshLemmaStrip') || '';
   check(/chosenId\)/.test(rf) && /dataset\.lemmaId/.test(rf), 'B-211: the repaint passes the field\'s choice');
   const rw = fnSrc('LingCoT.html', 'renderWord') || '';
-  check(/renderTransliterationsView\(word\.transliterations\)/.test(rw), 'B-212: the word view draws the word\'s transliterations');
+  // mono-link: through translitRowsOf, so a lone morpheme's rows show too.
+  check(/const _wtl = translitRowsOf\(word\);/.test(rw) && /renderTransliterationsView\(_wtl\)/.test(rw),
+        'B-212: the word view draws the word\'s transliterations');
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

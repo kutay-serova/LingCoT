@@ -549,12 +549,15 @@ test('_fixMorphRowIds selectors match the emitted markup', () => {
      comment said "as long as both hold the same text", the code said "both are
      empty" — the only reachable case while the gloss was always stored. */
   const ev = decomment(read(path.join('modules', 'events.js')));
-  check(/const _agree = _ewGloss\.value === _ewMg0\.value;/.test(ev),
-        'the word↔morpheme mirror attaches when the two agree',
+  /* mono-link replaced the gloss mirror with linked pairs; the behaviour is
+     driven in gui_crud_test.js scenario I. What stays here is B-187's half:
+     agreeing values start linked, not only empty ones. */
+  check(/linked: va === vb \|\| !va \|\| !vb,/.test(ev),
+        'the word↔morpheme link attaches when the two agree',
         '       `both empty` is a special case of agreeing and was the only one\n'
       + '       that could happen; reopening a glossed word met neither');
-  check(/let _lastSync = _ewGloss\.value;/.test(ev),
-        'and starts from the value they agree on, not from empty');
+  check(/source: va === vb \? null : \(va \? 'a' : 'b'\)/.test(ev),
+        'and an agreeing pair has no leading side until one is typed into');
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

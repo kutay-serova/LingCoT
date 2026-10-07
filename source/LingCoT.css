@@ -204,6 +204,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
   color: var(--danger, #c0392b); font-weight: 600;
   pointer-events: auto; cursor: pointer;
 }
+/* mono-link: linked word and morpheme fields; the copy is drawn muted until
+   it is edited, which unlinks it. */
+.mono-linked { box-shadow: inset 3px 0 0 var(--accent-dim, rgba(80,120,200,.35)); }
+.mono-copy, .mono-copy .translit-text, .mono-copy .translit-label { color: var(--text-muted); font-style: italic; }
 /* A flash with an action button (Undo) takes clicks while it is shown. */
 #save-status-flash.flash-action.visible { pointer-events: auto; }
 #save-status-flash .flash-act {

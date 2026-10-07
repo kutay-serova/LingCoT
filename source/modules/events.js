@@ -197,6 +197,99 @@ async function translateParagraphAll() {
    EVENT BINDING
 ══════════════════════════════════════════════════════════════════════════════ */
 // @fn bindEvents
+/* ── Single-morpheme words: linked word and morpheme fields (mono-link) ───────
+   With one morpheme row, gloss and part of speech are linked pairs, and so is
+   transliteration when the morpheme has the word's own form. The side typed
+   into first fills the other as it is typed; typing into that filled copy breaks
+   the pair's link. A pair whose two sides differ when the editor opens starts
+   unlinked; one side empty starts linked, with the filled side leading. */
+let _monoPairs = [];
+
+// @fn _monoVal, a field's value in a comparable form (rows joined for a list)
+function _monoVal(el, kind) {
+  return kind === 'list'
+    ? readRowEditor('translit', el.id).map(x => `${x.label}\u0001${x.text}`).join('\u0002')
+    : (el.value || '').trim();
+}
+
+// @fn _monoCopy, put one side's value into the other, visibly
+function _monoCopy(from, to, kind) {
+  if (kind === 'list') {
+    const rows = document.getElementById(to.id + '-rows');
+    if (rows) rows.innerHTML = readRowEditor('translit', from.id).map(ROW_EDITORS.translit.build).join('');
+    to.closest('details')?.setAttribute('open', '');
+  } else {
+    to.value = from.value;
+  }
+  // Previews, chip states and offer strips listen for input on the field.
+  to.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// @fn _monoMark, show which fields are linked and which one is the copy
+function _monoMark(p) {
+  for (const side of ['a', 'b']) {
+    const el = p[side];
+    const copy = p.linked && p.source !== null && p.source !== side;
+    el.classList.toggle('mono-linked', p.linked);
+    el.classList.toggle('mono-copy', copy);
+    if (el.dataset.monoTitle === undefined) el.dataset.monoTitle = el.title || '';
+    el.title = p.linked ? t(copy ? 'title.editor.mono_copy' : 'title.editor.mono_linked')
+                        : el.dataset.monoTitle;
+  }
+}
+
+// @fn _monoInput, one keystroke (or chip) on one side of a pair
+function _monoInput(p, side) {
+  if (p.syncing || !p.linked) return;
+  const other = side === 'a' ? 'b' : 'a';
+  if (p.source === null) p.source = side;
+  if (p.source === side) {
+    p.syncing = true;
+    try { _monoCopy(p[side], p[other], p.kind); } finally { p.syncing = false; }
+  } else if (_monoVal(p[side], p.kind) !== _monoVal(p[other], p.kind)) {
+    p.linked = false;                       // the copy was edited: unlink
+  }
+  _monoMark(p);
+}
+
+/* @fn bindMonoLinks, (re)build the pairs from the editor as it is now.
+   Called on render and after the parse rebuilds the rows. Listeners on the word
+   fields are attached once per render and look up the current pair. */
+function bindMonoLinks() {
+  _monoPairs = [];
+  if (S.view !== 'word-edit') return;
+  const rows = document.querySelectorAll('#ew-morph-rows .morph-edit-row');
+  if (rows.length !== 1) return;
+  const row = rows[0];
+  const wordForm = document.getElementById('ew-form')?.textContent || '';
+  const mForm = row.querySelector('.morph-edit-form-label')?.textContent || '';
+  const defs = [
+    ['gloss', document.getElementById('ew-gloss'), row.querySelector('.morph-gloss-input'), 'text'],
+    ['pos',   document.getElementById('ew-pos'),   row.querySelector('.morph-pos-input'),   'text'],
+  ];
+  if (normForm(wordForm) === normForm(mForm))
+    defs.push(['translit', document.getElementById('ew-translit'),
+               row.querySelector('.morph-translits .transliterations-editor'), 'list']);
+  for (const [key, a, b, kind] of defs) {
+    if (!a || !b) continue;
+    const va = _monoVal(a, kind), vb = _monoVal(b, kind);
+    const p = { key, a, b, kind, syncing: false,
+                linked: va === vb || !va || !vb,
+                source: va === vb ? null : (va ? 'a' : 'b') };
+    _monoPairs.push(p);
+    for (const side of ['a', 'b']) {
+      const el = p[side];
+      if (el._monoBound) continue;
+      el._monoBound = true;
+      el.addEventListener('input', () => {
+        const q = _monoPairs.find(x => x[side] === el);
+        if (q) _monoInput(q, side);
+      });
+    }
+    _monoMark(p);
+  }
+}
+
 function bindEvents() {
   // Per-render wiring ONLY.  Most click handling, save buttons, the translation
   // toolbar, LaTeX export, search (srch-*), dict-browse sort/filter, and the
@@ -286,6 +379,7 @@ function bindEvents() {
   if (ewParse) {
     ewParse.addEventListener('input', () => {
       syncMorphemeRows();      // rebuild the rows for the new parse
+      bindMonoLinks();         // mono-link: the row may be new, or no longer single
       refreshMorphSuggest();   // D42: one strip, rebuilt whole
       refreshLinkClash();      // B-197: the rows changed, so the links may not fit
     });
@@ -297,56 +391,9 @@ function bindEvents() {
      annotator touched it. There is one control, and WHICH forms is asked once
      by openPushPickModal at the moment of pushing. */
 
-  /* ── Word-gloss ↔ morpheme-gloss synchronisation ──────────────────────────
-     Condition (all three must hold at the time the edit view opens):
-       1. No morphological parse is set.
-       2. Morpheme Glosses shows exactly one row (the whole-word default row).
-       3. The Word Gloss field and that single Morpheme Gloss field AGREE — which
-          on a first visit means both are empty, and on a later one means the
-          word's gloss is the morpheme's (B-187).
-     Behaviour: typing in either field mirrors the value to the other in real
-     time, letter-for-letter, so the user only has to type the gloss once.
-     The mirror stays active as long as both fields hold the same text.  If
-     either is edited independently so they diverge, mirroring stops.
-     An additional guard prevents sync from running after the user fills in
-     the Morphological Parse field (which would expand the morpheme rows and
-     make the mirror semantically wrong).
-     Kept per-render: the closure state (_lastSync) is intentionally scoped to a
-     single edit view and must reset each time the view is re-rendered. */
-  const _ewGloss  = document.getElementById('ew-gloss');
-  const _ewMg0    = document.getElementById('ew-mg-0');
-  const _ewParseF = document.getElementById('ew-parse');   // same element as ewParse above
-  if (_ewGloss && _ewMg0 && _ewParseF) {
-    const _hasParse  = _ewParseF.value.trim() !== '';
-    const _singleRow = document.querySelectorAll('#ew-morph-rows .morph-edit-row').length === 1;
-    /* B-187: they AGREE, which is what the rule above actually says — "the mirror
-       stays active as long as both fields hold the same text". The attach test
-       was `both are empty`, a special case of agreeing that was the only reachable
-       one while the word gloss was always stored: reopening a glossed word put a
-       value in both boxes, the mirror declined to attach, and clearing one left
-       the other. Both empty is still the first-visit case and still attaches. */
-    const _agree = _ewGloss.value === _ewMg0.value;
-    if (!_hasParse && _singleRow && _agree) {
-      // _lastSync tracks the last value we wrote via sync.
-      // If the target field still holds that value, we know it hasn't been
-      // independently edited, so it is safe to overwrite with the new value.
-      let _lastSync = _ewGloss.value;
-      _ewGloss.addEventListener('input', () => {
-        if (_ewParseF.value.trim()) return;  // parse added, stop syncing
-        if (_ewMg0.value === _lastSync) {
-          _ewMg0.value = _ewGloss.value;
-          _lastSync    = _ewGloss.value;
-        }
-      });
-      _ewMg0.addEventListener('input', () => {
-        if (_ewParseF.value.trim()) return;  // parse added, stop syncing
-        if (_ewGloss.value === _lastSync) {
-          _ewGloss.value = _ewMg0.value;
-          _lastSync      = _ewMg0.value;
-        }
-      });
-    }
-  }
+  /* mono-link: word and morpheme fields of a single-morpheme word are linked
+     pairs (replaces the B-187 word-gloss mirror, which covered gloss only). */
+  bindMonoLinks();
 
   /* Live text → word tokenization sync, sentence-add ONLY.
 
