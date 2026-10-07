@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-09-24 · **Version:** v3.15.4
+**Updated:** 2026-10-07 · **Version:** v3.16.0
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its

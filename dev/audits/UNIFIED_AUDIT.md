@@ -1,5 +1,5 @@
 # UNIFIED AUDIT: the audit of record
-**Updated:** 2026-09-24 · **Version:** v3.15.4
+**Updated:** 2026-10-07 · **Version:** v3.16.0
 *LIVE. Started against v3.14.221 and bumped with every version since, because a
 stale audit of record is worse than none. Findings keep the build they were found
 against. `dev/audits/AUDIT_INDEX.md` indexes the frozen audits this replaced.*

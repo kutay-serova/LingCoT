@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-09-24 · **Version:** v3.15.4
+**Updated:** 2026-10-07 · **Version:** v3.16.0
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,145 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## B-234, B-235: setup reports a failed check on an existing venv; setup.log gets headers only for sessions that log (2026-10-07)
+**Version:** v3.16.0 · **Type:** fix · **Archives:** `dev/archive/changes/setup-log/` (v3.15.4)
+**Touched:** source/build_env.py · source/log_setup.py · dev/BUGS.md · dev/tests/log_setup_test.js · dev/tests/venv_tier_test.js
+**Closed:** B-234, B-235
+**Change:** `setup-log`
+
+**What changed.**
+- B-234: `build_env.main()`, existing-venv path: a failed sync or a failed `check_venv` returns 1 and logs an error; success logs `build_env complete … (existing venv synced)`. `setup.command` already stops on a non-zero status, so it no longer says Setup complete, or builds LingCoT.app, over missing packages.
+- B-235: `setup_append_logger` writes the `Session started` header with the first record (`_SeparatorOnFirstRecord`, a filter on the file handler that never drops a record).
+
+**Why.** The 2026-10-07 `setup.log` from a post-test run had no completion line for that run, and 1,094 of its 1,101 session headers were empty.
+
+**Guard.** `venv_tier_test.js` executes `main()` with the sync and the check stubbed and the workspace steps stubbed out: a failed check returns 1, a passing one 0, both logged. `log_setup_test.js` executes `setup_append_logger`: no header for a silent session, one header before the first line, one more for the next session. Against the archived pre-change files: 2 and 3 failures.
+
+**Verification.** `./dev/tests/run_all.sh`: 107 passed. `venv_tier_test.js` 17 passed, `log_setup_test.js` 11 passed.
+
+---
+
+## macOS: setup clears the download flag and builds LingCoT.app, which starts without Terminal (2026-10-07)
+**Version:** v3.15.10 · **Type:** feature · **Archives:** `dev/archive/changes/mac-app/` (v3.15.4)
+**Touched:** setup.command · .gitignore · README.md · QUICKSTART.md · TESTERS.md · setup.md · source/scripts/make_mac_app.sh (new) · dev/tests/mac_app_test.js (new) · dev/PRACTICES.md
+**Change:** `mac-app`
+
+**What changed.**
+- `setup.command`, on macOS only: `xattr -dr com.apple.quarantine` on the folder, then `source/scripts/make_mac_app.sh`. Setup ends by naming `LingCoT.app`; if the app cannot be built it says so and names `LingCoT.command`.
+- `make_mac_app.sh` writes `LingCoT.app` (Info.plist and a launch script). The launcher holds the folder's absolute path, so the app can be dragged to Applications or the Dock. It reports a moved folder, an incomplete setup (with Open Setup) and a non-zero exit (with Show Logs) in macOS dialogs; Python's stderr goes to `logs/launcher_stderr.log`.
+- `.gitignore`: `LingCoT.app/`. The app is built per machine and never ships.
+- Docs: launch instructions name `LingCoT.app`; the security-override steps apply to `setup.command` only. `LingCoT.command` stays as the launcher with a Terminal window.
+- The managed NLLB server already stops on window close (`events.closed` and `atexit`, D29 P1b), so no process is left running unseen.
+
+**Why.** Post-test item 2. The macOS 26 tester needed a security override per script, and the Terminal window that came with the app invited being closed.
+
+**Guard.** `mac_app_test.js` (new): runs the generator into a folder named with a space and an apostrophe; checks the plist, the executable, the quoted path, the order of checks in the launcher, and setup's wiring and ignore rule. Not executed: the launcher itself, which opens dialogs on a Mac.
+
+**Verification.** `./dev/tests/run_all.sh`: 107 passed. `mac_app_test.js`: 13 passed. Not verifiable from here: Gatekeeper behaviour and the Dock on a real Mac; to check after `setup.command` on a downloaded zip.
+
+---
+
+## Re-tokenization keeps annotation: a merge makes morphemes, a split makes words (2026-10-07)
+**Version:** v3.15.9 · **Type:** feature · **Archives:** `dev/archive/changes/retok-carry/` (v3.15.4)
+**Touched:** source/LingCoT.html · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/retokenize_align_test.js · dev/tests/gui_crud_test.js · dev/tests/prov_intern_test.js
+**Change:** `retok-carry`
+
+**What changed.**
+- `retokenizeCarryPlan`: among the tokens `alignTokens` leaves unpaired, a run of two or more old words whose forms join to one new form is a merge; an old word whose morpheme forms equal that many consecutive new forms is a split. Forms compare folded, ignoring apostrophes and hyphens (`İstanbul 'da` merges into `İstanbul'da`). Anything else goes to the existing loss prompt.
+- `buildMergedWord`: the old words become the new word's morphemes. Gloss, transliterations, part of speech and comments are carried and stamped `carried (merge)` with `from` the old word id. Type, dictionary links and lemma are not carried.
+- `buildSplitWords`: each morpheme record moves intact under its own word; the word's part of speech is copied from it, stamped `carried (split)`. A split word with word-level work its parts cannot hold (typed gloss, transliteration, lemma, comments) still asks.
+- `retokenizeRemapHeads`: heads pointing at a replaced word follow it; a merged word keeps its parts' outward head and relation; internal heads are dropped.
+- `saveSentence` plans the carry before the loss prompt. Status line and log line report counts.
+
+**Why.** Post-test item 4. In the Mandarin tester log (2026-09-27 14:48) merging 走 过 into 走过 discarded the annotation on 走.
+
+**Guard.** `retokenize_align_test.js` M1 to M9, S1 to S5, D1, D2, W1 execute the shipped functions, including the Turkish cases (`kahvaltı` is not a merge, `ev de` arrives stamped as carried, `dA` splits fall back). `gui_crud_test.js` scenario J (J1 to J5): merge and split through the sentence editor without a prompt, glosses back on their words in the file; J1 to J5 fail on the archived pre-change app. `prov_intern_test.js` lists `buildMergedWord` as a provenance writer.
+
+**Verification.** `./dev/tests/run_all.sh`: 106 passed after this entry. `gui_crud_test.js`: 80 passed. `retokenize_align_test.js`: 52 passed.
+
+---
+
+## Single-morpheme words: word and morpheme fields linked; existing data reconciled on load (2026-10-07)
+**Version:** v3.15.8 · **Type:** feature · **Archives:** `dev/archive/changes/mono-link/` (v3.15.4)
+**Touched:** source/LingCoT.html · source/modules/events.js · source/modules/reader.js · source/LingCoT.css · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/gui_crud_test.js · dev/PRACTICES.md · dev/tests/sentence_copy_test.js · dev/tests/word_chip_test.js · dev/tests/reader_igt_test.js · dev/tests/word_edit_pos_test.js · dev/tests/translit_model_test.js · dev/tests/mono_link_test.js (new)
+**Change:** `mono-link`
+
+**What changed.**
+- Word editor, one morpheme row: gloss, part of speech and (when the morpheme has the word's form) transliteration are linked pairs. The side typed into first fills the other as it is typed; the copy is drawn muted; typing into the copy unlinks that pair. Pairs that differ on opening start unlinked. Replaces the B-187 gloss mirror (no parse, gloss only).
+- Storage: gloss on the morpheme (word stores a typed gloss only when it differs, D60); transliteration on the morpheme, the word keeping a list only when it differs; part of speech on both.
+- `_reconcileMonoMorphemes` on load and after replay: a word-only gloss or transliteration moves to the morpheme with its stamp; an equal word transliteration is dropped; a one-sided part of speech is copied. Differing values are kept. Logged once as counts.
+- `translitRowsOf(w)` for the list readers (editor, chips, word view, reader popup); `wordHasStoredTranslit` counts a lone same-form morpheme as the word's own.
+
+**Why.** Post-test item 3, and the source of the recurring fill banner (item 1, fix A): the editor saved transliterations on the word and the dictionary offer then proposed them for the morpheme.
+
+**Guard.** `gui_crud_test.js` scenario I (I1 to I12): linking, unlinking, the archiphoneme case and what reaches the file. `mono_link_test.js` (new): reconciliation, stamps, idempotence, readers.
+
+**Verification.** `./dev/tests/run_all.sh`: 106 passed. `gui_crud_test.js`: 75 passed; scenario I fails 9 of 12 on the archived pre-change app. `pseudo_locale_test.js`: 6 passed. On the live corpora (read-only): Mandarin 126 of 126 single-morpheme words reconciled, none left with a word-only transliteration; Turkish 40, the 8 left are `dA`/`mI` words, which keep their own by design.
+
+---
+
+## A one-morpheme word with one new row is added to the dictionary without the panel, with Undo (2026-10-07)
+**Version:** v3.15.7 · **Type:** feature · **Archives:** `dev/archive/changes/autopush/` (v3.15.4)
+**Touched:** source/LingCoT.html · source/modules/events.js · source/LingCoT.css · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/push_to_dict_test.js · dev/tests/outcome_channel_test.js · dev/tests/gui_crud_test.js
+**Change:** `autopush`
+
+**What changed.**
+- `pickerNeeded(word, rows)`: false for a word of at most one morpheme whose one visible row is ticked, new, and clashes with nothing. `saveWord` then pushes `defaultCandidates(rows)` without opening the panel; every other case opens it as before.
+- The status line says what was added and carries an Undo button (8 s). `undoAutoPush` deletes the entries that push created, clearing their links, without a confirm (`deleteDictEntry(id, { ask: false, stay: true })`).
+- `flashSaveStatus(msg, { action, label })`: an optional action button; severity is still read from the message.
+- Log: `add-to-dictionary picker skipped`, `dictionary push undone`.
+
+**Why.** Post-test item 5b. In the Mandarin tester logs 70 of 74 saves through the panel spent under 2 s in it: a confirmation click on a single row.
+
+**Guard.** `gui_crud_test.js` scenario H (H1 to H5): no panel and an entry for a one-morpheme word, Undo removes entry and link, a two-morpheme word still opens the panel; H1 to H3 fail on the archived pre-change app. `push_to_dict_test.js`: `pickerNeeded` executed on the skip case and three ask cases.
+
+**Verification.** `./dev/tests/run_all.sh`: 105 passed. `gui_crud_test.js`: 63 passed.
+
+---
+
+## B-231, B-233: logs carry ids, not forms; a replayed journal is folded; one offer per load (2026-10-07)
+**Version:** v3.15.6 · **Type:** fix · **Archives:** `dev/archive/changes/log-ids/` (v3.15.4)
+**Touched:** source/LingCoT.html · source/modules/events.js · dev/tests/log_triage.js · dev/tests/offer_after_replay_test.js · dev/tests/log_content_test.js (new) · dev/PRACTICES.md · dev/BUGS.md
+**Closed:** B-231, B-233 · **Opened:** B-232
+**Change:** `log-ids`
+
+**What changed.**
+- B-231: eleven `logEvent` calls carried forms; they carry ids and counts now. `navigate:` no longer logs a dictionary form.
+- B-233: a replay that applies records bumps both save generations and counts the journal's bytes; arming autosave compacts when a journal is pending. The offer is computed once per load, after the replay (`applyDict(..., { offer: false })` during a project load).
+- Fill-banner log line names the entry ids it offers (E, amended to ids).
+- New lines: `lemma created <id>`; `add-to-dictionary picker: N picked[, dismissed], T s`. `repeat copy accepted` splits word fields from sentence fields.
+- `log_triage.js`: the re-tokenization mask covers words as well as morphemes; the 2026-09-27 `dağ` line is acknowledged against B-232.
+
+**Why.** Post-test log review (items 1 and 5).
+
+**Guard.** `log_content_test.js` (new): reads every `logEvent` call; fails on 11 calls in the pre-change file. `offer_after_replay_test.js`: one offer per load, after the replay.
+
+**Verification.** `./dev/tests/run_all.sh`: 105 passed, 0 failed (`log_triage.js` passes again). `gui_crud_test.js` 58 passed; `pseudo_locale_test.js` 6 passed. `log_content_test.js` lists 11 calls in the archived pre-change `LingCoT.html`.
+
+---
+
+## B-228 to B-230: projects open whole; dictionary-only sessions; switching asks only when work would be lost (2026-10-07)
+**Version:** v3.15.5 · **Type:** fix · **Archives:** `dev/archive/changes/bundle-open/` (v3.15.4)
+**Touched:** source/LingCoT.html · source/modules/events.js · source/LingCoT.css · source/LingCoT.pyw · source/resources/locale/en.json · source/resources/locale/haw.json · dev/tests/project_files_test.js · dev/tests/gui_crud_test.js · dev/tests/_gui.js · dev/tests/corpus_load_test.js · dev/tests/session_panel_test.js · source/modules/project_files.js · dev/BUGS.md · dev/DEV_PLAN.md
+**Closed:** B-228, B-229, B-230
+**Change:** `bundle-open`
+
+**What changed.**
+- A `_dictionary.jsonl` picked in Open or dropped on the window opens its project through the sibling corpus, like the journal and participants files (B-184). With no corpus beside it, or with no role suffix, it opens as a dictionary-only session: bound to that file, Dictionary view as home, corpus controls hidden.
+- The project's dictionary is applied on every load, empty or not (B-228).
+- Removed: the companion banner, the corpus/dictionary pair memory, the "Replace the dictionary?" dialog, and the per-file Change buttons in the save panel (B-229). Paths are read-only; new buttons Save Project As and Show in Finder. One chooser, `chooseProjectPath`, sets all three paths and refuses a location whose companion files belong to another project.
+- Opening another project asks only when something would be lost (an editor with changes, or edits with no save path). Pending records are flushed, and compacted when autosave is on, before the switch.
+- `LingCoT.pyw`: `path_exists`, `reveal_path`.
+- B-230: `projectPrefix` also strips a role suffix from a name whose extension is already gone, which is what the loaders pass.
+
+**Why.** Post-test review: a dictionary picked on its own mixed into the open project, and the replace-corpus confirm accounted for the 4 to 6 s "slow open" seen in the tester logs (a wait for a click, not load time).
+
+**Guard.** `gui_crud_test.js` scenario G (G0 to G11) drives the real UI: dictionary file opens its project, the previous project's entries stay out of the next one's file, lone and hand-named dictionaries open alone, an edited editor makes the switch ask. `project_files_test.js` and `corpus_load_test.js` cover the chooser and the dictionary role.
+
+**Verification.** `./dev/tests/run_all.sh`: 103 passed, 1 failed (`log_triage.js`, a pre-existing warning that logs a form; closed in the next change). `gui_crud_test.js`: 58 passed; scenario G fails 8 of 12 checks against the archived pre-edit app.
 
 ---
 
