@@ -119,26 +119,33 @@ for (const [call, why] of [
   ['_migrateCorpusRecords(S.docs)', 'the record migrations (B-176)'],
   ['buildCorpusIndex()',            'the corpus index'],
   ['buildDictIndex()',              'the dictionary index'],
-  ['offerDictFill()',               'AND the offer (B-192)'],
 ])
   check(blk.includes(call), `it re-runs ${why}`,
         `         ${call} is missing — anything derived from the whole corpus\n`
       + '         during the load is stale until it is asked again here');
 
-/* The ordering itself: the offer must be recomputed AFTER the replay, not before.
-   Both calls exist in the file, so presence alone proves nothing. */
-const iReplay = src.indexOf('const rep = replayJournal(project.journalText);');
-const iOffer  = src.indexOf('offerDictFill()', iReplay);
-check(iReplay > 0 && iOffer > iReplay && iOffer - iReplay < 1400,
-      'and does so after the replay, not before it',
+/* The offer is computed ONCE per project load, after the replay block, and the
+   dictionary is applied without one (log-ids: it was computed and logged twice,
+   the first time on the pre-replay state). */
+const bundle = (src.match(/async function applyProjectBundle\(project\)[\s\S]*?\n\}/) || [''])[0];
+check(/applyDict\(dictData, dictBase, \{ offer: false \}\)/.test(bundle),
+      'the load applies the dictionary without raising the offer');
+const iReplay = bundle.indexOf('const rep = replayJournal(project.journalText);');
+const iOffer  = bundle.indexOf('offerDictFill()', iReplay);
+const iDang   = bundle.indexOf('reportDangling(basename)');
+check(iReplay > 0 && iOffer > iReplay && iOffer < iDang,
+      'and raises it AFTER the replay, not before it (B-192)',
       '         computing it earlier is the bug, not a style choice');
+check((bundle.match(/offerDictFill\(\)/g) || []).length === 1,
+      'exactly once per load, whether or not there was a journal');
 
 console.log('\n5 · the rule, so the next addition is covered');
 
 /* `applyDict` is where the offer is normally raised, and that is right for a
    dictionary opened on its own. What must not happen is a SECOND thing being
    added there that the load path then never recomputes. */
-const applyDictSrc = (src.match(/function applyDict\(data, basename\)[\s\S]*?\n\}/) || [''])[0];
+const applyDictSrc = (src.match(/function applyDict\(data, basename(, opts = \{\})?\)[\s\S]*?\n\}/) || [''])[0];
+check(applyDictSrc.length > 500, 'applyDict found');
 const raised = [...applyDictSrc.matchAll(/^\s{2}([a-zA-Z_]\w*)\(\);?$/gm)].map(m => m[1]);
 /* Classified, not just listed — the question this guard asks is whether a call
    derives anything from the CORPUS, and a bare name cannot answer it. Checked at

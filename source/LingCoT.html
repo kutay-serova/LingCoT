@@ -2334,12 +2334,13 @@ function applyWordCopy(r, moment) {
 /* @fn applySentenceCopy, the ticked rows of each plan, one mutate for the lot */
 function applySentenceCopy(selection) {
   const written = [], undo = [];
-  let W = 0, F = 0;
+  let W = 0, F = 0, SF = 0;
   const from = selection[0]?.plan.src.id;
   for (const { plan, rows, sent: withSent } of selection) {
     if (!rows.length && !(withSent && plan.sent.ops.length)) continue;
     const moment = _copyFieldProv(plan.src.id);
     const tgt = plan.tgt;
+    let sentF = 0;
     const snap = { sentId: tgt.id,
       sent: JSON.parse(JSON.stringify({ translations: tgt.translations, transliterations: tgt.transliterations })),
       words: rows.map(ri => ({ id: plan.rows[ri].tgt.id, snap: JSON.parse(JSON.stringify(plan.rows[ri].tgt)) })), w: 0, f: 0 };
@@ -2348,22 +2349,22 @@ function applySentenceCopy(selection) {
         if (o.op === 'translation') {
           tgt.translations = [...(tgt.translations || []).filter(x => x && x.text),
             stampElement({ text: o.val.text, source_id: o.val.source_id || null, date: o.val.date || null }, moment)];
-          snap.f++;
+          snap.f++; sentF++;
         } else {
           tgt.transliterations = [...(tgt.transliterations || []),
             ...o.val.map(x => stampElement({ label: x.label || '', text: x.text }, moment))];
-          snap.f += o.val.length;
+          snap.f += o.val.length; sentF += o.val.length;
         }
       }
     for (const ri of rows) { applyWordCopy(plan.rows[ri], moment); written.push(plan.rows[ri].tgt); snap.f += plan.rows[ri].fields; }
     snap.w = rows.length;
     written.push({ rec: tgt, shallow: true });
     undo.push(snap);
-    W += snap.w; F += snap.f;
+    W += snap.w; F += snap.f - sentF; SF += sentF;
   }
   if (!written.length) return;
   _copyUndo = { from, targets: undo };
-  logEvent('info', 'repeat copy accepted', `${W} word(s), ${F} field(s)`);
+  logEvent('info', 'repeat copy accepted', `${W} word(s), ${F} word field(s), ${SF} sentence field(s)`);
   mutate('corpus', written);
 }
 
@@ -2553,7 +2554,7 @@ function deleteLemmaRecord(lemmaId) {
     if (!bucket.length) S.lemmaByForm.delete(k);
   }
   _dictSorted = null;
-  logEvent('info', 'orphaned lemma record deleted', `${lemmaId} (${l.form})`);
+  logEvent('info', 'orphaned lemma record deleted', lemmaId);
   mutate(['dict'], { dict: [{ del: lemmaId }] });
   go('dict-browse');
 }
@@ -2591,7 +2592,7 @@ function renameLemma(id, nextForm) {
   _dictSorted = null;                   // the browse sort reads the citation form
   linkNote('note.link.lemma_renamed', { from: prevForm, to: next });
   mutate('dict', [l]);
-  logEvent('info', 'lemma renamed', `${prevForm} -> ${next}`);
+  logEvent('info', 'lemma renamed', l.id);
   return l;
 }
 
@@ -2802,6 +2803,7 @@ function _createLemmaRecord(citation, { sibling = false } = {}) {
      `record_type: 'lemma'` body to `S.lemmas`. It was only ever waiting to be
      sent one. */
   mutate('dict', [lemma]);
+  logEvent('info', 'lemma created', lemma.id);
   return lemma.id;
 }
 
@@ -2860,7 +2862,7 @@ function _carryUnsavedLemmas(incoming, incomingEntries) {
   const carried = (S.lemmas || []).filter(l => l && !l.deleted && !have.has(l.id) && cited.has(l.id));
   if (carried.length)
     logEvent('warn', 'unsaved lemma records carried over the load',
-             carried.map(l => `${l.id} (${l.form})`).join(', '));
+             carried.map(l => l.id).join(', '));
   return carried;
 }
 
@@ -2912,7 +2914,7 @@ function repairDanglingLemma(lemmaId) {
   _indexLemma(rec);
   _dictSorted = null;
   logEvent('info', 'dangling lemma record rebuilt',
-           `${lemmaId} (${d.form}) — ${d.entries} entr(ies), ${d.tokens} token(s)`);
+           `${lemmaId}: ${d.entries} entr(ies), ${d.tokens} token(s)`);
   mutate(['dict'], { dict: [rec] });
   return rec;
 }
@@ -3426,8 +3428,11 @@ function offerDictFill() {
   _dictOffer = dictFillProposal();
   const c = offerCounts(_dictOffer);
   if (!c.morphemes) { hideOfferBanner(); return 0; }
+  // Entry ids, never forms (logging policy); enough to tell one offer from the next.
+  const ids = [...new Set(_dictOffer.map(g => g.items[0]?.plan?.cands?.[0]?.id).filter(Boolean))];
   logEvent('info', 'dictionary fill available',
-           `${c.morphemes} morpheme(s) in ${c.forms} form(s): ${c.fields} field(s), ${c.links} link(s)`);
+           `${c.morphemes} morpheme(s) in ${c.forms} form(s): ${c.fields} field(s), ${c.links} link(s); `
+           + `entries ${ids.slice(0, 10).join(' ')}${ids.length > 10 ? ` +${ids.length - 10}` : ''}`);
   const msg = document.getElementById('offer-msg');
   if (msg) msg.textContent = t('offer.banner', { n: c.morphemes, forms: c.forms });
   const banner = document.getElementById('offer-banner');
@@ -4309,7 +4314,9 @@ function hasAnnotation(o, deep = true, human = false, level = 'word') {
 function confirmAnnotationLoss(lost, kind) {
   if (!lost.length) return true;
   const names = lost.slice(0, 8).map(o => (o.form || o.text || '?')).join(', ');
-  logEvent('warn', `re-tokenization would discard ${lost.length} annotated ${kind}(s)`, names);
+  // B-231: ids in the log; the forms go only to the dialog.
+  logEvent('warn', `re-tokenization would discard ${lost.length} annotated ${kind}(s)`,
+           lost.slice(0, 8).map(o => o.id || '?').join(', '));
   return confirm(t('confirm.retokenize.loses_annotation',
                    { n: lost.length, kind, names: names + (lost.length > 8 ? ' …' : '') }));
 }
@@ -5487,9 +5494,9 @@ function _fillMorphRows(form, gloss, src, entryId, pos, type, mode = 'take') {
 
   /* B-082 was reported from annotation and could not be reproduced by reading:
      the offers carry the right data and this function fills correctly in
-     isolation. If it still writes nothing, the log says so and names the form
-     it was looking for, which is the one thing static reading could not tell. */
-  if (!filled) logEvent('warn', 'offer filled nothing', `${form} · ${rows} row(s) on screen`);
+     isolation. If it still writes nothing, the log says so. B-231: the form is
+     not logged; the word is named by the `navigate: word-edit` line before it. */
+  if (!filled) logEvent('warn', 'offer filled nothing', `${rows} row(s) on screen`);
 }
 
 /* @fn focusOfferChip, put the caret back on the strip after an offer is taken.
@@ -8271,8 +8278,9 @@ function go(view, opts = {}) {
   // wordId` meant every `navigate: word` / `navigate: word-edit` line recorded
   // the sentence and silently dropped the word, degrading the one diagnostic
   // channel that has found most of this week's bugs.
+  // B-231: never opts.dictForm, which is a form.
   logEvent('debug', `navigate: ${view}`,
-           opts.wordId || opts.sentId || opts.dictEntryId || opts.dictForm || null);
+           opts.wordId || opts.sentId || opts.dictEntryId || null);
   closeReaderPop();
   render();
   if (!(view === 'reader' && _readerScrollSi != null)) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -8524,7 +8532,7 @@ function applyCorpus(data, basename) {
 }
 
 // @fn applyDict
-function applyDict(data, basename) {
+function applyDict(data, basename, opts = {}) {
   /* D35 A2: one file, two kinds of record. Rows written before v3.14.184 carry
      `type: 'lemma'` and are converted here; ids are preserved, so every
      lemma_id in the corpus still resolves. The converted shape reaches disk on
@@ -8565,7 +8573,7 @@ function applyDict(data, basename) {
      (L-035). It computes and shows now, and writes only what is accepted. The
      de-sync repair is separate and still automatic — it runs at corpus load, and
      a dictionary arriving later changes nothing structural. */
-  offerDictFill();
+  if (opts.offer !== false) offerDictFill();   // a project load offers once, after replay
   updateDictStatus();
   refreshSavePanelPaths();
   // Bust the render cache. S.dictionary is not in the cache key, so without
@@ -8681,7 +8689,7 @@ async function applyProjectBundle(project) {
     const dictData = project.dictText ? (parseJsonlText(project.dictText) || []) : [];
     const dictBase = (project.dictPath || basename).replace(/\\/g, '/').split('/').pop()
                                                     .replace(/\.json(l)?$/i, '');
-    applyDict(dictData, dictBase);        // refreshes the save panel
+    applyDict(dictData, dictBase, { offer: false });   // offered once, after the replay
   }
 
   /* D50: replay the journal LAST, after both stores are loaded, because one
@@ -8734,26 +8742,17 @@ async function applyProjectBundle(project) {
                                  `${_migR.unjoined} from journalled record bodies (B-176)`);
     buildCorpusIndex();
     buildDictIndex();
-    /* B-192, v3.14.366. THE OFFER IS PART OF THAT SEQUENCE, and was not in it.
-
-       `offerDictFill()` runs inside `applyDict`, which by the design directly
-       above happens BEFORE the replay — so the proposal was computed against the
-       corpus as it stood on disk, and the journal holding the last session's
-       accepted fills landed a moment later. Every fill the annotator had already
-       taken was offered again on the next open, for as long as no full write
-       compacted the journal into the base. Reported from use on `chinese-test`,
-       whose corpus file had not been rewritten in two days while its journal
-       carried the accepted fills.
-
-       Recomputing rather than suppressing: what the dictionary can still supply
-       is a question about the FINAL state, and this is the first moment that
-       state exists. Nothing repaints between the two calls, so the count the
-       annotator sees is the second one; `offerDictFill` hides the banner when
-       there is nothing left, which is how the re-prompt disappears. */
-    offerDictFill();
     logEvent('info', 'journal replayed',
              `${rep.applied} applied (${rep.byOp.put} put, ${rep.byOp.add} add, ${rep.byOp.del} del), `
              + `${rep.skipped} already present, ${rep.unresolved} unresolved`);
+    /* The replayed records are on disk only in the journal. Mark both stores
+       changed and count the journal's bytes, so the first compaction after
+       autosave is armed folds it into the base instead of replaying it on
+       every open. */
+    if (rep.applied) {
+      _bumpSaveGen(['corpus', 'dict']);
+      _journalBytes = project.journalText.length;
+    }
     if (rep.unresolved) {
       /* Loud, for the same reason reportProvDamage is: a record that resolves to
          nothing is annotation the file no longer contains, and the next full
@@ -8763,6 +8762,10 @@ async function applyProjectBundle(project) {
     }
     }
   }
+
+  /* B-192: the offer is computed once, on the final state (after any replay).
+     `applyDict` is told not to compute it before the replay. */
+  offerDictFill();
 
   /* 3d: with everything loaded and replayed, say what does not resolve between
      the files that were actually found. */
@@ -13064,7 +13067,7 @@ function openAddDict(rows, opts = {}) {
       for (const e of touched) if (backPropagate(e, opts.word, opts.sent)) backFed = opts.word;
 
     logEvent('info', `dictionary entries added (${created.length} new, ${touched.length} written)`,
-             touched.map(e => e.form).join(', '));
+             touched.map(e => e.id).join(', '));
     reportLinkNotes();                // S3: say what the linking machinery did
     mutate(['corpus', 'dict'], { corpus: backFed ? [backFed] : [], dict: touched });
 
@@ -13119,7 +13122,7 @@ function addDictForMorpheme(wordId, sentId, mIndex) {
   /* Unreachable after the handoff, and it says so rather than returning in
      silence — the silence is what made B-163 take a live session to notice. */
   if (!row) {
-    logEvent('warn', 'no candidate row for + dict', `${wordId} #${mIndex} ${m.form || ''}`);
+    logEvent('warn', 'no candidate row for + dict', `${wordId} #${mIndex}`);
     return;
   }
   row.on = true;                      // it was clicked; the question is what, not whether
@@ -14861,9 +14864,14 @@ function saveWord(wordId, sentId) {
      `picked` of null means push nothing. Split out rather than left inline
      because the panel is asynchronous and the tail is not repeatable. */
   let _finished = false;
+  let _pickerT0 = 0;                       // set when the add-to-dictionary panel opens
   const _finishSave = (picked) => {
     if (_finished) return;                 // Escape and a button can both arrive
     _finished = true;
+    if (_pickerT0)
+      logEvent('info', 'add-to-dictionary picker',
+               `${picked ? picked.length : 0} picked${picked ? '' : ', dismissed'}, `
+               + `${((Date.now() - _pickerT0) / 1000).toFixed(1)} s`);
 
     /* S1: push this token's analysis into the shared dictionary. Runs after the
        lemma is resolved/linked above so the word dict entry can inherit the
@@ -14902,9 +14910,10 @@ function saveWord(wordId, sentId) {
      A button opening it mid-edit would have to read the candidates' glosses from
      the form's DOM, a third read path beside readForm and the word editor's own;
      the store stays the single source. */
-  if (document.getElementById('ew-push-dict')?.checked)
+  if (document.getElementById('ew-push-dict')?.checked) {
+    _pickerT0 = Date.now();
     openAddDictModal(candidateRows({ word }), _finishSave);
-  else _finishSave(null);
+  } else _finishSave(null);
 }
 
 // @fn saveDictEntry
@@ -15038,7 +15047,7 @@ function saveDictEntry(entryId, dictForm, wordId, sentId, dictBackView) {
     if (wr) { _backFedWord = wr.word; backPropagate(entry, wr.word, wr.sent); }
   }
 
-  logEvent('info', 'dict entry saved', dictForm || entryId);
+  logEvent('info', 'dict entry saved', entry.id || entryId);
   reportLinkNotes();   // S3
   /* D50: this path writes the entry, possibly a lemma record it minted through
      _resolveOrCreateLemma, and — only when saved from the word-edit context —
@@ -15359,7 +15368,7 @@ function mergeDictEntries(survivorId, mergedId) {
   assignHomographs(keep.form);
 
   logEvent('info', 'dictionary entries merged',
-           `${mergedId} → ${survivorId} (${keep.form}): ${moved} reference(s), ${filled.length} field(s) filled`);
+           `${mergedId} → ${survivorId}: ${moved} reference(s), ${filled.length} field(s) filled`);
   mutate(['corpus', 'dict'], { dict: [keep, { del: mergedId }] });
   return { ok: true, moved, filled };
 }

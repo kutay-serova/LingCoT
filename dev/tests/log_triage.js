@@ -167,6 +167,17 @@ const ACKNOWLEDGED = {
     "input events, which do not repaint the morphology strip, so its chips were " +
     "clicked against rows already full. takeWordAnalysis now repaints it.",
 
+  "[JS] offer filled nothing dağ · N row(s) on screen":
+    "B-232, OPEN. 2026-09-27: `dağ` was added to the dictionary from the word " +
+    "view, the editor reopened, and the chips for `dağ` and `lAr` were offered " +
+    "for rows that already held those values, so taking them wrote nothing " +
+    "(B-108's shape). Not reproduced yet. Since log-ids (B-231) the form is not " +
+    "logged, so a recurrence reads `offer filled nothing N row(s) on screen`.",
+
+  "[JS] re-tokenization would discard N annotated word(s)":
+    "Not a defect: B-057's word-level confirm, the same guard as the morpheme " +
+    "entry below. Logged with ids since B-231.",
+
   "[JS] offer filled nothing lAr · N row(s) on screen":
     "D40 stage D, same take as the `su` entry.",
 
@@ -351,7 +362,7 @@ function signature(msg) {
        Turkish `hakk`, so the suite went red on the app behaving correctly, which
        is the guard-that-goes-red-on-success shape (UNIFIED §5.3). B-108's entry
        keeps its form deliberately and is not masked. */
-    .replace(/(re-tokenization would discard N annotated morpheme\(s\)).*$/, '$1')
+    .replace(/(re-tokenization would discard N annotated (morpheme|word)\(s\)).*$/, '$1')
     .trim();
 }
 

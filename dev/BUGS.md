@@ -6,7 +6,7 @@ Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosme
 
 ## Open bugs at a glance
 
-**9 open** · 0 S1 · 1 S2 · 8 S3  |  **220 fixed**  |  **1 withdrawn** (B-096)
+**10 open** · 0 S1 · 1 S2 · 9 S3  |  **222 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -15,7 +15,7 @@ is how a consistency script found it at v3.14.397.*
 |---|---|---|---|
 | **S1** | 0 | blocks use, or loses data silently | none |
 | **S2** | 1 | visible and wrong, but workable | B-224 |
-| **S3** | 8 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181, B-225, B-226 |
+| **S3** | 9 | cosmetic, or contained | B-028, B-029, B-035, B-136, B-170, B-181, B-225, B-226, B-232 |
 
 Counts are checked by `doc_integrity_test.js`, so they cannot drift from the
 entries below. Update them in the same commit that opens or closes a bug.
@@ -33,6 +33,7 @@ below already is.*
 | tooling | B-170, B-181 | B-170 wants a vacuity floor; B-181 is `new_version.py --add` |
 | Linux | B-224, B-225 | a decision on Linux support; the tester build is macOS-only |
 | layout | B-226 | nothing |
+| annotation offers | B-232 | a reproduction |
 
 **Eight themes emptied**, and two are worth remembering for how they closed
 rather than that they did: *an edit that does not take* — B-175, B-176, B-178 and
@@ -103,6 +104,7 @@ thirteen that once reported success while checking nothing, are in
 | `workspace_test.js` | user corpora are never written inside the app folder. Shells out to `python3` | B-022–B-024 |
 | `venv_tier_test.js` | setup never uninstalls what a previous setup installed. Executes `build_env.py` | — |
 | `log_triage.js` | the retained logs contain no unacknowledged error | B-008 |
+| `log_content_test.js` | no `logEvent` call interpolates a form, gloss, text or title | B-231 |
 | `doc_integrity_test.js` | DEV_PLAN/BUGS sections must not vanish and cross-references must resolve | 2026-08-24 |
 | `readme_tree_test.js` | every path the README draws exists | — |
 | `session_panel_test.js` | the queue, the session record, and that every box on the shared modal rule is either scrollable or exempted with a reason | B-162 |
@@ -114,6 +116,15 @@ thirteen that once reported success while checking nothing, are in
 ---
 
 ## Open
+
+### B-232 · S3 · A morphology chip offered for a row that already holds it
+
+**Found 2026-09-27** in `logs/app_2026-09-27_213806.log`: `dağ` was added to the
+dictionary from the word view, the word editor reopened, and the chips for `dağ`
+and `lAr` were taken against rows that already held those values, so nothing was
+written (`offer filled nothing`, twice in one second). B-108's shape; the likely
+cause is that the new entry's link is not on the row the strip reads. Not
+reproduced yet.
 
 ### B-226 · S3 · The help button sits on top of the open File menu
 
@@ -302,6 +313,8 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-231** | S2 | pending:log-ids | **Eleven log lines carried annotation content**: forms in `dict entry saved`, `dictionary entries added`, `dictionary entries merged`, `offer filled nothing`, the re-tokenization warning, four lemma lines and dictionary navigation. B-219 had fixed one instance and nothing guarded the rule; a form in a warning also made every new form a new triage signature. |
+| **B-233** | S3 | pending:log-ids | **A replayed journal was never folded into the base.** Replay did not mark the stores changed, so with no further edits the same journal replayed on every open; the dictionary offer was also computed and logged twice per load, the first time before the replay. |
 | **B-230** | S3 | pending:bundle-open | **An opened project's prefix kept its role suffix** (`x_corpus` rather than `x`): the loaders strip `.jsonl` before asking for the prefix, so Export and Save suggested `x_corpus_corpus.jsonl`, and the PDF export was titled `x_corpus`. |
 | **B-229** | S2 | pending:bundle-open | **The save panel could point one file of a project at another project's file.** Each row had its own Change… dialog, so the dictionary or participants path could be set to an existing file elsewhere, which the next save overwrote. |
 | **B-228** | S2 | pending:bundle-open | **A dictionary file opened on its own was loaded into the project already open**, and could become its dictionary save target. Separately, switching to a project whose dictionary file was empty kept the previous project's entries in memory, bound to the new file. |

@@ -1211,6 +1211,7 @@ async function promptLoadedCorpusAutosave(absPath, corpusBase, dictPath = null, 
         _autoSave = true;
         refreshSavePanelPaths();
         flashSaveStatus(`${icon('check-circle')} ${t('status.autosave_on')}`);
+        if (_journalBytes) compact('autosave armed');   // fold a replayed journal
       },
       () => { /* user skipped */ }
     );
@@ -1228,6 +1229,7 @@ async function promptLoadedCorpusAutosave(absPath, corpusBase, dictPath = null, 
         _autoSave = true;
         _syncPanelPath('sp-corpus-path', _savePath, S._corpusFilename, 'corpus');
         flashSaveStatus(`${icon('check-circle')} ${t('status.autosave_on')}`);
+        if (_journalBytes) compact('autosave armed');   // fold a replayed journal
       },
       () => { /* user skipped */ }
     );
