@@ -6,9 +6,19 @@
 
 ## Requirements
 
-**Python 3.** [python.org/downloads](https://www.python.org/downloads/)
+| | Minimum | Notes |
+|---|---|---|
+| **macOS** | 11 Big Sur, Apple Silicon or Intel | tested on 14 and 26 |
+| **Windows** | 10 or 11, 64-bit | not tested in this build |
+| **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
+| **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
+| **Disk** | about 200 MB | plus your corpora |
+| **Offline translation (NLLB)** | Apple Silicon Mac, or 64-bit Windows or Linux (glibc 2.28+) | about 1.1 GB more on disk, 1.2 GB download; 4 GB RAM or more recommended. Not available on Intel Macs yet; online translation works there |
 
-On macOS this is usually pre-installed. On Windows, check **"Add Python to PATH"** during installation.
+Setup checks these before it installs anything and says which one is not met.
+
+On Windows, check **"Add Python to PATH"** when installing Python. On macOS, check
+the version with `python3 --version`; older macOS versions can come with 3.8.
 
 ---
 
@@ -208,8 +218,13 @@ Check that `source/LingCoT.html` and `source/LingCoT.pyw` are both present. Laun
 **NLLB download fails or is interrupted**
 Re-run `setup_NLLB.command` / `setup_NLLB.bat`. HuggingFace Hub resumes partial downloads automatically.
 
+**Setup stops with "system requirement not met"**
+The message names the requirement; see [Requirements](#requirements). On an Intel
+Mac this is expected for `setup_NLLB.command`: offline translation is not
+available there yet, and online translation is.
+
 **`source/build_env.py` fails on the NLLB tier (torch)**
-torch requires Python 3.9+. Check with `python3 --version`. Use `setup_NLLB.command` instead of running build_env.py directly. It handles the tier upgrade and model download in the correct order.
+Use `setup_NLLB.command` instead of running build_env.py directly. It handles the tier upgrade and model download in the correct order.
 
 **Offline translation or PDF export stopped working after running setup**
 Fixed in v3.14.81. `uv sync` removes anything outside the tier it is given, so

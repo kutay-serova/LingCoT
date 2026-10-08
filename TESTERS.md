@@ -7,8 +7,9 @@ start to finish; what it needs now is people other than its author doing that.
 
 ## Getting started
 
-**macOS only.** Linux and Windows are not supported in this build; see Known
-issues.
+**macOS only**, macOS 11 or later with Python 3.9 or later. Offline translation
+(NLLB) needs an Apple Silicon Mac. Linux and Windows are not supported in this
+build; see Known issues. Full requirements: [setup.md](setup.md#requirements).
 
 1. **Get the build.** On the
    [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.15.4),

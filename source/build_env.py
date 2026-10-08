@@ -100,6 +100,9 @@ Uses sys.prefix (not sys.executable) to detect venv activation reliably even
 when the venv Python is a symlink to the system binary.
 """
 
+# B-236: lets the `str | None` annotations below import under Python 3.9.
+from __future__ import annotations
+
 import argparse
 import os
 import shutil
@@ -123,6 +126,7 @@ _log = _setup_log(PROJECT_ROOT, filename='setup.log', logger_name='build_env')
 # create the workspace. (v3.14.77 put it in setup.py, which those scripts never
 # invoke; the step silently never ran. See workspace.py.)
 from version import __version__ as APP_VERSION
+import sysreq as _sysreq
 from workspace import (WORKSPACE, CORPORA_DIR, ensure_workspace as _ensure_ws,
                        migrate_legacy_corpora as _migrate_ws,
                        migrate_workspace as _migrate_home)
@@ -738,6 +742,15 @@ def main() -> int:
         if _homed:
             _log.info(f"workspace migrated from the old location: {_homed}")
     print()
+
+    # Refuse before the venv is touched on a system the app cannot run on.
+    # After the workspace step, which B-023 requires on every path.
+    if not args.show:
+        problems = _sysreq.check_base()
+        if args.tier == TIER_NLLB:
+            problems += _sysreq.check_nllb()
+        if not _sysreq.report(problems, fail, info, _log):
+            return 1
 
     # ── Show mode ───────────────────────────────────────────────────────────────
     if args.show:

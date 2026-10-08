@@ -535,6 +535,10 @@ def download_nllb() -> bool:
     print("  (source stays cached in ~/.cache/huggingface/ for future re-use)")
     print()
 
+    import sysreq
+    if not sysreq.report(sysreq.check_nllb(), warn, info, _log):
+        return False
+
     # ── Step 1: Make sure the NLLB Python packages are all installed ──────────
     # This covers the minimal-tier → nllb-tier upgrade path: if any of
     # ctranslate2 / sentencepiece / huggingface_hub / transformers / torch is

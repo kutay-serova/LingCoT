@@ -111,9 +111,9 @@ table that did not before.
 
 ## 6. Guards
 
-**110 in `dev/tests/`. `run_all.sh` runs 107 by default — 107 pass, 0 disabled;
+**111 in `dev/tests/`. `run_all.sh` runs 108 by default — 108 pass, 0 disabled;
 `--slow` adds `nllb_diag_test.py`, `gui_crud_test.js` and `pseudo_locale_test.js`
-for 110.** Guards log to `LINGCOT_LOG_DIR` (a temp dir), never `logs/`; `run_all.sh`
+for 111.** Guards log to `LINGCOT_LOG_DIR` (a temp dir), never `logs/`; `run_all.sh`
 fails if `logs/` changed during the run. Run `--slow`
 before a release.
 

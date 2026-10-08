@@ -43,8 +43,9 @@ unavailable, in fieldwork situations especially. This is a tool for
 documentation, analysis, and helping academic and community-oriented linguistic
 work and research.
 
-LingCoT is written for Windows, macOS and Linux. It only requires Python 3.9 or
-later; setup installs everything else for you. **The current tester build is
+LingCoT is written for Windows, macOS and Linux. It needs Python 3.9 or later and
+macOS 11, Windows 10 or a current Linux (see [Requirements](#requirements));
+setup installs everything else for you. **The current tester build is
 macOS-only**: on Linux the app does not open without Qt or GTK (B-224), and
 Windows has not been tested.
 
@@ -143,10 +144,22 @@ Apple's Command Line Tools; that is needed once.
 
 ### Requirements
 
-- **Python 3.9 or later.** [python.org/downloads](https://www.python.org/downloads/)
-  - **Windows:** during installation, check **"Add Python to PATH"**
-  - **macOS:** usually pre-installed; verify with `python3 --version` in Terminal
-  - **Linux:** install via your package manager (e.g. `sudo apt install python3`)
+| | Minimum | Notes |
+|---|---|---|
+| **macOS** | 11 Big Sur, Apple Silicon or Intel | tested on 14 and 26 |
+| **Windows** | 10 or 11, 64-bit | not tested in this build |
+| **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
+| **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
+| **Disk** | about 200 MB | plus your corpora |
+| **Offline translation (NLLB)** | Apple Silicon Mac, or 64-bit Windows or Linux (glibc 2.28+) | about 1.1 GB more on disk, 1.2 GB download; 4 GB RAM or more recommended. Not available on Intel Macs yet; online translation works there |
+
+Setup checks these before it installs anything and says which one is not met.
+
+Installing Python:
+- **Windows:** during installation, check **"Add Python to PATH"**
+- **macOS:** check with `python3 --version` in Terminal. The `python3` that comes
+  with older macOS versions can be 3.8; if so, install a current one from python.org
+- **Linux:** install via your package manager (e.g. `sudo apt install python3`)
 
 ### Windows
 
@@ -925,6 +938,7 @@ LingCoT/
 │   ├── LingCoT.css               All styling
 │   ├── LingCoT.pyw               Desktop launcher (PyWebView) and the Python bridge
 │   ├── version.py                The application version, defined once
+│   ├── sysreq.py                 Minimum system requirements, checked by setup
 │   ├── workspace.py              Where your corpora live (~/LingCoT-Data), defined once
 │   ├── log_setup.py              Session logging
 │   ├── build_env.py              Virtual-environment builder - what setup.command runs
