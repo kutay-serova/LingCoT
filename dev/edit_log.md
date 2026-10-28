@@ -27,7 +27,7 @@ said 50 for thirty entries.
 - `build_env.main()` checks after the workspace step (B-023 keeps that first) and before the venv is touched, adding the NLLB check for `--tier nllb`; `setup.py` checks before the NLLB packages are installed. A failed check prints the reason and returns 1, so `setup.command`, `setup_NLLB.command` and the `.bat` files stop there.
 - B-236: `from __future__ import annotations` in `build_env.py` and `dict_export.py` (the in-app PDF export also failed to load on 3.9); `Optional[str]` for the two `str | None` hints in `corpus_ingest.py`, where the `__future__` import breaks its dataclasses when loaded by file path.
 - A failed requirement points to `setup.md`, section Requirements, the page testers have.
-- Docs: one requirements table in README and setup.md (macOS 11, Windows 10/11 64-bit, Python 3.9, about 200 MB; NLLB about 1.1 GB more, 4 GB RAM recommended, not on Intel Macs yet); TESTERS states the minimum.
+- Docs: one requirements table in README and setup.md (macOS 11, Windows 10/11 64-bit, Python 3.9, about 200 MB; NLLB about 1.1 GB more, 4 GB RAM recommended, not on Intel Macs yet); TESTERS states the minimum, links the v3.16.1 release and adds Tutorials (install, approving `setup.command`, no or old Python).
 
 **Why.** Requested after the compatibility review of 2026-10-07: an old system failed partway through installing packages instead of being told why.
 
