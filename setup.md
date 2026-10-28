@@ -1,6 +1,6 @@
 # LingCoT: Setup & Running
 
-**Updated:** 2026-10-07 · **Version:** v3.16.0
+**Updated:** 2026-10-28 · **Version:** v3.16.1
 
 ---
 
