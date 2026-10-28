@@ -187,7 +187,7 @@ def _slugify(text: str) -> str:
 
 
 # @fn _default_output
-def _default_output(args_input: list, args_title: str | None) -> str:
+def _default_output(args_input: list, args_title: Optional[str]) -> str:
     """
     Derive the default output path when -o / --output is not supplied.
 
@@ -1073,7 +1073,7 @@ class CorpusBuilder:
         }
 
     def _build_word(self, form: str, sid: str, n: int,
-                    gloss: str | None = None) -> dict:
+                    gloss: Optional[str] = None) -> dict:
         """
         Build a single word dict.  Punctuation tokens pass gloss="PUNCT"
         so they are immediately labelled without needing an annotator pass.

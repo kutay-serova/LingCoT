@@ -54,13 +54,57 @@ const dl = st.slice(st.indexOf('def download_nllb('));
 check(dl.indexOf('sysreq.check_nllb()') !== -1 && dl.indexOf('sysreq.check_nllb()') < dl.indexOf('if not ensure_nllb_packages()'),
       'W3  the NLLB download checks before installing packages');
 
-console.log('\nsetup imports under the oldest supported Python (B-236)');
-for (const f of ['build_env.py', 'setup.py', 'log_setup.py', 'workspace.py', 'version.py', 'sysreq.py']) {
-  const src = fs.readFileSync(path.join(SRC, f), 'utf8');
-  const sigs = src.split('\n').filter(l => /^\s*def .*(\|\s*None|\b(list|dict|tuple|set)\[)/.test(l));
-  check(!sigs.length || /^from __future__ import annotations/m.test(src),
-        `I   ${f}: ${sigs.length ? 'newer annotations, with the __future__ import' : 'no 3.10-only annotations in signatures'}`,
-        sigs.slice(0, 3).join('\n       '));
+console.log('\nevery source module imports under the oldest supported Python (B-236)');
+// Python 3.9 evaluates annotations when a def or class body runs, so `X | Y` there
+// raises TypeError on import unless the module has the __future__ import.
+// Annotations inside function bodies are never evaluated and are skipped.
+// The __future__ import is not safe with @dataclass in a module loaded by file
+// path (workspace_test.js loads corpus_ingest.py that way): use Optional there.
+// Read with ast, so signatures split over several lines are covered too.
+const UNION_SCAN = `
+import ast, json, sys
+def unions(node):
+    return [n.lineno for n in ast.walk(node)
+            if isinstance(n, ast.BinOp) and isinstance(n.op, ast.BitOr)] if node else []
+out = {}
+for f in sys.argv[1:]:
+    tree = ast.parse(open(f, encoding='utf8').read())
+    if any(isinstance(n, ast.ImportFrom) and n.module == '__future__'
+           and any(a.name == 'annotations' for a in n.names) for n in tree.body):
+        out[f] = []
+        continue
+    hits = []
+    def visit(body):
+        for n in body:
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                a = n.args
+                for arg in a.posonlyargs + a.args + a.kwonlyargs + [a.vararg, a.kwarg]:
+                    if arg: hits.extend(unions(arg.annotation))
+                hits.extend(unions(n.returns))
+            elif isinstance(n, ast.ClassDef):
+                visit(n.body)
+            elif isinstance(n, ast.AnnAssign):
+                hits.extend(unions(n.annotation))
+            elif isinstance(n, (ast.If, ast.Try, ast.With)):
+                visit(getattr(n, 'body', []))
+    visit(tree.body)
+    out[f] = sorted(set(hits))
+print(json.dumps(out))
+`;
+const pyFiles = [];
+(function walk(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) { if (!['__pycache__', 'models'].includes(e.name)) walk(p); }
+    else if (/\.pyw?$/.test(e.name)) pyFiles.push(p);
+  }
+})(SRC);
+const unionHits = JSON.parse(execFileSync('python3', ['-c', UNION_SCAN, ...pyFiles], { encoding: 'utf8' }));
+check(pyFiles.length >= 12, `I0  ${pyFiles.length} modules scanned under source/`);
+for (const f of pyFiles) {
+  const lines = unionHits[f], rel = path.relative(SRC, f);
+  check(!lines.length, `I   ${rel}: no \`X | Y\` annotation evaluated on import`,
+        lines.length ? `lines ${lines.join(', ')}; use Optional[...], or the __future__ import in a module without dataclasses` : '');
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

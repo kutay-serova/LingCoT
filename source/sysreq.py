@@ -124,5 +124,5 @@ def report(problems, fail, info, log=None):
         if log:
             log.error("system requirement not met: %s" % p)
     if problems:
-        info("System requirements: README.md, section 1. Setup.")
+        info("System requirements: setup.md, section Requirements.")
     return not problems

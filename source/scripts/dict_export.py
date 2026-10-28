@@ -36,6 +36,8 @@
 # RETURN  {ok: bool, path?: str, error?: str, install_hint?: str}
 # =============================================================================
 
+from __future__ import annotations  # B-236: `str | None` hints on Python 3.9
+
 import os
 import sys
 from pathlib import Path
