@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-10-28 · **Version:** v3.16.2
+**Updated:** 2026-10-28 · **Version:** v3.16.3
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -14,6 +14,25 @@ said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
 
+---
+
+## B-238: PDF export installed by setup; the in-app message says to run setup again; command boxes scroll instead of breaking (2026-10-28)
+**Version:** v3.16.3 · **Type:** fix · **Archives:** `dev/archive/changes/pdf-base/` (v3.16.2)
+**Touched:** pyproject.toml · uv.lock · source/build_env.py · source/setup.py · source/scripts/dict_export.py · source/LingCoT.pyw · source/LingCoT.css · source/resources/locale/en.json · source/resources/locale/haw.json · setup.md · README.md · QUICKSTART.md · TESTERS.md · dev/BUGS.md · dev/tests/venv_tier_test.js · dev/tests/printed_commands_test.js
+**Closed:** B-238
+
+**What changed.**
+- `pyproject.toml`: `fpdf2` and `python-bidi` move from the `pdf` extra to the base dependencies; the extra is removed. `uv.lock` regenerated: the two packages lose their `extra == 'pdf'` marker, no version changes.
+- `build_env.py`: both in the core checks; `pdf` dropped from the extras detection and from `_uv_sync_cmd`; `--tier pdf` is still accepted and runs as minimal. `setup.py`'s PDF repair calls plain `build_env.py`.
+- Missing-package message (`dict_export.py`, `LingCoT.pyw`, en and haw locale): run setup again, no Terminal command.
+- CSS: `.dex-install-hint`, `.xlate-cmd-code` and `.nllb-modal-code` stay on one line and scroll sideways.
+- setup.md, README, QUICKSTART, TESTERS: PDF export is part of setup; disk about 250 MB; release link v3.16.3.
+
+**Why.** The v3.16.2 dry run: Export PDF on a fresh install asked for a Terminal command, shown broken mid-word.
+
+**Guard.** `venv_tier_test.js`: nllb is the only extra; no sync asks for `--extra pdf`; `--tier pdf` runs as minimal; both packages are base dependencies. `printed_commands_test.js`: the three command boxes scroll, never break or truncate (fails on the pre-change CSS).
+
+**Verification.** `./dev/tests/run_all.sh`: 109 passed. On a copy (Linux): fresh pip install under Python 3.9 and uv install under 3.12 both import `fpdf` and `bidi` and write a PDF; a v3.16.2 venv with the old `pdf` extra re-runs setup cleanly; `--tier pdf` runs as minimal. Venv 42 MB → 92 MB (pip).
 ---
 
 ## B-237: Windows preview: .bat files written out with CRLF, launcher shows why it stopped, tester docs for Windows (2026-10-28)

@@ -976,7 +976,8 @@ class Api:
             # the session log said nothing at all (B-025 made it reachable by
             # pruning the pdf tier out of the venv).
             _log.error(f"export_dict_pdf: could not load dict_export module: {exc}")
-            hint = ("python3 source/build_env.py --tier pdf"
+            hint = ("Double-click setup.command (macOS) or setup.bat (Windows)\n"
+                    "in the LingCoT folder, then restart LingCoT."
                     if "fpdf" in str(exc).lower() or "bidi" in str(exc).lower() else None)
             return {"ok": False,
                     "error": f"Could not load dict_export module: {exc}",

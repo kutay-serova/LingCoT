@@ -2,7 +2,7 @@
 
 **LingCoT is an open-source tool for annotating linguistic corpora.**
 
-**Updated:** 2026-10-28 · **Version:** v3.16.2
+**Updated:** 2026-10-28 · **Version:** v3.16.3
 
 > **Status: in development.** No stable release has been cut. The application is
 > in daily use on the author's own corpora and the data format is settled enough
@@ -150,7 +150,7 @@ Apple's Command Line Tools; that is needed once.
 | **Windows** | 10 or 11, 64-bit | preview, first tester run in v3.16.2; use Python 3.13 or earlier |
 | **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
 | **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
-| **Disk** | about 200 MB | plus your corpora |
+| **Disk** | about 250 MB | plus your corpora |
 | **Offline translation (NLLB)** | Apple Silicon Mac, or 64-bit Windows or Linux (glibc 2.28+) | about 1.1 GB more on disk, 1.2 GB download; 4 GB RAM or more recommended. Not available on Intel Macs yet; online translation works there |
 
 Setup checks these before it installs anything and says which one is not met.
@@ -191,7 +191,7 @@ Open a terminal in the LingCoT folder and run:
 python3 source/build_env.py
 ```
 
-Setup installs the **minimal tier**: the PyWebView desktop app, ingestion libraries for TXT/EPUB files, and online translation via Google Translate.
+Setup installs the **minimal tier**: the PyWebView desktop app, ingestion libraries for TXT/EPUB files, online translation via Google Translate, and PDF dictionary export.
 
 ---
 

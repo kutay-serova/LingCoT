@@ -987,7 +987,7 @@
   "status.dict.export.done": "PDF saved",
   "status.dict.export.empty": "No entries match the selected filter.",
   "status.dict.export.generating": "Generating PDF…",
-  "status.dict.export.missing_pkg": "Missing packages — see install instructions below.",
+  "status.dict.export.missing_pkg": "PDF export is not installed. Run setup again:",
   "status.empty.matches": "No matches",
   "status.empty.morphemes": "No morpheme annotation for this word.",
   "status.empty.paragraphs": "No paragraphs yet",

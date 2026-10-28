@@ -574,7 +574,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
   font-family: var(--mono); font-size: 0.82rem;
   background: var(--surface-dim); border: 1px solid var(--border);
   border-radius: 6px; padding: 8px 14px; margin: 4px 0 10px;
-  white-space: pre; user-select: all;
+  white-space: pre; overflow-x: auto; user-select: all;
 }
 .nllb-modal-btns  { display: flex; gap: 10px; justify-content: flex-end; }
 .nllb-modal-close {
@@ -1268,7 +1268,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); line
 .dex-install-hint {
   font-family: var(--mono); font-size: 0.75rem; background: var(--surface-dim);
   border: 1px solid var(--border); border-radius: var(--r); padding: 6px 8px;
-  margin-top: 4px; white-space: pre-wrap; word-break: break-all;
+  margin-top: 4px; white-space: pre; overflow-x: auto;
 }
 
 .dict-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -2794,8 +2794,7 @@ details.prov-morpheme-inline {
   background: var(--surface-dim);
   border-radius: 3px;
   padding: 3px 7px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-x: auto;
   white-space: nowrap;
   color: var(--text);
 }

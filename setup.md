@@ -1,6 +1,6 @@
 # LingCoT: Setup & Running
 
-**Updated:** 2026-10-28 · **Version:** v3.16.2
+**Updated:** 2026-10-28 · **Version:** v3.16.3
 
 ---
 
@@ -12,7 +12,7 @@
 | **Windows** | 10 or 11, 64-bit | preview, first tester run in v3.16.2; use Python 3.13 or earlier |
 | **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
 | **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
-| **Disk** | about 200 MB | plus your corpora |
+| **Disk** | about 250 MB | plus your corpora |
 | **Offline translation (NLLB)** | Apple Silicon Mac, or 64-bit Windows or Linux (glibc 2.28+) | about 1.1 GB more on disk, 1.2 GB download; 4 GB RAM or more recommended. Not available on Intel Macs yet; online translation works there |
 
 Setup checks these before it installs anything and says which one is not met.
@@ -60,7 +60,7 @@ sudo apt install libxcb-cursor0
 ```
 With Qt, messages in pop-up dialogs show `\n` and quotation marks (B-225).
 
-Setup installs the **minimal tier**: pywebview (desktop app), ingestion libraries (TXT/EPUB), and online translation via Google Translate. Offline NLLB translation and PDF export are separate tiers, see below.
+Setup installs the **minimal tier**: pywebview (desktop app), ingestion libraries (TXT/EPUB), and online translation via Google Translate, and PDF dictionary export. Offline NLLB translation is a separate tier, see below.
 
 Setup also creates your **workspace** at `~/LingCoT-Data/`, and tells you where it is.
 
@@ -147,15 +147,11 @@ See `README.md` for full flag reference.
 
 ---
 
-## PDF dictionary export (optional)
+## PDF dictionary export
 
-Exporting a dictionary to PDF needs one extra tier:
-
-```bash
-python3 source/build_env.py --tier pdf
-```
-
-Adds `fpdf2` and `python-bidi` (right-to-left scripts). Tiers are **additive.** installing this does not remove NLLB, and vice versa.
+Part of the base install since v3.16.3: setup installs `fpdf2` and `python-bidi`
+(right-to-left scripts). If **Export PDF** says PDF export is not installed, run
+setup again. `--tier pdf` is still accepted and does the same as plain setup.
 
 ---
 
@@ -236,8 +232,8 @@ Use `setup_NLLB.command` instead of running build_env.py directly. It handles th
 **Offline translation or PDF export stopped working after running setup**
 Fixed in v3.14.81. `uv sync` removes anything outside the tier it is given, so
 earlier versions uninstalled the NLLB and PDF packages whenever setup re-ran.
-Reinstall what you need, `python3 source/build_env.py --tier nllb` and
-`--tier pdf`, and note that they no longer undo each other.
+Reinstall offline translation with `python3 source/build_env.py --tier nllb`;
+PDF export comes back with plain setup.
 
 **Something misbehaved and you want to report it**
 Every run writes `logs/app_<date>_<time>.log`, and the app's version is on its

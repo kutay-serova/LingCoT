@@ -42,6 +42,11 @@ dependencies = [
 
     # ── Shared utilities ───────────────────────────────────────────────────────
     "tqdm>=4.65",                # progress bars (batch loops, downloads)
+
+    # ── PDF dictionary export ─────────────────────────────────────────────────
+    # Base install since v3.16.3 (B-238); was the "pdf" extra.
+    "fpdf2>=2.7",                # PDF generation (pure Python, TTF fonts)
+    "python-bidi>=0.6",          # bidi reordering for RTL text before fpdf2 draws it
 ]
 
 # ── Optional extras ────────────────────────────────────────────────────────────
@@ -64,14 +69,6 @@ nllb = [
     "transformers>=4.40",        # required by ct2-transformers-converter (one-time)
     "torch>=2.2",                # required by transformers for .bin model loading
                                  #   (CPU-only wheel pulled via [tool.uv.sources])
-]
-
-# PDF dictionary export — fpdf2 renders entries; python-bidi reorders RTL text
-# (Arabic, Hebrew, etc.) before fpdf2 draws it, since fpdf2 has no built-in bidi.
-# Install with:   python3 build_env.py --tier pdf
-pdf = [
-    "fpdf2>=2.7",                  # PDF generation (pure Python, supports TTF fonts)
-    "python-bidi>=0.6",            # Unicode bidi algorithm for RTL script support
 ]
 
 # Development tools

@@ -14,8 +14,8 @@
 #
 # DEPENDENCY TIERS
 #   minimal (default)
-#     Core packages only: ingestion, online translation via Google, HTTP.
-#     No ML, no large downloads.  Fast install (~30 MB).
+#     Core packages: ingestion, online translation via Google, HTTP, and
+#     PDF export (fpdf2, python-bidi).  No ML, no large downloads.
 #
 #   nllb
 #     Everything in "minimal", plus the packages needed to run and convert
@@ -25,9 +25,8 @@
 #     it to ~600 MB int8 CTranslate2 weights.
 #
 #   pdf
-#     Everything in "minimal", plus fpdf2 (PDF generation) and python-bidi
-#     (Unicode bidi reordering for RTL scripts).  Small install (~5 MB).
-#     Enables the dictionary PDF export feature in the desktop app.
+#     Accepted for old instructions; same as minimal. PDF export (fpdf2,
+#     python-bidi) has been part of the base install since v3.16.3 (B-238).
 #
 #   Tiers are re-runnable: starting on minimal and later re-running with
 #   --tier nllb or --tier pdf upgrades the existing venv in place.
@@ -62,13 +61,12 @@ activate it first (see the "self-activating bootstrap" below).
 
 Dependency tiers
 ----------------
-  minimal  (default)   Ingestion + Google Translate only.
+  minimal  (default)   Ingestion, Google Translate, PDF export.
   nllb                 Everything in minimal, plus offline NLLB translation
                        (ctranslate2, sentencepiece, transformers, torch, …).
-  pdf                  Everything in minimal, plus PDF export for the dictionary
-                       (fpdf2, python-bidi).  Small install (~5 MB).
+  pdf                  Same as minimal; PDF export is in the base install.
 
-Upgrading tiers later is safe: re-run with --tier nllb or --tier pdf and
+Upgrading tiers later is safe: re-run with --tier nllb and
 uv/pip will add the new packages without rebuilding from scratch.
 
 Usage
@@ -194,8 +192,8 @@ def find_pip() -> str | None:
 # ── Tier names ──────────────────────────────────────────────────────────────────
 # "minimal" is pseudo, it installs only the [project].dependencies block, no
 # extras.  "nllb" installs the [project.optional-dependencies].nllb extra.
-# "pdf"  installs the [project.optional-dependencies].pdf extra (fpdf2 + python-bidi).
-# Tiers are additive: --tier pdf gives minimal + pdf packages.
+# "pdf" is kept as an alias of "minimal" for old instructions (B-238).
+# Tiers are additive: --tier nllb gives minimal + nllb packages.
 TIER_MINIMAL = "minimal"
 TIER_NLLB    = "nllb"
 TIER_PDF     = "pdf"
@@ -210,7 +208,6 @@ VALID_TIERS  = (TIER_MINIMAL, TIER_NLLB, TIER_PDF)
 # ctranslate2 is unambiguous.
 EXTRA_MARKERS = {
     TIER_NLLB: ("ctranslate2", "sentencepiece"),
-    TIER_PDF:  ("fpdf", "bidi"),
 }
 
 
@@ -260,7 +257,7 @@ def _uv_sync_cmd(uv: str, tier: str, dev: bool, extras=None) -> list[str]:
     """
     cmd = [uv, "sync", "--no-dev", "--inexact"]
     wanted = set(extras or ())
-    if tier in (TIER_NLLB, TIER_PDF):
+    if tier == TIER_NLLB:
         wanted.add(tier)
     for extra in sorted(wanted):
         cmd += ["--extra", extra]
@@ -528,6 +525,8 @@ _CORE_CHECKS = [
     ("deep_translator","Google Translate backend"),
     ("requests",       "HTTP client"),
     ("tqdm",           "progress bars"),
+    ("fpdf",           "PDF export (fpdf2)"),
+    ("bidi",           "RTL text in PDF export (python-bidi)"),
 ]
 
 # Additional packages expected in the NLLB tier.
@@ -545,12 +544,6 @@ _NLLB_CONVERT_CHECKS = [
     ("torch",           "required by transformers for .bin loading"),
 ]
 
-# PDF-tier packages: fpdf2 is imported as "fpdf" (the package exposes that name);
-# python-bidi is imported as "bidi".
-_PDF_CHECKS = [
-    ("fpdf",  "PDF generation (fpdf2)"),
-    ("bidi",  "Unicode bidi reordering for RTL scripts (python-bidi)"),
-]
 
 
 # @fn _import_check
@@ -579,7 +572,6 @@ def check_venv(tier: str = TIER_MINIMAL) -> bool:
 
     Passing tier="minimal" checks only the core packages.
     Passing tier="nllb" additionally checks the NLLB runtime + conversion deps.
-    Passing tier="pdf"  additionally checks fpdf2 + python-bidi.
     """
     header(f"Venv health check  (tier: {tier})")
 
@@ -608,13 +600,6 @@ def check_venv(tier: str = TIER_MINIMAL) -> bool:
             if not _import_check(pkg, desc):
                 all_ok = False
 
-    if tier == TIER_PDF:
-        print()
-        print(_c(BOLD, "  PDF export packages:"))
-        for pkg, desc in _PDF_CHECKS:
-            if not _import_check(pkg, desc):
-                all_ok = False
-
     return all_ok
 
 
@@ -637,7 +622,6 @@ def show_venv() -> None:
         ("Core (minimal tier)",         _CORE_CHECKS),
         ("NLLB runtime (nllb tier)",    _NLLB_RUNTIME_CHECKS),
         ("NLLB conversion (nllb tier)", _NLLB_CONVERT_CHECKS),
-        ("PDF export (pdf tier)",       _PDF_CHECKS),
     ]
     # beautifulsoup4 is imported as "bs4" but listed as "beautifulsoup4" in PyPI
     display_names = {"bs4": "beautifulsoup4", "huggingface_hub": "huggingface-hub"}
@@ -676,10 +660,10 @@ def parse_args() -> argparse.Namespace:
             "  python3 source/build_env.py --show               # print installed package versions\n"
             "\n"
             "Tiers:\n"
-            "  minimal  Ingestion + Google Translate only (~30 MB)\n"
+            "  minimal  Ingestion, Google Translate, PDF export (~60 MB)\n"
             "  nllb     Adds offline NLLB translation deps (~500 MB; plus\n"
             "           `setup.py --nllb` to download the ~600 MB model)\n"
-            "  pdf      Adds PDF export deps: fpdf2 + python-bidi (~5 MB)\n"
+            "  pdf      Same as minimal; PDF export is in the base install\n"
             "\n"
             "Upgrade path:  run again with --tier nllb to add NLLB packages\n"
             "to an existing minimal install without rebuilding from scratch.\n"
@@ -696,7 +680,11 @@ def parse_args() -> argparse.Namespace:
                    help="Print a summary of the venv and installed versions.")
     p.add_argument("--dev",      action="store_true",
                    help="Also install dev extras (pytest, mypy).")
-    return p.parse_args()
+    args = p.parse_args()
+    # Old instructions say --tier pdf; PDF export is now in the base install.
+    if args.tier == TIER_PDF:
+        args.tier = TIER_MINIMAL
+    return args
 
 
 # @fn main

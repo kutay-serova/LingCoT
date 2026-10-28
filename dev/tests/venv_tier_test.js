@@ -13,6 +13,10 @@
    The tiers were also mutually exclusive, so even `--tier pdf` would have
    removed the nllb packages. They are additive now.
 
+   B-238: PDF export moved into the base install, so nllb is the only extra.
+   `--tier pdf` is still accepted, as minimal, and no sync may ask uv for the
+   removed `pdf` extra, which uv rejects.
+
    This guard EXECUTES build_env.py rather than reading it. An earlier guard in
    this project asserted a function was "defined and called" and was worthless
    because nothing ran the file; reading source cannot tell you what a command
@@ -52,9 +56,11 @@ def cmd(tier, extras):
 
 out = {}
 out['minimal_nothing'] = cmd('minimal', set())
-out['minimal_both']    = cmd('minimal', {'pdf','nllb'})
-out['nllb_with_pdf']   = cmd('nllb', {'pdf'})
+out['minimal_nllb']    = cmd('minimal', {'nllb'})
+out['nllb_again']      = cmd('nllb', {'nllb'})
 out.setdefault('legacy_signature', False)
+sys.argv = ['build_env.py', '--tier', 'pdf']
+out['pdf_alias'] = be.parse_args().tier
 
 if not hasattr(be, 'detect_installed_extras'):
     out['detected'] = None
@@ -88,23 +94,31 @@ console.log('\na sync never removes what it did not install\n');
         '--inexact is always passed',
         '         without it, `uv sync` deletes every package outside the resolved\n'
         + '         set — which is exactly how B-025 wiped two tiers');
-  for (const k of ['minimal_both', 'nllb_with_pdf'])
+  for (const k of ['minimal_nllb', 'nllb_again'])
     check(r[k].includes('--inexact'), `--inexact present for ${k}`);
 }
 
 console.log('\ninstalled extras survive a lower-tier run');
 {
-  const both = r.minimal_both.join(' ');
-  check(both.includes('--extra pdf') && both.includes('--extra nllb'),
-        'tier=minimal with pdf+nllb installed syncs BOTH, not neither',
-        `         got: ${both}\n`
-        + '         → setup.command passes no --tier; if this drops the extras,\n'
-        + '           running setup UNINSTALLS the user’s features');
+  const kept = r.minimal_nllb.join(' ');
+  check(kept.includes('--extra nllb'),
+        'tier=minimal with nllb installed keeps nllb',
+        `         got: ${kept}\n`
+        + '         → setup.command passes no --tier; if this drops the extra,\n'
+        + '           running setup UNINSTALLS offline translation');
 
-  const nllb = r.nllb_with_pdf.join(' ');
-  check(nllb.includes('--extra nllb') && nllb.includes('--extra pdf'),
-        'tiers are additive — asking for nllb does not remove pdf',
-        `         got: ${nllb}`);
+  const all = [r.minimal_nothing, r.minimal_nllb, r.nllb_again].map(c => c.join(' '));
+  check(all.every(c => !c.includes('--extra pdf')),
+        'no sync asks for the removed pdf extra (B-238)',
+        `         got: ${all.join(' | ')}`);
+  check(r.pdf_alias === 'minimal',
+        '--tier pdf is accepted and runs as minimal (B-238)',
+        `         got: ${r.pdf_alias}`);
+
+  const pp = fs.readFileSync(path.join(ROOT, 'pyproject.toml'), 'utf8');
+  const deps = pp.slice(pp.indexOf('dependencies = ['), pp.indexOf(']', pp.indexOf('dependencies = [')));
+  check(/"fpdf2/.test(deps) && /"python-bidi/.test(deps) && !/^pdf\s*=\s*\[/m.test(pp),
+        'fpdf2 and python-bidi are base dependencies, and there is no pdf extra (B-238)');
 }
 
 console.log('\ndetection actually looks at disk');
@@ -113,9 +127,9 @@ console.log('\ndetection actually looks at disk');
         'detect_installed_extras() exists',
         '         without it nothing can know what a re-run would delete');
   if (r.detected !== null) {
-    check(JSON.stringify(r.detected) === JSON.stringify(['nllb', 'pdf']),
-          'marker packages on disk are detected as their extras',
-          `         got ${JSON.stringify(r.detected)}, expected ["nllb","pdf"]`);
+    check(JSON.stringify(r.detected) === JSON.stringify(['nllb']),
+          'marker packages on disk are detected as their extras; fpdf is base, not an extra',
+          `         got ${JSON.stringify(r.detected)}, expected ["nllb"]`);
     check(r.detected_empty.length === 0,
           'an empty site-packages detects nothing — the check is not a constant',
           `         got ${JSON.stringify(r.detected_empty)}`);

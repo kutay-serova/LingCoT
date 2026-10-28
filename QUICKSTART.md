@@ -1,6 +1,6 @@
 # LingCoT — Quickstart
 
-**Updated:** 2026-10-28 · **Version:** v3.16.2
+**Updated:** 2026-10-28 · **Version:** v3.16.3
 
 **A guided first session.** You will build a corpus from your own text and try
 each of the things LingCoT does: glossing, the dictionary, translation,
@@ -250,6 +250,6 @@ start again with a new corpus.
 
 - [TESTERS.md](TESTERS.md): what is new in this build, known issues, and how to report
 - [README.md](README.md) — every view and field, in full
-- [setup.md](setup.md) — offline translation and PDF export, both optional
+- [setup.md](setup.md) — offline translation (optional) and PDF export
 - The `samples` folder inside the application folder holds two finished corpora,
   Turkish and Mandarin. Open one to read it rather than to edit it.

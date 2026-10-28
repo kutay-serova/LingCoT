@@ -1,6 +1,6 @@
 # LingCoT tester build
 
-**Updated:** 2026-10-28 · **Version:** v3.16.2
+**Updated:** 2026-10-28 · **Version:** v3.16.3
 
 This build is for testing. It is complete enough to annotate a real text from
 start to finish; what it needs now is people other than its author doing that.
@@ -30,8 +30,8 @@ start to finish; what it needs now is people other than its author doing that.
 
 ### 1. Download, set up and open
 
-1. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.2), under *Assets*, click
-   **LingCoT-3.16.2-macOS.zip**.
+1. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.3), under *Assets*, click
+   **LingCoT-3.16.3-macOS.zip**.
 2. **Unzip and place the folder.** Double-click the zip in Downloads (Safari
    may already have unzipped it). Move the `LingCoT` folder to where it will
    stay, for example Documents. Setup records this location, so move the folder
@@ -104,8 +104,8 @@ Expect problems, and report each one.
    and run it. On the first screen, tick **Add python.exe to PATH**, then click
    **Install Now**. Python 3.14 may not open the LingCoT window yet (see Known
    issues).
-2. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.2), under *Assets*, click
-   **LingCoT-3.16.2-Windows.zip**.
+2. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.3), under *Assets*, click
+   **LingCoT-3.16.3-Windows.zip**.
 3. **Extract.** Right-click the zip → **Extract All…** → choose where it will
    stay, for example Documents → **Extract**. Running `setup.bat` from inside
    the zip without extracting does not work.
@@ -139,6 +139,7 @@ Expect problems, and report each one.
 | Settings and tags you add to the POS and morpheme-type lists are kept in `LingCoT-Data`, so an update does not reset them | |
 | Setup checks the system first (macOS 11, Python 3.9, 64-bit) and names the one not met; it runs on the Python 3.9 that comes with Apple's developer tools | `setup.command` |
 | Setup creates `LingCoT.app`, which opens without a Terminal window; `setup.command` is the only file macOS asks you to approve | the `LingCoT` folder |
+| **PDF export** is installed by setup; nothing to add first | dictionary browser → **Export PDF** |
 | **Windows preview**: a first build for Windows; `LingCoT.bat` keeps a console open and shows why the app stopped, if it does | [Tutorial 3](#3-windows-preview-set-up-and-open) |
 
 ## Known issues

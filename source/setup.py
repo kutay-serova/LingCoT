@@ -335,7 +335,7 @@ def check_pdf_packages(verbose: bool = True) -> bool:
     """
     Check that the venv has the Python packages required for dictionary PDF export.
     Returns True if all packages are present.
-    Install with:  python3 source/build_env.py --tier pdf
+    Part of the base install since v3.16.3 (B-238).
     """
     if verbose:
         header("PDF export packages")
@@ -347,7 +347,7 @@ def check_pdf_packages(verbose: bool = True) -> bool:
         for pkg in _PDF_PACKAGES:
             (ok if _check_import(pkg) else missing)(f"{pkg}  ({pkg_labels.get(pkg, pkg)})")
         if not all_ok:
-            info("Install with:  python3 source/build_env.py --tier pdf")
+            info("To install them, run setup again (setup.command on macOS, setup.bat on Windows).")
 
     return all_ok
 
@@ -356,7 +356,7 @@ def check_pdf_packages(verbose: bool = True) -> bool:
 def ensure_pdf_packages() -> bool:
     """
     Make sure fpdf2 and python-bidi are installed.  If missing, invoke
-    `build_env.py --tier pdf` to install them into the existing venv.
+    `build_env.py`, which installs the base set into the existing venv.
     Returns True when all packages are importable after this call.
     """
     if all(_check_import(p) for p in _PDF_PACKAGES):
@@ -364,7 +364,7 @@ def ensure_pdf_packages() -> bool:
 
     header("Installing PDF export packages")
     info("fpdf2 and python-bidi are required for dictionary PDF export.")
-    info("Calling  build_env.py --tier pdf  to install them.")
+    info("Calling  build_env.py  to install them.")
     print()
 
     build_env = PROJECT_ROOT / "source" / "build_env.py"
@@ -373,10 +373,10 @@ def ensure_pdf_packages() -> bool:
         info("Install manually:  .venv/bin/pip install fpdf2 python-bidi")
         return False
 
-    result = subprocess.run([sys.executable, str(build_env), "--tier", "pdf"],
+    result = subprocess.run([sys.executable, str(build_env)],
                             cwd=str(PROJECT_ROOT))
     if result.returncode != 0:
-        warn("build_env.py --tier pdf failed.  See output above for details.")
+        warn("build_env.py failed.  See output above for details.")
         return False
 
     import importlib
@@ -807,7 +807,7 @@ def main() -> int:
     pdf_pkgs_ok = check_pdf_packages()
     if not pdf_pkgs_ok:
         pdf_issues.append(
-            "PDF export packages missing (install with: python3 source/build_env.py --tier pdf)"
+            "PDF export packages missing (run setup again (setup.command on macOS, setup.bat on Windows))"
         )
 
     # ── Annotator config (optional, scripts have built-in defaults) ──────────

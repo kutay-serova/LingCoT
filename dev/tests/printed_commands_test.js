@@ -115,5 +115,19 @@ check(broken.length === 0,
       `every printed command names a path that exists from the root`,
       broken.join('\n') + '\n         a user pastes this immediately after a successful install');
 
+// B-238: a command shown in the app must be copyable as written. The PDF hint
+// box used `word-break: break-all` and split `build_env.py` mid-word; the
+// translation panel's box cut commands off with an ellipsis.
+console.log('\ncommand boxes in the app scroll, they do not break or truncate (B-238)');
+{
+  const css = fs.readFileSync(path.join(ROOT, 'source', 'LingCoT.css'), 'utf8');
+  for (const cls of ['dex-install-hint', 'xlate-cmd-code', 'nllb-modal-code']) {
+    const m = css.match(new RegExp('\\.' + cls + '\\s*\\{([^}]*)\\}'));
+    const body = m ? m[1] : '';
+    check(m && /overflow-x:\s*auto/.test(body) && !/break-all|text-overflow:\s*ellipsis|pre-wrap/.test(body),
+          `.${cls}: one line, scrolls sideways`, `         ${body.replace(/\s+/g, ' ').trim()}`);
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

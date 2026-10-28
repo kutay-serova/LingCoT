@@ -6,7 +6,7 @@
 # Renders the LingCoT dictionary (or a filtered subset) to a PDF file using
 # fpdf2.  Called from LingCoT.pyw via the export_dict_pdf() API method.
 #
-# DEPENDENCIES (install with: python3 source/build_env.py --tier pdf)
+# DEPENDENCIES (in the base install since v3.16.3; setup installs them)
 #   fpdf2>=2.7        PDF generation (pure Python, supports TTF Unicode fonts)
 #   python-bidi>=0.6  Unicode bidi algorithm, reorders RTL text (Arabic,
 #                     Hebrew, etc.) to visual order before fpdf2 renders it.
@@ -66,11 +66,12 @@ def _check_deps() -> str | None:
     except ImportError:
         missing.append("fpdf2")
     if missing:
+        # Setup installs these, so a missing one means setup did not finish.
         pkgs = " ".join(missing)
         return (
-            f"PDF export requires: {pkgs}\n"
-            "Install with:  python3 source/build_env.py --tier pdf\n"
-            "or:            .venv/bin/pip install fpdf2 python-bidi"
+            f"Missing: {pkgs}\n"
+            "Double-click setup.command (macOS) or setup.bat (Windows)\n"
+            "in the LingCoT folder, then restart LingCoT."
         )
     return None
 
