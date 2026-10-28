@@ -1,12 +1,12 @@
 # LingCoT: Open Bugs
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 Running list of reported defects. Fixed entries move to `edit_log.md` with their fix.
 Severity: **S1** blocks use · **S2** visible/wrong but workable · **S3** cosmetic.
 
 ## Open bugs at a glance
 
-**10 open** · 0 S1 · 1 S2 · 9 S3  |  **225 fixed**  |  **1 withdrawn** (B-096)
+**10 open** · 0 S1 · 1 S2 · 9 S3  |  **226 fixed**  |  **1 withdrawn** (B-096)
 
 *Three states, not two. Counting ids without the third comes up one short — which
 is how a consistency script found it at v3.14.397.*
@@ -313,6 +313,7 @@ one-liner is in `dev/edit_log.md` under v3.14.387.*
 
 | Bug | Sev | Fixed in | What it was |
 |---|---|---|---|
+| **B-237** | S2 | v3.16.2 | **The Windows `.bat` files reached testers with LF line endings**, which `cmd.exe` can misparse inside `( )` blocks: stored LF with no `.gitattributes`, so `git archive` passed them on unchanged. Their em dashes printed as mojibake in the default console code page, and `LingCoT.bat` started `pythonw.exe`, so an error at startup showed nothing. Found while preparing the Windows preview zip. |
 | **B-236** | S2 | v3.16.1 | **Setup could not run on Python 3.9**, the minimum `pyproject.toml` declares: `build_env.py` used `str \| None` in function signatures, which raises `TypeError` on import before Python 3.10; `dict_export.py` (in-app PDF export) and `corpus_ingest.py` the same. Found by running it under 3.8 and 3.9 while adding the requirement checks. |
 | **B-234** | S2 | v3.16.0 | **Re-running setup over an existing venv reported success when its package check failed.** The sync path returned 0 whatever `check_venv` found and logged no outcome, so `setup.command` went on to say Setup complete over missing packages. Found from a 2026-10-07 `setup.log` with no completion line. |
 | **B-235** | S3 | v3.16.0 | **`setup.log` filled with empty session headers**: `setup_append_logger` wrote the header when the logger was created, so every import of a module that sets it up added one. 1,094 of 1,101 headers in one install had no lines under them. |

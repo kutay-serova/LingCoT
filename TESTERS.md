@@ -1,6 +1,6 @@
 # LingCoT tester build
 
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 This build is for testing. It is complete enough to annotate a real text from
 start to finish; what it needs now is people other than its author doing that.
@@ -10,11 +10,13 @@ start to finish; what it needs now is people other than its author doing that.
 | | |
 |---|---|
 | **System** | macOS 11 or later, Apple Silicon or Intel; Python 3.9 or later. Offline translation (NLLB): Apple Silicon only. Full requirements: [setup.md](setup.md#requirements) |
-| **Not supported** | Linux and Windows, in this build; see Known issues |
+| **Windows** | 10 or 11, 64-bit, as an untested preview: [Tutorial 3](#3-windows-preview-set-up-and-open) |
+| **Not supported** | Linux, in this build; see Known issues |
 | **Time** | about 10 minutes to install, half an hour for the quickstart |
 
-1. **Install and open LingCoT**: [Tutorial 1](#1-download-set-up-and-open).
-   If setup stops, see [Tutorial 2](#2-if-setup-stops).
+1. **Install and open LingCoT**: [Tutorial 1](#1-download-set-up-and-open) on
+   macOS, [Tutorial 3](#3-windows-preview-set-up-and-open) on Windows. If setup
+   stops on macOS, see [Tutorial 2](#2-if-setup-stops).
 2. Work through [QUICKSTART.md](QUICKSTART.md) with a short text of your own.
 3. Report what you find (below).
 
@@ -23,12 +25,13 @@ start to finish; what it needs now is people other than its author doing that.
 | | for | time |
 |---|---|---|
 | [1. Download, set up and open](#1-download-set-up-and-open) | everyone | about 10 minutes |
-| [2. If setup stops](#2-if-setup-stops) | no Python, or an old Python | 5 to 15 minutes |
+| [2. If setup stops](#2-if-setup-stops) | macOS: no Python, or an old Python | 5 to 15 minutes |
+| [3. Windows preview: set up and open](#3-windows-preview-set-up-and-open) | Windows | about 15 minutes |
 
 ### 1. Download, set up and open
 
-1. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.1), under *Assets*, click
-   **LingCoT-3.16.1-macOS.zip**.
+1. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.2), under *Assets*, click
+   **LingCoT-3.16.2-macOS.zip**.
 2. **Unzip and place the folder.** Double-click the zip in Downloads (Safari
    may already have unzipped it). Move the `LingCoT` folder to where it will
    stay, for example Documents. Setup records this location, so move the folder
@@ -90,6 +93,41 @@ folder. If you move the `LingCoT` folder later, run `setup.command` again.
 To check which Python setup will use: open **Terminal** (in Applications →
 Utilities) and type `python3 --version`. 3.9 or later works.
 
+### 3. Windows preview: set up and open
+
+The first run on Windows: setup and launch have not been tested there yet.
+Expect problems, and report each one.
+
+1. **Install Python 3.13.** On
+   [python.org/downloads/windows](https://www.python.org/downloads/windows/),
+   under the newest Python 3.13 release, download **Windows installer (64-bit)**
+   and run it. On the first screen, tick **Add python.exe to PATH**, then click
+   **Install Now**. Python 3.14 may not open the LingCoT window yet (see Known
+   issues).
+2. **Download.** On the [release page](https://github.com/kutay-serova/LingCoT/releases/tag/v3.16.2), under *Assets*, click
+   **LingCoT-3.16.2-Windows.zip**.
+3. **Extract.** Right-click the zip → **Extract All…** → choose where it will
+   stay, for example Documents → **Extract**. Running `setup.bat` from inside
+   the zip without extracting does not work.
+4. **Open `setup.bat`** in the `LingCoT` folder. Windows warns the first time
+   each `.bat` file is opened, because LingCoT is not signed:
+
+   | what appears | what to do |
+   |---|---|
+   | "Windows protected your PC" | **More info** → **Run anyway** |
+   | "Open File - Security Warning", publisher could not be verified | **Run** |
+   | "Smart App Control blocked a file" (Windows 11) | cannot be allowed per file; say so in a report |
+
+5. **Let setup run.** A console window installs what LingCoT needs, a few
+   minutes. It ends with *Setup complete!*; press any key to close it. If it
+   says *Python 3 is not installed* although step 1 is done, run the Python
+   installer again, choose **Modify**, and tick **Add Python to environment
+   variables**; then open `setup.bat` again.
+6. **Open `LingCoT.bat`** (approve it as in step 4). A console window opens
+   and stays open while LingCoT runs; closing it closes LingCoT. If LingCoT
+   stops with an error, the window shows it and waits: include
+   `logs\launcher_stderr.log` in your report.
+
 ## New in this build
 
 | | where |
@@ -101,6 +139,7 @@ Utilities) and type `python3 --version`. 3.9 or later works.
 | Settings and tags you add to the POS and morpheme-type lists are kept in `LingCoT-Data`, so an update does not reset them | |
 | Setup checks the system first (macOS 11, Python 3.9, 64-bit) and names the one not met; it runs on the Python 3.9 that comes with Apple's developer tools | `setup.command` |
 | Setup creates `LingCoT.app`, which opens without a Terminal window; `setup.command` is the only file macOS asks you to approve | the `LingCoT` folder |
+| **Windows preview**: a first build for Windows; `LingCoT.bat` keeps a console open and shows why the app stopped, if it does | [Tutorial 3](#3-windows-preview-set-up-and-open) |
 
 ## Known issues
 
@@ -109,6 +148,9 @@ Utilities) and type `python3 --version`. 3.9 or later works.
 | PDF dictionary export has no page numbers or running header (B-028) | |
 | The native name *словѣньскъ* resolves to Old Russian, never Old Church Slavonic; use the code `cu` (B-035) | |
 | Exports (PDF, LaTeX) are in English whatever the interface language | by decision, for now |
+| Windows: setup and launch are untested; this is the first run there | [Tutorial 3](#3-windows-preview-set-up-and-open) |
+| Windows: Python 3.14 may not open the LingCoT window: the Windows window backend (pythonnet 3.0.5) supports Python up to 3.13 | install Python 3.13 |
+| Windows: each `.bat` file shows a security warning once | [Tutorial 3](#3-windows-preview-set-up-and-open), step 4 |
 | Linux: setup completes but the app does not open, because the window toolkit it needs (Qt or GTK) is not installed (B-224) | [setup.md](setup.md), Linux |
 | Linux: messages in pop-up dialogs show `\n` and quotation marks (B-225) | |
 
@@ -121,7 +163,9 @@ For each problem:
 - **The version**: open the help sidebar (**?**, top right) and click the
   version line at the bottom; it is copied to the clipboard.
 - **The log**: the newest `app_….log` in the `logs` folder inside the
-  application folder. Logs record what the app did, never the text you annotate.
+  application folder. If the app did not open at all, also
+  `logs/launcher_stderr.log`. Logs record what the app did, never the text you
+  annotate.
 
 Your corpus files stay on your computer, in `LingCoT-Data`. Send one only if you
 choose to.

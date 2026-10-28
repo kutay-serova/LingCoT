@@ -1,5 +1,5 @@
 # LingCoT Edit Log
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 **Earlier entries are archived, verbatim, in `dev/archive/docs/edit_log/`:**
 `edit_log_2026-05_to_2026-06.md` (71 entries, 2026-08-24) and
@@ -13,6 +13,25 @@ and that boundary means something in a way that "50 entries" did not — this li
 said 50 for thirty entries.
 
 **House style:** an entry is *what changed · why · the guard · verification*, a few lines. Reasoning that a future reader needs belongs in a code comment, where it is read at the point of use rather than found by archaeology. The long-form entries below 2026-08-24 predate this rule; they are kept as written.
+
+---
+
+## B-237: Windows preview: .bat files written out with CRLF, launcher shows why it stopped, tester docs for Windows (2026-10-28)
+**Version:** v3.16.2 · **Type:** fix · **Archives:** `dev/archive/changes/win-preview/` (v3.16.1)
+**Touched:** setup.bat · LingCoT.bat · setup_NLLB.bat · .gitattributes (new) · TESTERS.md · setup.md · README.md · dev/BUGS.md · dev/PRACTICES.md · dev/tests/windows_bat_test.js (new)
+**Closed:** B-237
+
+**What changed.**
+- `.gitattributes` (new): `*.bat text eol=crlf`. Stored LF; CRLF on checkout and in `git archive`.
+- The three `.bat` files: CRLF, ASCII only (em dashes and box-drawing characters replaced).
+- `LingCoT.bat`: runs `python.exe` with stderr to `logs\launcher_stderr.log`, as the macOS launcher does; on a non-zero exit prints the log and pauses. The console stays open while the app runs.
+- TESTERS: Tutorial 3, Windows preview (Python 3.13 with PATH, Extract All, SmartScreen, setup, launch); Windows rows in Getting started, New in this build and Known issues; release link v3.16.2. setup.md and README: Windows marked as a preview, Python 3.13 or earlier, the console and the log.
+
+**Why.** A Windows zip goes to testers for early feedback, untested on Windows.
+
+**Guard.** `windows_bat_test.js` (new): every root `.bat` has `eol=crlf` by `git check-attr` and is ASCII only; `LingCoT.bat` runs `python.exe` with stderr to the log, not `pythonw.exe`, and prints it on failure. Fails on the pre-change files.
+
+**Verification.** `./dev/tests/run_all.sh`: 109 passed. In a scratch clone, `git archive` writes the `.bat` files with CRLF while the repository stores LF. Not run on Windows.
 
 ---
 

@@ -1,5 +1,5 @@
 @echo off
-:: LingCoT — NLLB offline translation setup (Windows)
+:: LingCoT: NLLB offline translation setup (Windows)
 :: Run after setup.bat. Downloads NLLB-200 and optimizes it for your CPU.
 ::
 :: What this does:
@@ -13,11 +13,11 @@
 cd /d "%~dp0"
 
 echo =============================================
-echo  LingCoT ^— NLLB offline translation setup
+echo  LingCoT: NLLB offline translation setup
 echo =============================================
 echo.
 
-:: ── Check that the base setup has been run ───────────────────────────────────
+:: -- Check that the base setup has been run -----------------------------------
 if not exist ".venv\Scripts\python.exe" (
     echo Base setup is not complete.
     echo Please run setup.bat first, then try again.
@@ -26,8 +26,8 @@ if not exist ".venv\Scripts\python.exe" (
     exit /b 1
 )
 
-:: ── Step 1: upgrade venv to NLLB tier + download model ───────────────────────
-echo Step 1/2 ^— Downloading NLLB packages and model...
+:: -- Step 1: upgrade venv to NLLB tier + download model -----------------------
+echo Step 1/2: Downloading NLLB packages and model...
 echo (This is a large download and may take several minutes.)
 echo.
 .venv\Scripts\python.exe source\setup.py --nllb
@@ -40,8 +40,8 @@ if %errorlevel% neq 0 (
 
 echo.
 
-:: ── Step 2: benchmark CPU and write optimized config ─────────────────────────
-echo Step 2/2 ^— Benchmarking your CPU for optimal NLLB settings...
+:: -- Step 2: benchmark CPU and write optimized config -------------------------
+echo Step 2/2: Benchmarking your CPU for optimal NLLB settings...
 echo.
 .venv\Scripts\python.exe source\scripts\corpus_optimize.py
 if %errorlevel% neq 0 (

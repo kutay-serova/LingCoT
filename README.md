@@ -2,7 +2,7 @@
 
 **LingCoT is an open-source tool for annotating linguistic corpora.**
 
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 > **Status: in development.** No stable release has been cut. The application is
 > in daily use on the author's own corpora and the data format is settled enough
@@ -45,9 +45,9 @@ work and research.
 
 LingCoT is written for Windows, macOS and Linux. It needs Python 3.9 or later and
 macOS 11, Windows 10 or a current Linux (see [Requirements](#requirements));
-setup installs everything else for you. **The current tester build is
-macOS-only**: on Linux the app does not open without Qt or GTK (B-224), and
-Windows has not been tested.
+setup installs everything else for you. **The current tester build is for
+macOS**, with a first, untested Windows preview; on Linux the app does not open
+without Qt or GTK (B-224).
 
 ---
 
@@ -147,7 +147,7 @@ Apple's Command Line Tools; that is needed once.
 | | Minimum | Notes |
 |---|---|---|
 | **macOS** | 11 Big Sur, Apple Silicon or Intel | tested on 14 and 26 |
-| **Windows** | 10 or 11, 64-bit | not tested in this build |
+| **Windows** | 10 or 11, 64-bit | preview, first tester run in v3.16.2; use Python 3.13 or earlier |
 | **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
 | **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
 | **Disk** | about 200 MB | plus your corpora |
@@ -163,12 +163,12 @@ Installing Python:
 
 ### Windows
 
-1. Open the `LingCoT` folder.
+1. Extract the zip (right-click → **Extract All…**) and open the `LingCoT` folder.
 2. Double-click **`setup.bat`**.
-3. A terminal window will open and run through the installation. When it closes on its own, setup is complete.
+3. A console window runs the installation. It ends with *Setup complete!*; press any key to close it.
 
 **If Windows shows a SmartScreen warning:**
-Click **"More info"**, then **"Run anyway"**. This warning appears because the file is not code-signed; the script only installs Python packages locally.
+Click **"More info"**, then **"Run anyway"**. This warning appears because the file is not code-signed; the script only installs Python packages locally. It appears once for each `.bat` file.
 
 ### macOS
 
@@ -199,7 +199,9 @@ Setup installs the **minimal tier**: the PyWebView desktop app, ingestion librar
 
 ### Windows
 
-Double-click **`LingCoT.bat`**.
+Double-click **`LingCoT.bat`**. A console window stays open while the app runs;
+closing it closes the app. If the app stops with an error, the window shows it
+and it is written to `logs\launcher_stderr.log`.
 
 ### macOS
 

@@ -1,16 +1,16 @@
 @echo off
-:: LingCoT — first-time setup (Windows)
+:: LingCoT: first-time setup (Windows)
 :: Run once. Installs all dependencies (app + corpus scripts) into a local .venv\ folder.
 :: To add offline NLLB translation later, run setup_NLLB.bat.
 
 cd /d "%~dp0"
 
 echo =============================================
-echo  LingCoT ^— first-time setup
+echo  LingCoT: first-time setup
 echo =============================================
 echo.
 
-:: ── Check for Python ─────────────────────────────────────────────────────────
+:: -- Check for Python ---------------------------------------------------------
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo Python 3 is not installed on this machine.
@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
 for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo Found: %%v
 echo.
 
-:: ── Run the unified environment builder ──────────────────────────────────────
+:: -- Run the unified environment builder --------------------------------------
 :: build_env.py creates .venv\ and installs the full minimal-tier dependency set:
 :: pywebview (desktop app), ingestion libraries, online translation, and utilities.
 :: Uses uv if available (faster, hash-pinned); falls back to venv + pip.

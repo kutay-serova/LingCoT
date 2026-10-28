@@ -1,5 +1,5 @@
 # LingCoT: Development Practices
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 How to work on this project. `DEV_PLAN.md` is *what* to build; this is *how*.
 Every rule was bought with a bug, and the ids are kept: a rule without its
@@ -111,9 +111,9 @@ table that did not before.
 
 ## 6. Guards
 
-**111 in `dev/tests/`. `run_all.sh` runs 108 by default — 108 pass, 0 disabled;
+**112 in `dev/tests/`. `run_all.sh` runs 109 by default — 109 pass, 0 disabled;
 `--slow` adds `nllb_diag_test.py`, `gui_crud_test.js` and `pseudo_locale_test.js`
-for 111.** Guards log to `LINGCOT_LOG_DIR` (a temp dir), never `logs/`; `run_all.sh`
+for 112.** Guards log to `LINGCOT_LOG_DIR` (a temp dir), never `logs/`; `run_all.sh`
 fails if `logs/` changed during the run. Run `--slow`
 before a release.
 

@@ -1,6 +1,6 @@
 # LingCoT: Setup & Running
 
-**Updated:** 2026-10-28 · **Version:** v3.16.1
+**Updated:** 2026-10-28 · **Version:** v3.16.2
 
 ---
 
@@ -9,7 +9,7 @@
 | | Minimum | Notes |
 |---|---|---|
 | **macOS** | 11 Big Sur, Apple Silicon or Intel | tested on 14 and 26 |
-| **Windows** | 10 or 11, 64-bit | not tested in this build |
+| **Windows** | 10 or 11, 64-bit | preview, first tester run in v3.16.2; use Python 3.13 or earlier |
 | **Linux** | 64-bit; GTK with WebKit2GTK, or Qt | not supported in this build (B-224) |
 | **Python** | 3.9 or later, 64-bit | [python.org/downloads](https://www.python.org/downloads/) |
 | **Disk** | about 200 MB | plus your corpora |
@@ -45,6 +45,11 @@ was made on your Mac.
 ```
 double-click setup.bat
 ```
+Extract the zip first (right-click → **Extract All…**). Each `.bat` file shows a
+warning the first time: *Windows protected your PC* → **More info** → **Run
+anyway**. Use Python 3.13 or earlier for now: pywebview's Windows backend
+(pythonnet 3.0.5) supports Python up to 3.13. Step by step:
+[TESTERS.md, Tutorial 3](TESTERS.md#3-windows-preview-set-up-and-open).
 
 **Linux:** not supported in the current tester build (B-224). Setup completes, but
 the app does not open: pywebview needs Qt or GTK, and setup installs neither.
@@ -81,7 +86,9 @@ move them the next time you run it.
 
 **macOS:** double-click `LingCoT.app` (no Terminal window). `LingCoT.command`
 also works and shows the app's output in Terminal.
-**Windows:** double-click `LingCoT.bat`
+**Windows:** double-click `LingCoT.bat`. A console window stays open while the
+app runs; if the app stops with an error, it is shown there and written to
+`logs\launcher_stderr.log`.
 
 The app opens as a native window. No browser needed.
 
@@ -177,7 +184,7 @@ python3 source/build_env.py --recreate
 | `setup_NLLB.bat` | **Windows.** add offline NLLB translation |
 | `LingCoT.app` | **macOS.** launch the desktop app; built by `setup.command` |
 | `LingCoT.command` | **macOS.** launch the desktop app with a Terminal window |
-| `LingCoT.bat` | **Windows.** launch the desktop app |
+| `LingCoT.bat` | **Windows.** launch the desktop app; errors to `logs\launcher_stderr.log` |
 | `pyproject.toml` | Dependency specification |
 | `uv.lock` | Locked dependency versions (used by build_env.py when uv is available) |
 | `source/LingCoT.pyw` | App entry point (opened by launchers) |
